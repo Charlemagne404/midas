@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import type { ComponentProps } from 'react';
+import { Component, lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   flexRender,
@@ -19,6 +19,7 @@ import {
   Clock3,
   Database,
   FlaskConical,
+  Globe2,
   LayoutDashboard,
   PanelLeftClose,
   Play,
@@ -34,21 +35,76 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { api } from './api';
-import { Laboratory } from './Laboratory';
-import { Arena } from './Arena';
-import { Reality } from './Reality';
 import { PaperPage, PaperSummary, ExperimentPanel } from './Paper';
 import { chartBase } from './chart-theme';
-const LazyChart = lazy(() => import('./Chart').then((module) => ({ default: module.Chart })));
+import { DeferredChart } from './DeferredChart';
+const LazyLaboratory = lazy(() =>
+  import('./Laboratory').then((module) => ({ default: module.Laboratory })),
+);
+const LazyArena = lazy(() => import('./Arena').then((module) => ({ default: module.Arena })));
+const LazyReality = lazy(() => import('./Reality').then((module) => ({ default: module.Reality })));
 const LazyVeritas = lazy(() => import('./Veritas').then((module) => ({ default: module.Veritas })));
+const LazyFrontier = lazy(() =>
+  import('./Frontier').then((module) => ({ default: module.Frontier })),
+);
+const LazyReadiness = lazy(() =>
+  import('./Readiness').then((module) => ({ default: module.Readiness })),
+);
 const LazyObservatory = lazy(() =>
   import('./Observatory').then((module) => ({ default: module.Observatory })),
 );
-function Chart(props: ComponentProps<typeof LazyChart>) {
+
+type WorkspaceErrorBoundaryProps = {
+  name: string;
+  children: ReactNode;
+};
+
+type WorkspaceErrorBoundaryState = { failed: boolean };
+
+export class WorkspaceErrorBoundary extends Component<
+  WorkspaceErrorBoundaryProps,
+  WorkspaceErrorBoundaryState
+> {
+  state: WorkspaceErrorBoundaryState = { failed: false };
+
+  static getDerivedStateFromError(): WorkspaceErrorBoundaryState {
+    return { failed: true };
+  }
+
+  render() {
+    if (this.state.failed) {
+      return (
+        <div className="empty" role="alert">
+          <h3>{this.props.name} workspace could not load</h3>
+          <p>Refresh Mission Control to try loading this workspace again.</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function LazyWorkspace({
+  name,
+  loading,
+  children,
+}: {
+  name: string;
+  loading: string;
+  children: ReactNode;
+}) {
   return (
-    <Suspense fallback={<div className="chart empty">Loading chart…</div>}>
-      <LazyChart {...props} />
-    </Suspense>
+    <WorkspaceErrorBoundary name={name}>
+      <Suspense fallback={<div className="empty">{loading}</div>}>{children}</Suspense>
+    </WorkspaceErrorBoundary>
+  );
+}
+
+function Chart(props: ComponentProps<typeof DeferredChart>) {
+  return (
+    <LazyWorkspace name="Chart" loading="Loading chart…">
+      <DeferredChart {...props} />
+    </LazyWorkspace>
   );
 }
 import type {
@@ -74,6 +130,8 @@ const pageGroups = [
   {
     label: 'Research',
     pages: [
+      ['Research Readiness', ShieldCheck],
+      ['Frontier', Globe2],
       ['Observatory', Sparkles],
       ['Reality', Radio],
       ['Veritas', BarChart3],
@@ -108,6 +166,8 @@ const pageSummaries: Record<string, string> = {
   Laboratory: 'Compare repeatable experiments and inspect the evidence behind each result.',
   Analytics: 'Review recorded market checks and virtual experiment results.',
   Arena: 'Train and compare research models using saved data and simulated markets.',
+  'Research Readiness': 'Review bounded readiness evidence and its operational limitations.',
+  Frontier: 'Inspect bounded multi-market research and its source-use limits.',
   Incidents: 'Review warnings and errors recorded by the system.',
   Telemetry: 'Check whether data feeds and background services are running as expected.',
   Settings: 'Review the safety boundaries and virtual risk controls.',
@@ -230,27 +290,35 @@ export function App() {
   const dataLabel =
     page === 'Observatory'
       ? 'Saved research evidence'
-      : page === 'Reality'
-        ? 'Public market observations'
-        : page === 'Veritas'
-          ? 'Saved economic evidence'
-          : state?.mode === 'live'
-            ? 'Live public data'
-            : state?.mode === 'demo'
-              ? 'Example data'
-              : 'Connecting to data';
+      : page === 'Research Readiness'
+        ? 'Readiness evidence'
+        : page === 'Frontier'
+          ? 'Frontier research evidence'
+          : page === 'Reality'
+            ? 'Public market observations'
+            : page === 'Veritas'
+              ? 'Saved economic evidence'
+              : state?.mode === 'live'
+                ? 'Live public data'
+                : state?.mode === 'demo'
+                  ? 'Example data'
+                  : 'Connecting to data';
   const dataHelp =
     page === 'Observatory'
       ? 'Saved research records updated about every 30 seconds. No market prices or live orders are used here.'
-      : page === 'Reality'
-        ? 'Public market observations collected over time. The page shows when this record was last updated.'
-        : page === 'Veritas'
-          ? 'A saved evidence snapshot. Its capture time is shown beside the assessment.'
-          : state?.mode === 'live'
-            ? 'Prices come from public market data. Quote age and data quality appear in System status.'
-            : state?.mode === 'demo'
-              ? 'Sample data is included so you can explore the site. It is not live market data, and all balances are virtual.'
-              : 'MIDAS is connecting to its data service. The source label will update when it is available.';
+      : page === 'Research Readiness'
+        ? 'Evidence classifications and measured gates; this page is not a deployment approval.'
+        : page === 'Frontier'
+          ? 'Bounded public-source research. Candidate states are evidence, not executable orders.'
+          : page === 'Reality'
+            ? 'Public market observations collected over time. The page shows when this record was last updated.'
+            : page === 'Veritas'
+              ? 'A saved evidence snapshot. Its capture time is shown beside the assessment.'
+              : state?.mode === 'live'
+                ? 'Prices come from public market data. Quote age and data quality appear in System status.'
+                : state?.mode === 'demo'
+                  ? 'Sample data is included so you can explore the site. It is not live market data, and all balances are virtual.'
+                  : 'MIDAS is connecting to its data service. The source label will update when it is available.';
   useEffect(() => {
     document.title = `MIDAS — ${page}`;
   }, [page]);
@@ -272,6 +340,9 @@ export function App() {
           <div>
             <Beaker size={15} />
             {activeGroup}
+            {page === 'Observatory' && <Badge tone="gold">READ ONLY</Badge>}
+            {page === 'Research Readiness' && <Badge tone="gold">EVIDENCE</Badge>}
+            {page === 'Frontier' && <Badge tone="gold">R&D</Badge>}
           </div>
         </div>
         <nav aria-label="Main navigation">
@@ -320,7 +391,9 @@ export function App() {
           <div className="topbar-right">
             <Badge
               tone={
-                page === 'Observatory' || page === 'Reality' || state?.mode === 'live'
+                page === 'Reality' ||
+                (state?.mode === 'live' &&
+                  !['Veritas', 'Observatory', 'Research Readiness', 'Frontier'].includes(page))
                   ? 'cyan'
                   : 'gold'
               }
@@ -335,42 +408,66 @@ export function App() {
           </div>
         </header>
         <main>
-          {page !== 'Reality' && page !== 'Veritas' && page !== 'Observatory' && (
-            <div className="page-heading">
-              <div>
-                <div className="eyebrow">WORKSPACE / {activeGroup}</div>
-                <h1>{page}</h1>
-                <p>{pageSummaries[page]}</p>
+          {page !== 'Reality' &&
+            page !== 'Veritas' &&
+            page !== 'Research Readiness' &&
+            page !== 'Observatory' &&
+            page !== 'Frontier' && (
+              <div className="page-heading">
+                <div>
+                  <div className="eyebrow">WORKSPACE / {activeGroup}</div>
+                  <h1>{page}</h1>
+                  <p>{pageSummaries[page]}</p>
+                </div>
+                <div className="heading-status">
+                  <span
+                    className={`status-dot ${disconnected || state?.status === 'DEGRADED' ? 'red' : ''}`}
+                  />
+                  {disconnected
+                    ? 'Data service offline'
+                    : state?.status
+                      ? readable(state.status)
+                      : 'Connecting'}
+                  <span className="heading-time">
+                    Updated {date(state?.timestamp_ms)} local time
+                  </span>
+                </div>
               </div>
-              <div className="heading-status">
-                <span
-                  className={`status-dot ${disconnected || state?.status === 'DEGRADED' ? 'red' : ''}`}
-                />
-                {disconnected
-                  ? 'Data service offline'
-                  : state?.status
-                    ? readable(state.status)
-                    : 'Connecting'}
-                <span className="heading-time">Updated {date(state?.timestamp_ms)} local time</span>
+            )}
+          {page !== 'Reality' &&
+            page !== 'Veritas' &&
+            page !== 'Research Readiness' &&
+            page !== 'Observatory' &&
+            page !== 'Frontier' &&
+            disconnected && (
+              <div className="alert danger">
+                <TriangleAlert size={17} />
+                <div>
+                  MIDAS cannot reach its data service. Some values may be out of date.
+                  <details className="error-details">
+                    <summary>Connection details</summary>
+                    <span>{stateQuery.error.message}</span>
+                  </details>
+                </div>
+                <button onClick={() => void stateQuery.refetch()}>Retry connection</button>
               </div>
-            </div>
-          )}
-          {page !== 'Reality' && page !== 'Veritas' && page !== 'Observatory' && disconnected && (
-            <div className="alert danger">
-              <TriangleAlert size={17} />
-              <div>
-                MIDAS cannot reach its data service. Some values may be out of date.
-                <details className="error-details">
-                  <summary>Connection details</summary>
-                  <span>{stateQuery.error.message}</span>
-                </details>
-              </div>
-              <button onClick={() => void stateQuery.refetch()}>Retry connection</button>
+            )}
+          {page === 'Research Readiness' && state?.mode === 'demo' && (
+            <div className="demo-strip">
+              <FlaskConical size={14} />
+              <strong>DEMO MODE</strong>
+              <span>
+                Mission Control is in demo mode; Reality and Veritas panels show separately
+                classified public observation evidence.
+              </span>
+              <span className="strip-end">No live orders</span>
             </div>
           )}
           {page !== 'Reality' &&
             page !== 'Veritas' &&
+            page !== 'Research Readiness' &&
             page !== 'Observatory' &&
+            page !== 'Frontier' &&
             state?.mode === 'demo' && (
               <div className="demo-strip">
                 <FlaskConical size={14} />
@@ -384,7 +481,9 @@ export function App() {
             )}
           {page !== 'Reality' &&
             page !== 'Veritas' &&
+            page !== 'Research Readiness' &&
             page !== 'Observatory' &&
+            page !== 'Frontier' &&
             state?.status === 'DEGRADED' &&
             !disconnected && (
               <div className="alert danger">
@@ -395,7 +494,9 @@ export function App() {
             )}
           {page !== 'Reality' &&
             page !== 'Veritas' &&
+            page !== 'Research Readiness' &&
             page !== 'Observatory' &&
+            page !== 'Frontier' &&
             state?.safety.emergency_stop && (
               <div className="alert danger" role="alert">
                 <ShieldX size={17} />
@@ -412,6 +513,16 @@ export function App() {
               navigate={setPage}
             />
           )}
+          {page === 'Research Readiness' && (
+            <LazyWorkspace name="Readiness" loading="Loading readiness evidence…">
+              <LazyReadiness />
+            </LazyWorkspace>
+          )}
+          {page === 'Observatory' && (
+            <LazyWorkspace name="Observatory" loading="Loading saved research artifacts…">
+              <LazyObservatory />
+            </LazyWorkspace>
+          )}
           {page === 'Scanner' && (
             <Scanner
               evaluations={opportunities.data ?? []}
@@ -426,19 +537,31 @@ export function App() {
               <ExperimentPanel />
             </>
           )}
-          {page === 'Laboratory' && <Laboratory />}
-          {page === 'Analytics' && <AnalyticsPage data={analytics.data} />}
-          {page === 'Arena' && <Arena />}
-          {page === 'Reality' && <Reality />}
-          {page === 'Veritas' && (
-            <Suspense fallback={<div className="empty">Loading Veritas evidence…</div>}>
-              <LazyVeritas />
-            </Suspense>
+          {page === 'Laboratory' && (
+            <LazyWorkspace name="Laboratory" loading="Loading Laboratory research…">
+              <LazyLaboratory onNavigate={setPage} />
+            </LazyWorkspace>
           )}
-          {page === 'Observatory' && (
-            <Suspense fallback={<div className="empty">Opening the Observatory…</div>}>
-              <LazyObservatory />
-            </Suspense>
+          {page === 'Analytics' && <AnalyticsPage data={analytics.data} />}
+          {page === 'Arena' && (
+            <LazyWorkspace name="Arena" loading="Loading Arena research…">
+              <LazyArena />
+            </LazyWorkspace>
+          )}
+          {page === 'Reality' && (
+            <LazyWorkspace name="Reality" loading="Loading Reality observations…">
+              <LazyReality />
+            </LazyWorkspace>
+          )}
+          {page === 'Veritas' && (
+            <LazyWorkspace name="Veritas" loading="Loading Veritas evidence…">
+              <LazyVeritas />
+            </LazyWorkspace>
+          )}
+          {page === 'Frontier' && (
+            <LazyWorkspace name="Frontier" loading="Loading Frontier research workspace…">
+              <LazyFrontier onNavigate={setPage} />
+            </LazyWorkspace>
           )}
           {page === 'Incidents' && <Incidents />}
           {page === 'Telemetry' && <Telemetry state={state} />}

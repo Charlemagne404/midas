@@ -16,7 +16,7 @@ SCAN_ID = "scan-20261015T100000Z-6f98ffeaecab"
 def _source(tmp_path, *, age_seconds: int = 30, valid_digest: bool = True):
     repository = tmp_path / "repository"
     data_root = repository / "data" / "veritas-observatory"
-    event_path = data_root / "analysis-events" / "v4" / f"{SCAN_ID}.json"
+    event_path = data_root / "analysis-events" / VERSION.rsplit("-", 1)[-1] / f"{SCAN_ID}.json"
     captured = datetime(2026, 10, 15, 10, 0, tzinfo=UTC).timestamp()
     event = {
         "analysis_version": VERSION,
@@ -233,7 +233,12 @@ def test_invalid_source_summary_is_reported_without_blocking_public_qualificatio
 def test_director_waits_for_finalization(tmp_path):
     repository, now = _source(tmp_path)
     arena_root = tmp_path / "arena"
-    event = repository / "data/veritas-observatory/analysis-events/v4" / f"{SCAN_ID}.json"
+    event = (
+        repository
+        / "data/veritas-observatory/analysis-events"
+        / VERSION.rsplit("-", 1)[-1]
+        / f"{SCAN_ID}.json"
+    )
     event.unlink()
     waiting = research_director.tick(repository, arena_root, now=now, launch_jobs=False)
     assert waiting["state"] == "WAITING_FOR_FINALIZATION"
@@ -268,6 +273,35 @@ def test_director_defers_for_resource_pressure_and_recovers_without_duplicate_jo
     assert not list(arena_root.glob("jobs/*/job.json"))
     admitted = research_director.tick(repository, arena_root, now=now + 30, launch_jobs=False)
     assert admitted["state"] == "RUNNING"
+    assert len(list(arena_root.glob("jobs/*/job.json"))) == 1
+
+
+def test_director_recovers_from_host_wide_admission_lock_contention(tmp_path, monkeypatch):
+    from midas.arena.admission import ResourceAdmissionDenied
+
+    repository, now = _source(tmp_path)
+    arena_root = tmp_path / "arena"
+    monkeypatch.setattr(research_director, "resources_ready", lambda root: True)
+    create_job = research_director._create_job
+    calls = 0
+
+    def defer_once(root, scan_id, launch):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise ResourceAdmissionDenied(["resource_admission_lock_busy"])
+        return create_job(root, scan_id, launch=False)
+
+    monkeypatch.setattr(research_director, "_create_job", defer_once)
+    waiting = research_director.tick(repository, arena_root, now=now, launch_jobs=True)
+    assert waiting["state"] == "WAITING_RESOURCES"
+    assert waiting["pending_scan_id"] == SCAN_ID
+    assert waiting.get("failed_admission_scan_id") is None
+    assert not list(arena_root.glob("jobs/*/job.json"))
+
+    recovered = research_director.tick(repository, arena_root, now=now + 30, launch_jobs=True)
+    assert recovered["state"] == "RUNNING"
+    assert recovered["pending_scan_id"] is None
     assert len(list(arena_root.glob("jobs/*/job.json"))) == 1
 
 

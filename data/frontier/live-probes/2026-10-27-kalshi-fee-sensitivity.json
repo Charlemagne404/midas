@@ -1,0 +1,73 @@
+{
+  "artifact_kind": "offline_sensitivity_from_captured_public_fee_metadata",
+  "artifact_sha256": "cdc66e6722fe25369317107ca4d94b4749b3f47f938dca0b3924507f5b5922c4",
+  "limitations": [
+    "This is a deterministic offline calculation from the committed October 27 public metadata capture; no live call was made for this calculation.",
+    "The scenario price and quantity are illustrative inputs, not observed executable quotes.",
+    "The one-fill result does not model multi-fill order accumulation, FCM charges, rebates, venue access, or changed fee schedules.",
+    "No Frontier candidate economics or eligibility state is changed by this sensitivity."
+  ],
+  "scenario_inputs": {
+    "price_and_size_provenance": "manual scenario; not taken from a market book or trade",
+    "price_usd": "0.50",
+    "quantity_contracts": "1"
+  },
+  "schema_version": 1,
+  "sensitivity": {
+    "assumptions": [
+      "One hypothetical taker fill at the supplied price and quantity; no order was submitted.",
+      "Uses the July 7, 2026 public taker formula and captured event/series fee type and multiplier.",
+      "Shows direct and non-direct balance-precision cases because account classification is unknown.",
+      "Excludes multi-fill order rounding accumulation, FCM fees, rebates, and later schedule changes.",
+      "An ask-side immediate buy is treated as taker for this sensitivity only.",
+      "Price and size are manual scenario inputs; no matching public book is bound to this calculation."
+    ],
+    "calculation_sha256": "0218bc4415eafbd8d154173fd66b98c8be92ef7255d0cd75b9a61e8b5a385ce0",
+    "effective_fee_multiplier": "1",
+    "effective_fee_type": "quadratic_with_combo_maker_fees",
+    "formula_source_url": "https://kalshi.com/docs/kalshi-fee-schedule.pdf",
+    "input_observation_ids": [
+      "b33327d6fd935c041db106614b51d8b18a7b15242b00b195be70d71535aa795c",
+      "21a035c3f8d142a9e71a8d23769cb3cab8be7de5de525e51c84881a7b4b3a6df"
+    ],
+    "input_raw_sha256": [
+      "dc09b478c3ade9c09fafca71d2f488c28a1da14fd3f3fbdb9916334185a9406d",
+      "896821229942685424576e6e2e5b23254a0bfef6eb8091e55869a1bb834478ec"
+    ],
+    "input_received_at_utc": [
+      "2026-10-26T23:16:17.916305Z",
+      "2026-10-26T23:16:18.408650Z"
+    ],
+    "model_version": "kalshi-event-taker-fee-sensitivity-2026-07-07-v1",
+    "native_event_id": "KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H",
+    "native_market_id": "KXMVECROSSCATEGORY-S202664GKNBS2X3SFAX4H-2IBWA6SLM",
+    "position_cost_usd": "0.50",
+    "price_usd": "0.50",
+    "quantity_contracts": "1",
+    "rounding_source_url": "https://docs.kalshi.com/getting_started/fee_rounding",
+    "scenarios": [
+      {
+        "account_precision_class": "direct_member",
+        "balance_quantum": "0.0001",
+        "balance_rounding_adjustment": "0.000000",
+        "model_fee_before_rounding": "0.017500",
+        "total_modeled_debit": "0.5175",
+        "total_modeled_fee": "0.0175",
+        "trade_fee_rounded_to_microdollar": "0.017500"
+      },
+      {
+        "account_precision_class": "non_direct_member",
+        "balance_quantum": "0.01",
+        "balance_rounding_adjustment": "0.002500",
+        "model_fee_before_rounding": "0.017500",
+        "total_modeled_debit": "0.52",
+        "total_modeled_fee": "0.02",
+        "trade_fee_rounded_to_microdollar": "0.017500"
+      }
+    ],
+    "schema_version": 1,
+    "series_ticker": "KXMVECROSSCATEGORY"
+  },
+  "source_capture_file": "2026-10-27-kalshi-public-fee-metadata.json",
+  "source_capture_sha256": "4a2e1ac8e2953314e89f26fa825142b551ce0a24512a14e3494df03b936ea53e"
+}

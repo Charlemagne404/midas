@@ -49,6 +49,8 @@ def classify_collector_health(status: dict[str, Any], now_ns: int) -> tuple[str,
 
     if status.get("backpressure_active"):
         reasons.append("backpressured")
+    if status.get("transport_queue_saturated") is True:
+        reasons.append("transport_queue_saturated")
     return ("degraded" if reasons else "recording"), reasons
 
 
@@ -176,6 +178,8 @@ def source_quality_report(status: dict[str, Any], now_ns: int) -> dict[str, Any]
         current_issues.append("secondary_comparison_ineligible")
     if persistence_state == "backpressured":
         current_issues.append("persistence_backpressure")
+    if status.get("transport_queue_saturated") is True:
+        current_issues.append("transport_queue_saturated")
     if status.get("resource_constrained") is True:
         current_issues.append("collector_resource_headroom_low")
 
@@ -341,6 +345,19 @@ def source_quality_report(status: dict[str, Any], now_ns: int) -> dict[str, Any]
         "transport_queue": {
             "depth": queue_depth,
             "bound": queue_bound,
+            "high_water_depth": nonnegative_int(status.get("transport_queue_high_water_depth")),
+            "sample_count": nonnegative_int(status.get("transport_queue_sample_count")),
+            "observation_available": (
+                status.get("transport_queue_observation_available")
+                if isinstance(status.get("transport_queue_observation_available"), bool)
+                else None
+            ),
+            "saturated": (
+                status.get("transport_queue_saturated")
+                if isinstance(status.get("transport_queue_saturated"), bool)
+                else None
+            ),
+            "sampled_ns": nonnegative_int(status.get("transport_queue_sampled_ns")),
             "depth_state": "reported" if queue_depth is not None else "unreported",
         },
         "persistence": {

@@ -54,8 +54,24 @@ in the incident artifact. No resolution follows merely from a later passing run.
 
 `apps/api/laboratory.py` exposes catalogs, campaigns, controls, paginated runs,
 comparisons, incident summaries, exports and actual re-execution. The existing Incidents
-API also includes Laboratory discoveries. `apps/web/src/Laboratory.tsx` adds seven
+API also includes Laboratory discoveries. `apps/web/src/Laboratory.tsx` adds eight
 research tabs while retaining every existing dashboard route and legacy simulation UI.
+
+The Laboratory's **Frontier research** tab is a read-only window into Arena's existing
+Frontier discovery jobs. It calls the bounded `GET /api/arena/frontier-discovery-comparisons`
+catalog and loads one selected completed job through
+`GET /api/arena/jobs/{identity}/frontier-discovery`. The Arena API verifies the pinned
+snapshot and result hashes before the Laboratory renders scope summaries, paired deltas,
+and reproducibility identities. The view does not submit a second campaign, copy data into
+the single-market Laboratory dataset model, contact a venue, or launch a worker. Selecting
+a job only changes which saved Arena artifact is inspected; the Frontier workspace remains
+the place to request a bounded discovery comparison through Arena admission.
+
+This is an interface-level Laboratory/Arena integration. It does not convert a Frontier
+multi-market payoff into legacy `MarketEvent` episodes, and it does not add Frontier jobs
+to Laboratory campaign controls or exports. Those models have different instrument and
+payoff semantics; a conversion would require an explicit lossless contract before it could
+be claimed as campaign integration.
 
 Logical time never reads wall time. Wall time is used only for resource budgets,
 throughput and audit timestamps. Random generators are local and explicitly seeded.
