@@ -116,7 +116,7 @@ jobs:
             --env MIDAS_PHASE5_SOURCE_SHA=2708269a85904898acbeeb46a9ca1eada75b6ac1 \
             --env MIDAS_PHASE5_SOURCE_TREE=5e12a6f06a331f6578d6f44f77e463841c39f685 \
             --env GIT_ALTERNATE_OBJECT_DIRECTORIES=/capacity-base/.git/objects \
-            --env MIDAS_PHASE5_MODE=full \
+            --env MIDAS_PHASE5_MODE=frontier-browser \
             --env MIDAS_PHASE5_SYNTHETIC_USER_PSI=1 \
             --env MIDAS_PHASE5_TEST_SUPPORT_ROOT=/control/test-support \
             --env MIDAS_MODE=demo \

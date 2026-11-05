@@ -273,6 +273,19 @@ if [[ "$validation_mode" == "diagnostic-browser" ]]; then
     fi
   done
   exit "$playwright_status"
+elif [[ "$validation_mode" == "frontier-browser" ]]; then
+  export MIDAS_FRONTIER_E2E_ROOT="$TMPDIR/midas-browser-captured-phase5"
+  export MIDAS_FRONTIER_E2E_CAPTURED=1
+  corepack pnpm --dir /workspace/apps/web exec playwright test --workers=1 --reporter=line \
+    e2e/frontier.captured.spec.ts
+  unset MIDAS_FRONTIER_E2E_CAPTURED
+
+  export MIDAS_FRONTIER_E2E_ROOT="$TMPDIR/midas-browser-seeded-phase5"
+  export MIDAS_SEED_FRONTIER_E2E=1
+  corepack pnpm --dir /workspace/apps/web exec playwright test --workers=1 --reporter=line \
+    e2e/frontier.seeded.spec.ts
+  unset MIDAS_SEED_FRONTIER_E2E
+  exit 0
 elif [[ "$validation_mode" != "full" ]]; then
   fail "unknown MIDAS_PHASE5_MODE=$validation_mode"
 fi
