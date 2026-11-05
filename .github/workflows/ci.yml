@@ -7,85 +7,26 @@ permissions:
 jobs:
   python:
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
-    env:
-      MIDAS_CI_ROOT: ${{ github.workspace }}/.midas-ci-${{ github.run_id }}-${{ github.run_attempt }}
-      MIDAS_MODE: demo
-      MIDAS_RUNTIME_ROOT: ${{ github.workspace }}/.midas-ci-${{ github.run_id }}-${{ github.run_attempt }}/runtime
-      MIDAS_DATABASE_URL: sqlite+aiosqlite:///${{ github.workspace }}/.midas-ci-${{ github.run_id }}-${{ github.run_attempt }}/runtime/paper.sqlite3
-      MIDAS_RECORDING_ROOT: ${{ github.workspace }}/.midas-ci-${{ github.run_id }}-${{ github.run_attempt }}/recordings
-      MIDAS_LABORATORY_ROOT: ${{ github.workspace }}/.midas-ci-${{ github.run_id }}-${{ github.run_attempt }}/laboratory
-      MIDAS_ARENA_ROOT: ${{ github.workspace }}/.midas-ci-${{ github.run_id }}-${{ github.run_attempt }}/arena
-      MIDAS_FRONTIER_ROOT: ${{ github.workspace }}/.midas-ci-${{ github.run_id }}-${{ github.run_attempt }}/frontier
-      MIDAS_REALITY_WORKSPACE: ${{ github.workspace }}/.midas-ci-${{ github.run_id }}-${{ github.run_attempt }}/reality
-      MIDAS_VERITAS_WORKSPACE: ${{ github.workspace }}
-      MIDAS_FRONTIER_POLYMARKET_PUBLIC_PROBE_ENABLED: "false"
-      MIDAS_FRONTIER_KALSHI_PUBLIC_PROBE_ENABLED: "false"
-      MIDAS_FRONTIER_KRAKEN_PUBLIC_PROBE_ENABLED: "false"
-      MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED: "false"
-      TMPDIR: ${{ github.workspace }}/.midas-ci-${{ github.run_id }}-${{ github.run_attempt }}/tmp
-      OMP_NUM_THREADS: "1"
-      OPENBLAS_NUM_THREADS: "1"
-      MKL_NUM_THREADS: "1"
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v4
         with:
-          version: "0.13.0"
-          enable-cache: true
-      - run: uv python install 3.12
-      - name: Prepare disposable backend roots
-        run: |
-          set -euo pipefail
-          root="$MIDAS_CI_ROOT"
-          test ! -e "$root"
-          mkdir -p "$root" "$TMPDIR"
-          python3 - <<'PY'
-          import os
-          from pathlib import Path
-
-          root = Path(os.environ["MIDAS_CI_ROOT"]).resolve()
-          run_id = f"{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}"
-          expected_root = (Path(os.environ["GITHUB_WORKSPACE"]) / f".midas-ci-{run_id}").resolve()
-          if root != expected_root:
-              raise SystemExit("CI root is not confined to this disposable checkout")
-          names = (
-              "MIDAS_RUNTIME_ROOT",
-              "MIDAS_RECORDING_ROOT",
-              "MIDAS_LABORATORY_ROOT",
-              "MIDAS_ARENA_ROOT",
-              "MIDAS_FRONTIER_ROOT",
-              "MIDAS_REALITY_WORKSPACE",
-          )
-          for name in names:
-              path = Path(os.environ[name]).resolve()
-              path.relative_to(root)
-              path.mkdir(parents=True, exist_ok=True)
-          prefix = "sqlite+aiosqlite:///"
-          url = os.environ["MIDAS_DATABASE_URL"]
-          if not url.startswith(prefix):
-              raise SystemExit("CI database must use a disposable SQLite file")
-          database = Path(url.removeprefix(prefix)).resolve()
-          database.relative_to(root)
-          if database.exists():
-              raise SystemExit("CI SQLite database path is not fresh")
-          source_workspace = Path(os.environ["MIDAS_VERITAS_WORKSPACE"]).resolve()
-          if source_workspace != Path(os.environ["GITHUB_WORKSPACE"]).resolve():
-              raise SystemExit("Veritas source evidence must come from the disposable CI checkout")
-          if os.environ["MIDAS_MODE"] != "demo":
-              raise SystemExit("CI runtime is not in demo mode")
-          print(f"Runtime and SQLite paths are confined to disposable root {root}")
-          PY
-      - run: uv sync --frozen --group arena-rl
-      - run: uv run ruff check packages apps/api tests infra scripts .github/ci-test-support
-      - run: uv run ruff format --check packages apps/api tests infra scripts .github/ci-test-support
-      - run: uv run mypy packages/midas apps/api
-      - name: Full backend regression suite
-        run: uv run pytest -q
-      - name: Offline synthetic replay
-        run: uv run python scripts/replay.py
+          repository: ${{ github.repository }}
+          ref: c83320000a085bf30490b4b76b425527fe8574f7
+          path: validation-capacity-base
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Run bounded, isolated backend validation
+        run: bash .github/ci-test-support/run-backend-container.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: ${{ runner.temp }}/midas-ci-backend-data-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: ignore
 
   web:
     runs-on: ubuntu-24.04
@@ -121,7 +62,18 @@ jobs:
         with:
           persist-credentials: false
       - name: Prepare disposable browser temp root
-        run: mkdir -p "$TMPDIR"
+        run: |
+          set -euo pipefail
+          mkdir -p "$TMPDIR"
+          export MIDAS_BLOCKED_COMMAND_LOG="$TMPDIR/shim-probe.log"
+          for command in systemctl systemd-run busctl dbus-send gdbus sudo; do
+            set +e
+            PATH="$MIDAS_PHASE5_TEST_SUPPORT_ROOT/bin:$PATH" \
+              "$command" --midas-ci-isolation-probe >/dev/null 2>&1
+            status=$?
+            set -e
+            test "$status" -eq 125 || { echo "$command blocker failed closed" >&2; exit 1; }
+          done
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -150,13 +102,19 @@ jobs:
           --grep 'seeded Frontier history pages|seeded Frontier discovery artifact'
       - name: Run isolated Reality browser coverage
         run: pnpm --dir apps/web exec playwright test --config playwright.reality.config.ts --workers=1
+      - name: Confirm browser APIs never attempted host service commands
+        run: |
+          if find "$TMPDIR" -type f -name blocked-commands.log -size +0c -print -quit | grep -q .; then
+            find "$TMPDIR" -type f -name blocked-commands.log -size +0c -exec cat {} \;
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: browser-artifacts
           path: |
-            ${{ runner.temp }}/midas-browser-*/test-results
-            ${{ runner.temp }}/midas-reality-browser-*/test-results
+            ${{ github.workspace }}/.midas-browser-tmp-${{ github.run_id }}-${{ github.run_attempt }}/midas-browser-*/test-results
+            ${{ github.workspace }}/.midas-browser-tmp-${{ github.run_id }}-${{ github.run_attempt }}/midas-reality-browser-*/test-results
           if-no-files-found: ignore
 
   postgres:

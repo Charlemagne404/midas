@@ -79,14 +79,33 @@ const runtimeRoot = join(browserRoot, 'runtime');
 const recordingRoot = join(browserRoot, 'recordings');
 const laboratoryRoot = join(browserRoot, 'laboratory');
 const realityRoot = join(browserRoot, 'reality');
+const homeRoot = join(browserRoot, 'home');
+const xdgCacheRoot = join(browserRoot, 'xdg-cache');
+const xdgConfigRoot = join(browserRoot, 'xdg-config');
+const xdgStateRoot = join(browserRoot, 'xdg-state');
+const xdgRuntimeRoot = join(browserRoot, 'xdg-runtime');
+for (const path of [homeRoot, xdgCacheRoot, xdgConfigRoot, xdgStateRoot, xdgRuntimeRoot]) {
+  mkdirSync(path, { recursive: true, mode: 0o700 });
+}
 const seededArenaJob = join(arenaRoot, 'jobs', 'job-e2e0123456789abcdef01234', 'job.json');
 const seedSyntheticFrontier = process.env.MIDAS_SEED_FRONTIER_E2E === '1';
 const seedCapturedFrontier = process.env.MIDAS_FRONTIER_E2E_CAPTURED === '1';
 const phase5TestSupportRoot = process.env.MIDAS_PHASE5_TEST_SUPPORT_ROOT;
+const phase5TestSupportBin = phase5TestSupportRoot
+  ? join(phase5TestSupportRoot, 'bin')
+  : undefined;
 const useSyntheticResourceAdmission =
   process.env.MIDAS_PHASE5_SYNTHETIC_USER_PSI === '1' && Boolean(phase5TestSupportRoot);
 if (phase5TestSupportRoot && !existsSync(join(phase5TestSupportRoot, 'sitecustomize.py'))) {
   throw new Error('Phase 5 test support root is missing its isolation shim');
+}
+if (
+  useSyntheticResourceAdmission &&
+  ['systemctl', 'systemd-run', 'busctl', 'dbus-send', 'gdbus', 'sudo'].some(
+    (command) => !existsSync(join(phase5TestSupportBin!, command)),
+  )
+) {
+  throw new Error('Phase 5 test support root is missing its service-command blockers');
 }
 if (seedSyntheticFrontier && seedCapturedFrontier) {
   throw new Error('Choose either the synthetic or captured Frontier E2E store');
@@ -148,6 +167,14 @@ export default defineConfig({
         MIDAS_FRONTIER_ROOT: frontierRoot,
         MIDAS_REALITY_WORKSPACE: realityRoot,
         MIDAS_VERITAS_WORKSPACE: process.env.MIDAS_VERITAS_WORKSPACE ?? repository,
+        HOME: homeRoot,
+        XDG_CACHE_HOME: xdgCacheRoot,
+        XDG_CONFIG_HOME: xdgConfigRoot,
+        XDG_STATE_HOME: xdgStateRoot,
+        XDG_RUNTIME_DIR: xdgRuntimeRoot,
+        DBUS_SESSION_BUS_ADDRESS: `unix:path=${join(browserRoot, 'no-user-bus')}`,
+        DBUS_SYSTEM_BUS_ADDRESS: `unix:path=${join(browserRoot, 'no-system-bus')}`,
+        SYSTEMD_BUS_ADDRESS: `unix:path=${join(browserRoot, 'no-system-bus')}`,
         MIDAS_FRONTIER_POLYMARKET_PUBLIC_PROBE_ENABLED: 'false',
         MIDAS_FRONTIER_KALSHI_PUBLIC_PROBE_ENABLED: 'false',
         MIDAS_FRONTIER_KRAKEN_PUBLIC_PROBE_ENABLED: 'false',
@@ -156,6 +183,8 @@ export default defineConfig({
           ? {
               MIDAS_PHASE5_SYNTHETIC_USER_PSI: '1',
               MIDAS_PHASE5_ISOLATED_API: '1',
+              MIDAS_BLOCKED_COMMAND_LOG: join(browserRoot, 'blocked-commands.log'),
+              PATH: `${phase5TestSupportBin!}${delimiter}${process.env.PATH ?? ''}`,
             }
           : {}),
         PYTHONPATH: [
