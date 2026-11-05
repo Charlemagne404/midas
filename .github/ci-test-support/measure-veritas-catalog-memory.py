@@ -60,14 +60,14 @@ else:
         raw, processed_count=0, max_segments=128, max_source_bytes=32 * 1024**2
     )
     selected = len(result.selected)
-    print(
-        json.dumps(
-            {
-                "selected": selected,
-                "peak_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
-            }
-        )
+print(
+    json.dumps(
+        {
+            "selected": selected,
+            "peak_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+        }
     )
+)
 """
     environment = dict(os.environ)
     environment["PYTHONPATH"] = os.pathsep.join(
