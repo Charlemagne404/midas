@@ -956,11 +956,9 @@ def update_finalized_source_analysis(
             if not event_path.exists() and initial_bytes + event_data_size > MAX_EVENTS_BYTES:
                 raise ValueError("Finalized-source analysis event store would exceed its bound")
             migration = state.get("migration")
-            allow_legacy_event = (
-                isinstance(migration, dict)
-                and state["processed_segment_count"]
-                == migration.get("from_processed_segment_count")
-            )
+            allow_legacy_event = isinstance(migration, dict) and state[
+                "processed_segment_count"
+            ] == migration.get("from_processed_segment_count")
             event_created = _write_event(
                 event_path, event, allow_legacy_code_hash=allow_legacy_event
             )

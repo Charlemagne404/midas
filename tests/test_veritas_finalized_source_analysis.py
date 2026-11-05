@@ -162,7 +162,9 @@ def _make_legacy_checkpoint(
     state.pop("state_sha256")
     state["schema_version"] = 1
     state.pop("migration", None)
-    analysis._atomic_json(legacy_path, analysis._sealed(state, "state_sha256"), maximum=analysis.MAX_STATE_BYTES)
+    analysis._atomic_json(
+        legacy_path, analysis._sealed(state, "state_sha256"), maximum=analysis.MAX_STATE_BYTES
+    )
     current_path.unlink()
     return legacy_path.read_bytes()
 
@@ -298,7 +300,9 @@ def test_v1_migration_interruption_restarts_from_preserved_checkpoint(tmp_path, 
     original_write_event = analysis._write_event
     failed = False
 
-    def interrupt_before_event(path: Path, event: dict[str, Any], *, allow_legacy_code_hash: bool = False) -> bool:
+    def interrupt_before_event(
+        path: Path, event: dict[str, Any], *, allow_legacy_code_hash: bool = False
+    ) -> bool:
         nonlocal failed
         if not failed:
             failed = True
@@ -332,7 +336,10 @@ def test_legacy_orphan_event_is_reconciled_once_after_migration(tmp_path, monkey
         return dict(LEGACY_CODE_FILES)
 
     def fail_second_state_commit(path: Path, value: dict[str, Any], *, maximum: int) -> int:
-        if path.name == "source-analysis-state-v2.json" and value.get("processed_segment_count") == 2:
+        if (
+            path.name == "source-analysis-state-v2.json"
+            and value.get("processed_segment_count") == 2
+        ):
             raise OSError("simulated interruption after event write")
         return original_atomic_json(path, value, maximum=maximum)
 

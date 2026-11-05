@@ -107,7 +107,7 @@ def main() -> None:
     )
     print(
         f"Isolated peak RSS: baseline={baseline_mib:.1f} MiB, "
-        f"streaming={current_mib:.1f} MiB, reduction={baseline_mib-current_mib:.1f} MiB."
+        f"streaming={current_mib:.1f} MiB, reduction={baseline_mib - current_mib:.1f} MiB."
     )
     if new_selected != min(args.catalog_count, 128):
         raise SystemExit("streaming reader did not retain the expected bounded batch")
