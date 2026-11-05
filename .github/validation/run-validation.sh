@@ -6,9 +6,9 @@ fail() {
   exit 90
 }
 
-test "$(git -C /source rev-parse HEAD)" = "$MIDAS_PHASE5_SOURCE_SHA" || fail "source SHA mismatch"
-test "$(git -C /source rev-parse 'HEAD^{tree}')" = "$MIDAS_PHASE5_SOURCE_TREE" || fail "source tree mismatch"
-if git -C /source config --local --get-regexp 'http\..*\.extraheader' >/dev/null 2>&1; then
+test "$(git -c safe.directory=/source -C /source rev-parse HEAD)" = "$MIDAS_PHASE5_SOURCE_SHA" || fail "source SHA mismatch"
+test "$(git -c safe.directory=/source -C /source rev-parse 'HEAD^{tree}')" = "$MIDAS_PHASE5_SOURCE_TREE" || fail "source tree mismatch"
+if git -c safe.directory=/source -C /source config --local --get-regexp 'http\..*\.extraheader' >/dev/null 2>&1; then
   fail "checkout credentials persisted in source configuration"
 fi
 
