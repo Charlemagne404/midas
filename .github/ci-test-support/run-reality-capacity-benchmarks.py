@@ -95,7 +95,9 @@ def run_one(
     try:
         subprocess.run(create, capture_output=True, text=True, check=True)
         created = True
-        subprocess.run(["docker", "start", name], capture_output=True, text=True, check=True)
+        subprocess.run(
+            ["docker", "start", name], capture_output=True, text=True, check=True
+        )
         details = json.loads(
             subprocess.check_output(["docker", "inspect", name], text=True)
         )[0]
@@ -120,7 +122,9 @@ def run_one(
             check=True,
         )
         if f"memory.high={MEMORY_HIGH}" not in bounded.stdout:
-            raise RuntimeError(f"Disposable cgroup high limit was not verified: {bounded.stdout}")
+            raise RuntimeError(
+                f"Disposable cgroup high limit was not verified: {bounded.stdout}"
+            )
         completed = subprocess.run(
             measurement, capture_output=True, text=True, timeout=65, check=False
         )
@@ -143,7 +147,9 @@ def run_one(
         timed_out = True
     except BaseException:
         if created:
-            subprocess.run(["docker", "rm", "--force", name], capture_output=True, check=False)
+            subprocess.run(
+                ["docker", "rm", "--force", name], capture_output=True, check=False
+            )
         raise
     try:
         inspect = subprocess.run(
@@ -165,7 +171,9 @@ def run_one(
             actual = {"inspect_error": inspect.stderr.strip()}
     finally:
         if created:
-            subprocess.run(["docker", "rm", "--force", name], capture_output=True, check=False)
+            subprocess.run(
+                ["docker", "rm", "--force", name], capture_output=True, check=False
+            )
 
     report: dict[str, Any] = {
         "implementation": implementation,
@@ -180,26 +188,39 @@ def run_one(
         try:
             measured = json.loads(stdout.strip().splitlines()[-1])
         except (IndexError, json.JSONDecodeError) as error:
-            raise RuntimeError(f"benchmark output was not valid JSON: {stdout!r}") from error
+            raise RuntimeError(
+                f"benchmark output was not valid JSON: {stdout!r}"
+            ) from error
         report["measurement"] = measured
         actual["memory_high"] = measured["cgroup"].get("memory.high")
         actual["memory_max"] = measured["cgroup"].get("memory.max")
         actual["memory_swap_max"] = measured["cgroup"].get("memory.swap.max")
     print(json.dumps(report, sort_keys=True), flush=True)
     if actual.get("memory_max") != MEMORY_MAX or actual.get("memory_high") != MEMORY_HIGH:
-        raise RuntimeError(f"Docker did not apply Reality service memory limits: {actual}")
-    if actual.get("memory_swap") != MEMORY_MAX or actual.get("cpu_quota_nano") != 1_000_000_000:
-        raise RuntimeError(f"Docker did not apply no-swap / one-CPU benchmark limits: {actual}")
+        raise RuntimeError(
+            f"Docker did not apply Reality service memory limits: {actual}"
+        )
+    if (
+        actual.get("memory_swap") != MEMORY_MAX
+        or actual.get("cpu_quota_nano") != 1_000_000_000
+    ):
+        raise RuntimeError(
+            f"Docker did not apply no-swap / one-CPU benchmark limits: {actual}"
+        )
     if status == 0 and (
         actual.get("memory_high") != MEMORY_HIGH
         or actual.get("memory_max") != MEMORY_MAX
         or actual.get("memory_swap_max") != 0
     ):
-        raise RuntimeError(f"Reality cgroup limits differ from the service envelope: {actual}")
+        raise RuntimeError(
+            f"Reality cgroup limits differ from the service envelope: {actual}"
+        )
     if implementation == "v6-candidate" and (
         status != 0 or actual.get("oom_killed") or timed_out
     ):
-        raise RuntimeError(f"Reality v6 candidate failed its existing service limits: {report}")
+        raise RuntimeError(
+            f"Reality v6 candidate failed its existing service limits: {report}"
+        )
     return report
 
 
@@ -227,13 +248,18 @@ def main() -> None:
 
     temp_name: str | None = None
     try:
-        with tempfile.TemporaryDirectory(prefix="midas-reality-capacity-", dir=runner_temp) as name:
+        with tempfile.TemporaryDirectory(
+            prefix="midas-reality-capacity-", dir=runner_temp
+        ) as name:
             temp_name = name
             data_root = Path(name) / "stores"
             subprocess.run(
                 [
                     sys.executable,
-                    str(source / ".github/ci-test-support/prepare-reality-capacity-fixture.py"),
+                    str(
+                        source
+                        / ".github/ci-test-support/prepare-reality-capacity-fixture.py"
+                    ),
                     "--root",
                     str(data_root),
                     "--counts",
@@ -267,7 +293,8 @@ def main() -> None:
                     value != successful_reports[0] for value in successful_reports[1:]
                 ):
                     raise RuntimeError(
-                        f"Reality capacity reports differ between available versions at {count} catalogs"
+                        "Reality capacity reports differ between available versions "
+                        f"at {count} catalogs"
                     )
     finally:
         if temp_name is not None and Path(temp_name).exists():

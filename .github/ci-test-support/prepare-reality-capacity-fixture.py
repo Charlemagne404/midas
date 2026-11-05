@@ -25,7 +25,9 @@ def create_store(root: Path, count: int, now_ns: int) -> None:
         name = f"{stem}.seg"
         payload = "PONG"
         if ordinal > count - SAMPLE_SEGMENTS:
-            random_bytes = hashlib.shake_256(str(ordinal).encode()).digest(SAMPLE_PAYLOAD_BYTES)
+            random_bytes = hashlib.shake_256(str(ordinal).encode()).digest(
+                SAMPLE_PAYLOAD_BYTES
+            )
             payload = base64.b64encode(random_bytes).decode("ascii")
         record = json.dumps(
             {
@@ -67,12 +69,15 @@ def create_store(root: Path, count: int, now_ns: int) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, required=True)
-    parser.add_argument("--counts", type=int, nargs="+", default=[1_000, 10_000, 58_367])
+    parser.add_argument(
+        "--counts", type=int, nargs="+", default=[1_000, 10_000, 58_367]
+    )
     args = parser.parse_args()
     counts = args.counts
     if counts != sorted(set(counts)) or counts[0] < 1 or counts[-1] != 58_367:
         parser.error(
-            "counts must be unique, ascending, and end at the 58,367-catalog production scale"
+            "counts must be unique, ascending, and end at the 58,367-catalog "
+            "production scale"
         )
     args.root.mkdir(mode=0o755, parents=True, exist_ok=False)
     for count in counts:
