@@ -34,9 +34,10 @@ it('reports unavailable genuine evidence without inventing observations', async 
   mount();
   expect(await screen.findByRole('alert', {}, { timeout: 3000 })).toHaveTextContent('offline');
   expect(screen.queryByText('The observation panel')).not.toBeInTheDocument();
-  expect(
-    screen.getByText(/Displayed quotes do not establish hypothetical fills/),
-  ).toBeInTheDocument();
+  const executionBoundary = screen.getByText('NO ORDER EXECUTION').parentElement;
+  expect(executionBoundary).toHaveTextContent(
+    /A displayed price does not prove an order could have filled or made money\./,
+  );
 });
 it('shows empty prospective candidates without treating them as profit', async () => {
   vi.stubGlobal(

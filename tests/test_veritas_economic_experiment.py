@@ -19,6 +19,7 @@ def _event(
     minimum: int,
     single_match: int,
     fragmentation_safe: int,
+    minimum_unit_status: str = "verified_usdc",
 ) -> dict[str, Any]:
     event = {
         "analysis_version": SNAPSHOT_ANALYSIS_VERSION,
@@ -27,6 +28,7 @@ def _event(
         "snapshot_evidence_sha256": hashlib.sha256(f"evidence-{scan_id}".encode()).hexdigest(),
         "snapshot_source_code_sha256": f"scanner-{scan_id}",
         "analysis_event_sha256": None,
+        "minimum_order_notional_unit_status": minimum_unit_status,
         "captured_ns": 1_800_000_000_000_000_000,
         "captured_at_utc": "2026-10-15T06:00:00+00:00",
         "attempted_market_pairs": attempted,
@@ -100,7 +102,7 @@ def test_economic_qualification_compares_baseline_with_depth_and_fee_gates():
     assert result["gross_candidate_evidence_count"] == 1
     assert result["gross_candidate_evidence_complete"] is True
     assert result["research_improvement"]["count_stage"] == (
-        "finalized_event_usdc_notional_prefilter"
+        "finalized_event_status_aware_notional_prefilter"
     )
     assert result["independent_candidate_replay_qualification"]["complete"] is False
     assert (
@@ -129,6 +131,30 @@ def test_economic_qualification_compares_baseline_with_depth_and_fee_gates():
     assert (
         compare_qualification_rules(events[:1])["experiment_run_id"] != result["experiment_run_id"]
     )
+
+
+def test_unverified_minimum_notional_keeps_qualification_unknown_without_losing_fee_evidence():
+    event = _event(
+        "scan-004",
+        attempted=1,
+        valid=1,
+        top=1,
+        full_depth=1,
+        minimum=1,
+        single_match=1,
+        fragmentation_safe=1,
+        minimum_unit_status="unverified",
+    )
+
+    result = compare_qualification_rules([event])
+
+    assert result["minimum_order_notional_unit_status"] == "unverified"
+    assert result["status"] == "minimum_notional_semantics_unverified"
+    assert result["research_improvement"]["positive_states"] is None
+    assert result["economic_qualification_funnel"][2]["positive_states"] is None
+    assert result["economic_qualification_funnel"][3]["positive_states"] == 1
+    assert result["economic_qualification_funnel"][4]["positive_states"] == 1
+    assert "do not claim minimum-notional qualification" in result["decision"]
 
 
 def test_economic_qualification_rejects_missing_positive_candidate_provenance():

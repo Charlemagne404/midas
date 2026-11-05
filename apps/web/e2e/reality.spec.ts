@@ -1,139 +1,204 @@
 import { test, expect } from '@playwright/test';
 
-test('native Reality exposes genuine evidence and frozen replay without synthetic labeling', async ({
+test('renders isolated Reality evidence fixtures through explorer and replay without implying execution', async ({
   page,
 }) => {
+  // Route every Reality data surface to bounded local fixtures; never query machine-local archives.
   const nowNs = Date.now() * 1_000_000;
-  await page.route('**/api/reality/overview', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        now_ns: nowNs,
-        health: 'recording',
-        collector: {
-          updated_ns: nowNs,
-          started_ns: nowNs - 3_600_000_000_000,
-          ordinal: 42,
-          frames: 21,
-          markets: 1,
-          fresh_books: 2,
-          expected_books: 2,
-          cohort: [
+  const condition = 'e2e-fixture-condition';
+  const yesAsset = 'e2e-fixture-yes-asset';
+  const noAsset = 'e2e-fixture-no-asset';
+  const segment = '00000000000000000001-00000000000000000000000000000000.seg';
+  const overview = {
+    now_ns: nowNs,
+    collector_status_age_seconds: 0,
+    health: 'recording',
+    capture_health: 'recording',
+    health_reasons: [],
+    source_quality: { status: 'available', current_issues: [], observability_gaps: [] },
+    collector: {
+      updated_ns: nowNs,
+      ordinal: 24,
+      frames: 12,
+      markets: 1,
+      fresh_books: 2,
+      expected_books: 2,
+      storage_bytes: 2048,
+      started_ns: nowNs - 3_600_000_000_000,
+      gaps: 0,
+      timing_uncertain_books: 0,
+      failures: 0,
+      cohort: [
+        {
+          condition,
+          question: 'E2E fixture only: binary market for isolated UI verification',
+          protocol: 'ctf',
+          selection_role: 'stable_control',
+          metadata_ordinal: 1,
+          negative_risk: false,
+          tokens: { [yesAsset]: 'Yes', [noAsset]: 'No' },
+        },
+      ],
+      books: {
+        [yesAsset]: {
+          received_ns: nowNs - 1_000_000_000,
+          asks: [['0.40', '100']],
+          best_bid: '0.39',
+          best_ask: '0.40',
+          spread: '0.01',
+          last: [24, 0],
+          depth_truncated: false,
+          issue: null,
+        },
+        [noAsset]: {
+          received_ns: nowNs - 1_000_000_000,
+          asks: [['0.55', '100']],
+          best_bid: '0.54',
+          best_ask: '0.55',
+          spread: '0.01',
+          last: [24, 1],
+          depth_truncated: false,
+          issue: null,
+        },
+      },
+      observation_coverage: {
+        [yesAsset]: {
+          first_received_ns: nowNs - 10_000_000_000,
+          last_received_ns: nowNs - 1_000_000_000,
+          book_update_frames: 3,
+        },
+        [noAsset]: {
+          first_received_ns: nowNs - 10_000_000_000,
+          last_received_ns: nowNs - 1_000_000_000,
+          book_update_frames: 3,
+        },
+      },
+    },
+    forward: {
+      state: 'fixture_only',
+      decisions: 1,
+      markets: 1,
+      families: 1,
+      days: ['2026-10-26'],
+      followups: { observed_public_measurement: 0, censored: 1 },
+    },
+    capacity: { estimated_storage_seconds_remaining: null },
+    schedule: {},
+    integrity: {},
+    execution_ground_truth: 'unknown_counterfactual',
+    orders_submitted: 0,
+  };
+  const historyRow = {
+    event_seq: 1,
+    ns: nowNs - 5_000_000_000,
+    condition,
+    legs: {
+      yes: {
+        best_ask: '0.40',
+        best_bid: '0.39',
+        spread: '0.01',
+        total_ask_quantity: '100',
+        last: [24, 0],
+      },
+      no: {
+        best_ask: '0.55',
+        best_bid: '0.54',
+        spread: '0.01',
+        total_ask_quantity: '100',
+        last: [24, 1],
+      },
+    },
+    quality_reason: null,
+  };
+  const decision = {
+    id: 'e2e-fixture-decision',
+    market_title: 'E2E fixture only: binary market for isolated UI verification',
+    condition,
+    decision_ns: nowNs - 2_000_000_000,
+    decision_ordinal: 20,
+    quality_reason: null,
+    baseline: {
+      opportunity: true,
+      acquisition: { yes: { value: '0.40' }, no: { value: '0.55' } },
+    },
+    policies: [{ policy: 'fixture_policy', action: 'abstain' }],
+  };
+  await page.route(
+    (url) => url.pathname === '/api/reality/overview',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(overview),
+      }),
+  );
+  await page.route(
+    (url) => url.pathname === '/api/reality/history',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ rows: [historyRow], truncated: false }),
+      }),
+  );
+  await page.route(
+    (url) => url.pathname === '/api/reality/decisions',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ rows: [decision], has_more: false }),
+      }),
+  );
+  await page.route(
+    (url) => url.pathname === `/api/reality/decisions/${decision.id}`,
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          decision: {
+            ...decision,
+            reconstruction_version: 'fixture-reconstruction-v1',
+            producer_implementation_sha256: '0'.repeat(64),
+            source_input_lag_ns: 100,
+            decision_latency_ns: 300,
+            source_record_ref: { ordinal: 1, segment, offset: 8 },
+            features: { fixture: true },
+            predictions: { fixture: true },
+            feature_sources: { fixture: 'fixture record' },
+          },
+          commit_ns: nowNs - 1_900_000_000,
+          outcomes: [
             {
-              condition: 'fixture-condition',
-              question: 'Will the fixture event happen?',
-              protocol: 'ctf',
-              metadata_ordinal: 1,
-              selection_role: 'rotating',
-              negative_risk: false,
-              tokens: { 'fixture-yes': 'Yes', 'fixture-no': 'No' },
+              horizon_ms: 1000,
+              labels: { status: 'future_observation_not_recorded', reason: 'fixture censoring' },
+              execution: [],
             },
           ],
-          books: {
-            'fixture-yes': {
-              received_ns: nowNs,
-              asks: [['0.55', '100']],
-              best_bid: '0.54',
-              best_ask: '0.55',
-              spread: '0.01',
-              last: [42],
-              depth_truncated: false,
-            },
-            'fixture-no': {
-              received_ns: nowNs,
-              asks: [['0.45', '100']],
-              best_bid: '0.44',
-              best_ask: '0.45',
-              spread: '0.01',
-              last: [43],
-              depth_truncated: false,
-            },
-          },
-          observation_coverage: {
-            'fixture-yes': {
-              first_received_ns: nowNs - 3_600_000_000_000,
-              last_received_ns: nowNs,
-              book_update_frames: 12,
-            },
-            'fixture-no': {
-              first_received_ns: nowNs - 3_600_000_000_000,
-              last_received_ns: nowNs,
-              book_update_frames: 9,
-            },
-          },
-        },
-        forward: {
-          state: 'recording',
-          decisions: 0,
-          markets: 0,
-          families: 0,
-          days: [],
-          followups: { observed_public_measurement: 0, censored: 0 },
-        },
-        capacity: { estimated_storage_seconds_remaining: 0 },
-        schedule: {},
+        }),
       }),
-    }),
   );
-  await page.route(/\/api\/reality\/decisions(?:\?.*)?$/, (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        rows: [
-          {
-            id: 'fixture-decision',
-            decision_ns: nowNs - 1_000_000,
-            decision_ordinal: 42,
-            market_title: 'Will the fixture event happen?',
-            condition: 'fixture-condition',
-            baseline: {
-              opportunity: false,
-              acquisition: { yes: { value: '0.55' }, no: { value: '0.45' } },
-            },
-            policies: [{ action: 'abstain' }],
-          },
-        ],
-        has_more: false,
+  await page.route(
+    (url) => url.pathname === '/api/reality/forward',
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ rows: [] }),
       }),
-    }),
   );
-  await page.route('**/api/reality/decisions/fixture-decision', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        decision: {
-          market_title: 'Will the fixture event happen?',
-          decision_ns: nowNs - 1_000_000,
-          reconstruction_version: 'isolated-browser-fixture-v1',
-          producer_implementation_sha256: '0'.repeat(64),
-          source_input_lag_ns: 1_000_000,
-          decision_latency_ns: 2_000_000,
-          policies: [{ policy: 'control', action: 'abstain', reason: 'fixture' }],
-          source_record_ref: {
-            ordinal: 42,
-            segment: '00000000000000000001-00000000000000000000000000000000.seg',
-            offset: 8,
-          },
-          features: {},
-          predictions: {},
-          feature_sources: {},
-          baseline: {},
-        },
-        commit_ns: nowNs,
-        outcomes: [
-          {
-            horizon_ms: 1_000,
-            labels: { status: 'unknown', reason: 'isolated fixture' },
-            execution: [],
-          },
-        ],
+  await page.route(
+    (url) => url.pathname.startsWith('/api/reality/artifacts/'),
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ data: {} }),
       }),
-    }),
   );
-  // Keep this browser pass isolated from source payloads and service controls.
+
+  // Keep source-record lookups and service controls isolated too.
   await page.route('**/api/reality/records/**', async (route) => {
     await route.fulfill({
       status: 200,
@@ -211,9 +276,14 @@ test('native Reality exposes genuine evidence and frozen replay without syntheti
     page.getByRole('heading', { name: 'The observation panel', exact: true }),
   ).toBeVisible();
   await expect(page.getByText('DEMO · SYNTHETIC', { exact: true })).toHaveCount(0);
-  await expect(page.getByText('REALITY · PUBLIC OBSERVATIONS', { exact: true })).toBeVisible();
-  await expect(page.getByText('No scientific champion', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText('PROJECT REALITY / CALIBRATION LABORATORY', { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText('NO ORDER EXECUTION', { exact: true })).toBeVisible();
   const nav = page.getByRole('navigation', { name: 'Reality research areas' });
+  await nav.getByRole('button', { name: 'Models', exact: false }).click();
+  await expect(page.getByText('No scientific champion', { exact: true })).toBeVisible();
+  await nav.getByRole('button', { name: 'Overview', exact: false }).click();
   const boxes = await nav
     .getByRole('button')
     .evaluateAll((nodes) => nodes.map((n) => n.getBoundingClientRect().top));

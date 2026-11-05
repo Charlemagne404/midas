@@ -218,7 +218,7 @@ def test_eight_read_successor_keeps_frames_and_adds_direct_only_control(tmp_path
     assert not (ACTIVE_OBSERVATORY_ROOT / "successor-root").exists()
 
 
-def test_successor_applies_usdc_and_share_minimums_as_separate_gates(tmp_path):
+def test_successor_keeps_unverified_notional_and_share_minimums_separate(tmp_path):
     markets = [_market(index, minimum_notional="2") for index in range(60)]
     controls = [markets[0]["id"], markets[59]["id"]]
     control_file = tmp_path / "control-cohort.json"
@@ -245,9 +245,10 @@ def test_successor_applies_usdc_and_share_minimums_as_separate_gates(tmp_path):
         "5": 30,
         "10": 30,
     }
+    assert report["counts"]["minimum_order_notional_unit_status"] == "unverified"
     assert report["counts"]["positive_minimum_notional_by_quantity"] == {
-        "5": 30,
-        "10": 30,
+        "5": 0,
+        "10": 0,
     }
     assert report["counts"]["positive_minimum_order_shares_by_quantity"] == {
         "5": 0,
@@ -255,14 +256,15 @@ def test_successor_applies_usdc_and_share_minimums_as_separate_gates(tmp_path):
     }
     assert report["counts"]["positive_order_constraints_by_quantity"] == {
         "5": 0,
-        "10": 30,
+        "10": 0,
     }
     for row in report["market_observations"]:
         q5, q10 = row["audit"]["quantity_results"]
-        assert q5["minimum_order_notional_satisfied"] is True
+        assert q5["minimum_order_notional_satisfied"] is None
         assert q5["minimum_order_shares_satisfied"] is False
-        assert q5["minimum_order_constraints_satisfied"] is False
-        assert q10["minimum_order_constraints_satisfied"] is True
+        assert q5["minimum_order_constraints_satisfied"] is None
+        assert q10["minimum_order_notional_satisfied"] is None
+        assert q10["minimum_order_constraints_satisfied"] is None
 
 
 def test_direct_lookup_missing_control_is_not_reused_from_frame(tmp_path):
