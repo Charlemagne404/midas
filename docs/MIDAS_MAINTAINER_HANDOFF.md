@@ -1,10 +1,11 @@
 # MIDAS maintainer handoff
 
-**Verified snapshot:** 2026-11-05, Europe/Stockholm. **Source base:**
-`origin/main` at `c00bd128605c85b5c34220efbee54f0993e9b560`. This maintenance
-work is on `codex/midas-maintenance-20261105`; it is not part of `main` and has
-not been deployed. Recheck the current repository and host before acting on
-these dated observations.
+**Verified snapshot:** 2026-11-05, Europe/Stockholm. **Source base before this
+maintenance pass:** `origin/main` at
+`c00bd128605c85b5c34220efbee54f0993e9b560`. The work was prepared on
+`codex/midas-maintenance-20261105`; source integration and deployment are
+separate states. Recheck current refs and the host before acting on these dated
+observations.
 
 ## What MIDAS contains
 
@@ -36,6 +37,11 @@ The detailed subsystem map is in [ARCHITECTURE.md](ARCHITECTURE.md).
 - `origin/main` was refreshed to `c00bd128`. The successful hosted run on this
   SHA was GitHub Actions run `42017520116` (four jobs: Python, web, browser,
   and PostgreSQL).
+- The maintenance implementation at `2bb3ffa` passed GitHub Actions run
+  `42030063692` across all five jobs: Python, web, browser, PostgreSQL, and the
+  required systemd unit parser. The isolated backend suite reported 2,185
+  passed, 2 skipped, and 0 failed. This handoff records that completed result;
+  check current CI for any later branch tip.
 - `6aa7c7f00d736d02ee7ca5629d1b9f102e0ae9d9` is the original squash
   integration and is an ancestor of `origin/main`.
 - `codex/midas-unification` at `c256cd1b0743d0c3ba6229c0115fd200fa0f014f`
@@ -43,9 +49,9 @@ The detailed subsystem map is in [ARCHITECTURE.md](ARCHITECTURE.md).
   that are not ancestors of the squash. The corresponding remote branch is
   retained.
 - The local `/home/charlie/midas` checkout is on `main` at
-  `b723bfda47dc5fae3103725a1dbe341f35487754`, six commits behind `origin/main`.
-  It is used by live services and Vite processes. Do not fast-forward or edit
-  it during ordinary development.
+  `b723bfda47dc5fae3103725a1dbe341f35487754`. It is used by live services and
+  Vite processes. Do not fast-forward or edit it during ordinary development;
+  compare it with current `origin/main` only from a separate task checkout.
 - The tags `midas-preservation-baseline-main-20261104` and
   `midas-preservation-baseline-unification-20261104` remain present. On
   2026-11-05, 26 otherwise unreachable commit objects were found and pinned by
@@ -101,13 +107,13 @@ exists yet.
 
 ## Validation status and live blockers
 
-The latest `origin/main` Actions run passed all four then-existing jobs. The
-maintenance branch adds a hosted systemd parser check; its hosted result is
-pending until that branch is pushed and CI completes. The focused backup,
-recording, Veritas source-analysis, and systemd parser tests passed locally:
-**23 passed**. Ruff checks and formatting passed for the changed Python files.
-No full backend, browser, or PostgreSQL suite was run locally during this
-maintenance pass.
+The maintenance implementation passed all five hosted jobs in run
+`42030063692`; the backend results were **2,185 passed, 2 skipped, 0 failed**.
+The dedicated systemd job required `systemd-analyze` and parsed the generated
+user service and timer units, so that check did not silently skip. The focused
+backup, recording, Veritas source-analysis, and systemd parser tests passed
+locally: **23 passed**. Ruff checks and formatting passed for the changed
+Python files. No full backend, browser, or PostgreSQL suite was run locally.
 
 The Veritas source-analysis timer is enabled and is failing repeatedly. The
 2026-11-05 journal contains **27 OOM kills since midnight**; the latest run
