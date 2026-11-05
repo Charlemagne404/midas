@@ -39,6 +39,7 @@ from .observatory import (
     MAX_STATE_BYTES,
     REQUEST_INTERVAL_SECONDS,
     REQUEST_TIMEOUT_SECONDS,
+    CumulativeResponseBudgetExceeded,
     PublicReadClient,
     _atomic_json,
     _book_state_hash,
@@ -148,7 +149,9 @@ class DiscoverySuccessorClient(PublicReadClient):
             raise ValueError("Public response receipt has an invalid byte count")
         self.response_bytes += response_bytes
         if self.response_bytes > MAX_CUMULATIVE_RESPONSE_BYTES:
-            raise ValueError("Discovery-successor cumulative response budget exceeded")
+            raise CumulativeResponseBudgetExceeded(
+                "Discovery-successor cumulative response budget exceeded"
+            )
 
     async def discover(self, params: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
         if self.control_lookup_done or self.frame_reads >= DISCOVERY_QUERIES:

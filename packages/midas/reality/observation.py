@@ -13,6 +13,7 @@ from .discovery import CLOB, GAMMA
 from .panel import queries, select_panel
 from .quality import depth_state
 from .reconstruction import Engine
+from .transport import bounded_get
 
 Append = Callable[..., dict[str, Any]]
 
@@ -31,7 +32,7 @@ async def discover(
     for stratum, params in queries(
         config.discovery_limit, now_ns, config.selection_seed, config.near_expiry_tag_id
     ):
-        response = await client.get(GAMMA + "/markets", params=params)
+        response = await bounded_get(client, GAMMA + "/markets", append=append, params=params)
         received_ns = time.time_ns()
         record = append(
             "discovery_page",
@@ -60,7 +61,9 @@ async def discover(
     verification_rejections = []
     for market in selected:
         try:
-            response = await client.get(CLOB + "/markets/" + market["condition"])
+            response = await bounded_get(
+                client, CLOB + "/markets/" + market["condition"], append=append
+            )
             record = append(
                 "public_market_metadata",
                 response.text,
@@ -93,7 +96,12 @@ async def discover(
             }
             fee_records = {}
             for token in market["tokens"]:
-                response = await client.get(CLOB + "/fee-rate", params=dict(token_id=token))
+                response = await bounded_get(
+                    client,
+                    CLOB + "/fee-rate",
+                    append=append,
+                    params=dict(token_id=token),
+                )
                 record = append(
                     "public_fee_metadata",
                     response.text,
@@ -118,17 +126,28 @@ async def discover(
 
 
 async def independent_book(
-    client: httpx.AsyncClient, engine: Engine, asset: str, condition: str, timeout: float
+    client: httpx.AsyncClient,
+    engine: Engine,
+    asset: str,
+    condition: str,
+    timeout: float,
+    *,
+    append: Append | None = None,
 ) -> dict[str, Any]:
     before = depth_state(engine.books.get(asset))
     request_ns, request_mono_ns = time.time_ns(), time.monotonic_ns()
     try:
-        response = await client.get(CLOB + "/book", params=dict(token_id=asset), timeout=timeout)
+        response = await bounded_get(
+            client,
+            CLOB + "/book",
+            append=append,
+            limit=1024**2,
+            params=dict(token_id=asset),
+            timeout=timeout,
+        )
         received_ns, received_mono_ns = time.time_ns(), time.monotonic_ns()
         after = depth_state(engine.books.get(asset))
         text = response.text
-        if len(text.encode()) > 1024**2:
-            raise ValueError("Independent response exceeds one MiB")
         return dict(
             payload=text,
             status_code=response.status_code,

@@ -1,0 +1,80 @@
+{
+  "captured_at_utc": "2026-10-27T11:56:08.882538+00:00",
+  "event_ticker": "KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC",
+  "evidence_type": "genuine_public_kalshi_mve_event_detail",
+  "normalization_result": {
+    "error_code": "INVALID_SCHEMA",
+    "error_message": "Kalshi event markets must be an array within the configured bound",
+    "state": "rejected"
+  },
+  "observation_id": "b1f30ca5060048af540c15ea20ce95269be312f0ef1d1cf3dbbf7882b07e694c",
+  "purpose": "one bounded event-detail follow-up to a saved MVE listing with omitted nested markets",
+  "raw_observation": {
+    "adapter_version": "frontier-kalshi-7",
+    "http_status": 200,
+    "observation_kind": "event_market_listing",
+    "raw_body": "{\"event\":{\"category\":\"Exotics\",\"collateral_return_type\":\"\",\"event_ticker\":\"KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC\",\"exchange_index\":1,\"last_updated_ts\":\"0001-01-01T00:00:00Z\",\"mutually_exclusive\":false,\"series_ticker\":\"KXMVECROSSCATEGORY\",\"settlement_sources\":[{\"name\":\"the league governing the game\",\"url\":\"https://www.ncaa.com/sports/football/fbs\"},{\"name\":\"the league governing the game\",\"url\":\"https://www.nfl.com/\"}],\"strike_period\":\"\",\"sub_title\":\"MVE\",\"title\":\"Which party will win the U.S. House?\"},\"markets\":[]}\n",
+    "raw_body_encoding": "utf8",
+    "raw_sha256": "4dff6f7d770dff3a7564b5cf0558ff0c21862977d52a360a93f5b10f436afa83",
+    "received_at_utc": "2026-10-27T11:56:08.637887Z",
+    "request_started_at_utc": "2026-10-27T11:56:08.272149Z",
+    "request_url": "https://external-api.kalshi.com/trade-api/v2/events/KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC?with_nested_markets=true",
+    "schema_version": 1,
+    "venue": "kalshi"
+  },
+  "raw_sha256": "4dff6f7d770dff3a7564b5cf0558ff0c21862977d52a360a93f5b10f436afa83",
+  "replay_after_adapter_fix": {
+    "adapter_version": "frontier-kalshi-8",
+    "event_markets_field_state": "omitted",
+    "network_requests_during_replay": 0,
+    "normalization_state": "valid_empty_top_level_market_list",
+    "normalized_batch": {
+      "complete_for_request": true,
+      "cursor": null,
+      "market_groups": [],
+      "markets": [],
+      "note": "Offline replay of one event-detail response with an explicit empty top-level market list. This is one response, not venue-wide inventory.",
+      "schema_version": 2,
+      "venue": "kalshi"
+    },
+    "normalized_market_count": 0,
+    "observation_id": "b1f30ca5060048af540c15ea20ce95269be312f0ef1d1cf3dbbf7882b07e694c",
+    "offline_saved_body_replay": true,
+    "raw_sha256_matches_saved_capture": true,
+    "row_sha256": "c47a0e7827849c886c2c3e290d16035e1a87c26b602d028217c90f9b58c760aa",
+    "separate_replay_store_readback_verified": true,
+    "source_transport_requests_in_mock": 1,
+    "top_level_markets_field_state": "present_empty_array"
+  },
+  "request_bounds": {
+    "authenticated": false,
+    "max_pages_requested": 1,
+    "method": "GET",
+    "request_count": 1,
+    "response_cap_bytes": 262144,
+    "retries": 0,
+    "timeout_seconds": 10.0,
+    "with_nested_markets": true
+  },
+  "response_schema_summary": {
+    "event_markets_field_present": false,
+    "event_markets_type": "missing",
+    "event_present": true,
+    "event_ticker": "KXMVECROSSCATEGORY-S2026ZZZB25KKPHBN3TFC",
+    "event_title": "Which party will win the U.S. House?",
+    "normalized_market_count": 0,
+    "normalized_market_ids": [],
+    "top_level_markets_count": 0,
+    "top_level_markets_field_present": true,
+    "top_level_markets_type": "list"
+  },
+  "row_sha256": "3cd24ab39df2a766e6118aee59f48e9e8142880ec5d15f77340252981b5f434f",
+  "schema_version": 1,
+  "scientific_limitations": [
+    "One public event-detail response is not venue-wide inventory.",
+    "The response is asynchronous relative to all earlier venue observations.",
+    "Returned child markets do not establish combo payoff or component settlement equivalence.",
+    "No synchronized cross-venue price or execution evidence is established."
+  ],
+  "store_readback_verified": true
+}

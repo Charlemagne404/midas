@@ -282,6 +282,23 @@
   overflow-x: auto;
   padding: 0 15px;
 }
+.ve-not-measured {
+  margin: 0;
+  padding: 10px 15px;
+  border-bottom: 1px solid #252a32;
+  color: #c4b17e;
+  font-size: 9px;
+  line-height: 1.5;
+}
+.ve-economic-gates-empty {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-width: 545px;
+  padding: 8px 0;
+  border-top: 1px solid #20252c;
+  color: #c4b17e;
+  font-size: 8px;
+}
 .ve-economic-gates-row {
   display: grid;
   grid-template-columns: minmax(80px, 0.62fr) repeat(4, minmax(104px, 1fr));
