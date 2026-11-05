@@ -331,7 +331,21 @@ run_pytest focused-integration "${focused[@]}"
 printf '\n=== Stage C: Frontend component and browser suites ===\n'
 corepack pnpm --dir /workspace/apps/web exec vitest run --maxWorkers=2 --minWorkers=1
 export MIDAS_FRONTIER_E2E_ROOT="$TMPDIR/midas-browser-phase5"
+set +e
 corepack pnpm --dir /workspace/apps/web exec playwright test --workers=1 --reporter=line
+playwright_status=$?
+set -e
+for context in \
+  "$MIDAS_FRONTIER_E2E_ROOT"/test-results/laboratory-*/error-context.md \
+  "$MIDAS_FRONTIER_E2E_ROOT"/test-results/veritas-*/error-context.md; do
+  if [[ -f "$context" ]]; then
+    printf '\n--- Browser failure context: %s ---\n' "$context"
+    sed -n '1,140p' "$context"
+  fi
+done
+if [[ "$playwright_status" -ne 0 ]]; then
+  exit "$playwright_status"
+fi
 corepack pnpm --dir /workspace/apps/web exec playwright test --config playwright.reality.config.ts --workers=1 --reporter=line
 unset MIDAS_FRONTIER_E2E_ROOT
 
