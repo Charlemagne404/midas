@@ -1,5 +1,11 @@
 name: Midas offline verification
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
 jobs:
   python:
     runs-on: ubuntu-latest
@@ -37,6 +43,8 @@ jobs:
         with:
           node-version: '22'
       - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.0"
       - run: uv python install 3.12
       - run: uv sync --frozen
       - run: corepack enable
@@ -68,6 +76,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.0"
       - run: uv python install 3.12
       - run: uv sync --frozen
       - run: uv run alembic upgrade head
