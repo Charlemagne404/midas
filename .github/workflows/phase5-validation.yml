@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: ${{ github.repository }}
-          ref: 2c6dcaafcd5b410284bc93b0e26e6b9035726fc4
+          ref: 5c4d9106c4536ef384c1804b39ec2358e035bbd7
           path: candidate
           fetch-depth: 1
           persist-credentials: false
@@ -30,8 +30,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C candidate rev-parse HEAD)" = 2c6dcaafcd5b410284bc93b0e26e6b9035726fc4
-          test "$(git -C candidate rev-parse 'HEAD^{tree}')" = 80833e22fadec6b6de99161776d184dd082a1d1b
+          test "$(git -C candidate rev-parse HEAD)" = 5c4d9106c4536ef384c1804b39ec2358e035bbd7
+          test "$(git -C candidate rev-parse 'HEAD^{tree}')" = 1aeb4439f5ae3ec2ee24eb8d4ec19b4527165afb
           if git -C candidate config --local --get-regexp 'http\..*\.extraheader' >/dev/null 2>&1; then
             echo "checkout token persisted in candidate git configuration" >&2
             exit 1
@@ -98,8 +98,8 @@ jobs:
             --mount "type=bind,src=$GITHUB_WORKSPACE/candidate,dst=/source,readonly" \
             --mount "type=bind,src=$GITHUB_WORKSPACE/.github/validation,dst=/control,readonly" \
             --mount "type=bind,src=$validation_data,dst=/test-data" \
-            --env MIDAS_PHASE5_SOURCE_SHA=2c6dcaafcd5b410284bc93b0e26e6b9035726fc4 \
-            --env MIDAS_PHASE5_SOURCE_TREE=80833e22fadec6b6de99161776d184dd082a1d1b \
+            --env MIDAS_PHASE5_SOURCE_SHA=5c4d9106c4536ef384c1804b39ec2358e035bbd7 \
+            --env MIDAS_PHASE5_SOURCE_TREE=1aeb4439f5ae3ec2ee24eb8d4ec19b4527165afb \
             --env MIDAS_PHASE5_SYNTHETIC_USER_PSI=1 \
             --env MIDAS_MODE=demo \
             --env MIDAS_RUNTIME_ROOT=/tmp/midas-phase5/runtime \
