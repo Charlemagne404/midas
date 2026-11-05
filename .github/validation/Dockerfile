@@ -1,0 +1,53 @@
+FROM ghcr.io/astral-sh/uv:0.13.0 AS uv-bin
+
+FROM node:22-bookworm
+COPY --from=uv-bin /uv /uvx /usr/local/bin/
+
+ENV COREPACK_HOME=/opt/corepack \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+    UV_LINK_MODE=copy \
+    UV_PROJECT_ENVIRONMENT=/opt/venv \
+    UV_PYTHON_INSTALL_DIR=/opt/uv/python \
+    UV_CACHE_DIR=/opt/uv/cache
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       build-essential ca-certificates git libpq-dev procps sqlite3 util-linux \
+    && rm -rf /var/lib/apt/lists/* \
+    && corepack enable \
+    && corepack prepare pnpm@10.18.0 --activate \
+    && uv python install 3.12
+
+WORKDIR /opt/python-deps
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-install-project --group arena-rl
+
+WORKDIR /opt/web-deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/web/package.json apps/web/package.json
+RUN pnpm install --frozen-lockfile --ignore-scripts \
+    && pnpm --dir apps/web exec playwright install --with-deps chromium \
+    && chmod -R a+rX /ms-playwright \
+    && chmod -R a+rX /opt/corepack \
+    && rm -rf /opt/uv/cache /var/lib/apt/lists/*
+
+RUN useradd --create-home --uid 10001 --shell /bin/bash midas \
+    && mkdir -p /opt/isolation/bin /workspace /home/charlie \
+    && printf '%s\n' '#!/bin/sh' \
+       'printf "blocked %s %s\\n" "$(basename "$0")" "$*" >> /tmp/midas-blocked-command.log' \
+       'exit 125' > /opt/isolation/bin/midas-deny-command \
+    && chmod 0555 /opt/isolation/bin/midas-deny-command \
+    && for command in systemctl systemd-run busctl dbus-send gdbus sudo; do \
+         rm -f "/usr/bin/$command"; \
+         ln -s /opt/isolation/bin/midas-deny-command "/usr/bin/$command"; \
+       done \
+    && chown -R 10001:10001 /workspace /home/midas
+
+ENV PATH=/opt/isolation/bin:/opt/venv/bin:/usr/local/bin:/usr/bin:/bin \
+    HOME=/home/midas \
+    MIDAS_PYTHON=/opt/venv/bin/python \
+    PYTHONPATH=/workspace:/workspace/packages \
+    COREPACK_HOME=/opt/corepack
+
+USER 10001:10001
+WORKDIR /workspace
