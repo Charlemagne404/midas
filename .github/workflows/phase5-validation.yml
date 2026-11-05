@@ -2,7 +2,7 @@ name: MIDAS Phase 5 isolated validation
 on:
   push:
     branches:
-      - codex/midas-validation-control-20261105-r3
+      - codex/midas-validation-control-20261105-r4
 permissions:
   contents: read
 concurrency:

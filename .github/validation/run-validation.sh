@@ -127,7 +127,11 @@ mkdir -p /tmp/midas-phase5/runtime /tmp/midas-phase5/recordings \
 chmod 0700 /tmp/midas-phase5/xdg-runtime
 cp -R /source/. /workspace/
 ln -s /opt/web-deps/node_modules /workspace/node_modules
-ln -s /opt/web-deps/apps/web/node_modules /workspace/apps/web/node_modules
+# Vite writes its temporary bundled-config file under apps/web/node_modules.
+# Keep the dependency graph from the lockfile install, but place the app-level
+# links in the writable tmpfs workspace so this cache write cannot target the
+# read-only image layer.
+cp -a /opt/web-deps/apps/web/node_modules /workspace/apps/web/node_modules
 
 printf '\n=== Candidate source ===\n'
 printf 'commit=%s\ntree=%s\n' \
