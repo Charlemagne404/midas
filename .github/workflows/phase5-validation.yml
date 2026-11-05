@@ -2,7 +2,7 @@ name: MIDAS Phase 5 isolated validation
 on:
   push:
     branches:
-      - codex/midas-validation-control-20261105-r4
+      - codex/midas-validation-control-20261105-r5
 permissions:
   contents: read
 concurrency:
@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: ${{ github.repository }}
-          ref: 32a5ab3c2d2cb5e222a66de41053e10a9ebff64c
+          ref: 1a9a7bf2c1fe40bcdf0fcd34cecaca2b286a456e
           path: candidate
           fetch-depth: 1
           persist-credentials: false
@@ -30,8 +30,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C candidate rev-parse HEAD)" = 32a5ab3c2d2cb5e222a66de41053e10a9ebff64c
-          test "$(git -C candidate rev-parse 'HEAD^{tree}')" = 13bb9d3a94ef86869e4705906934848ed44432ca
+          test "$(git -C candidate rev-parse HEAD)" = 1a9a7bf2c1fe40bcdf0fcd34cecaca2b286a456e
+          test "$(git -C candidate rev-parse 'HEAD^{tree}')" = 7cba59f2f9d17948729cd58e286c82803a129098
           if git -C candidate config --local --get-regexp 'http\..*\.extraheader' >/dev/null 2>&1; then
             echo "checkout token persisted in candidate git configuration" >&2
             exit 1
@@ -83,10 +83,10 @@ jobs:
           set -euo pipefail
           docker create --name midas-phase5-tests --init \
             --network midas-phase5-net \
-            --memory=11g --memory-swap=11g --cpus=3 --pids-limit=512 \
+            --memory=11g --memory-reservation=10g --memory-swap=11g --cpus=3 --pids-limit=512 \
             --read-only --cap-drop=ALL --security-opt=no-new-privileges:true \
             --shm-size=512m \
-            --tmpfs /tmp:rw,nosuid,nodev,size=2048m,uid=10001,gid=10001,mode=1777 \
+            --tmpfs /tmp:rw,nosuid,nodev,size=8192m,uid=10001,gid=10001,mode=1777 \
             --tmpfs /workspace:rw,nosuid,nodev,exec,size=4096m,uid=10001,gid=10001,mode=0755 \
             --tmpfs /home/midas:rw,nosuid,nodev,size=512m,uid=10001,gid=10001,mode=0755 \
             --tmpfs /home/charlie:ro,nosuid,nodev,size=64m,mode=0755 \
@@ -94,8 +94,9 @@ jobs:
             --tmpfs /var/tmp:rw,nosuid,nodev,size=256m,uid=10001,gid=10001,mode=1777 \
             --mount "type=bind,src=$GITHUB_WORKSPACE/candidate,dst=/source,readonly" \
             --mount "type=bind,src=$GITHUB_WORKSPACE/.github/validation,dst=/control,readonly" \
-            --env MIDAS_PHASE5_SOURCE_SHA=32a5ab3c2d2cb5e222a66de41053e10a9ebff64c \
-            --env MIDAS_PHASE5_SOURCE_TREE=13bb9d3a94ef86869e4705906934848ed44432ca \
+            --env MIDAS_PHASE5_SOURCE_SHA=1a9a7bf2c1fe40bcdf0fcd34cecaca2b286a456e \
+            --env MIDAS_PHASE5_SOURCE_TREE=7cba59f2f9d17948729cd58e286c82803a129098 \
+            --env MIDAS_PHASE5_SYNTHETIC_USER_PSI=1 \
             --env MIDAS_MODE=demo \
             --env MIDAS_RUNTIME_ROOT=/tmp/midas-phase5/runtime \
             --env MIDAS_DATABASE_URL=sqlite+aiosqlite:////tmp/midas-phase5/runtime/paper.sqlite3 \
@@ -119,7 +120,8 @@ jobs:
             --env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/tmp/midas-phase5/no-system-bus \
             --env SYSTEMD_BUS_ADDRESS=unix:path=/tmp/midas-phase5/no-system-bus \
             --env MIDAS_BLOCKED_COMMAND_LOG=/tmp/midas-blocked-command.log \
-            --env PYTHONPATH=/workspace:/workspace/packages \
+            --env PYTHONPATH=/control/test-support:/workspace:/workspace/packages \
+            --env PYTHONDONTWRITEBYTECODE=1 \
             --env MIDAS_PYTHON=/opt/venv/bin/python \
             --env COREPACK_HOME=/opt/corepack \
             --env PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
@@ -141,10 +143,23 @@ jobs:
           assert "ALL" in host["CapDrop"]
           assert any("no-new-privileges" in item for item in host["SecurityOpt"])
           assert host["PidMode"] != "host" and host["IpcMode"] != "host"
+          assert container["Config"]["User"] == "10001:10001", container["Config"]["User"]
+          assert host["Memory"] == 11 * 1024**3
+          assert host["MemorySwap"] == 11 * 1024**3
+          assert host["PidsLimit"] == 512
+          assert not host.get("Devices") and not host.get("DeviceRequests")
           binds = [m for m in container["Mounts"] if m["Type"] == "bind"]
-          assert {m["Destination"] for m in binds} == {"/source", "/control"}
+          bind_destinations = {m["Destination"] for m in binds}
+          assert {"/source", "/control"}.issubset(bind_destinations)
+          assert bind_destinations <= {
+              "/source", "/control", "/etc/hosts", "/etc/hostname", "/etc/resolv.conf"
+          }
           assert all(m["RW"] is False for m in binds)
           assert all(m["Type"] in {"bind", "tmpfs"} for m in container["Mounts"])
+          tmpfs_destinations = {
+              m["Destination"] for m in container["Mounts"] if m["Type"] == "tmpfs"
+          }
+          assert {"/tmp", "/workspace", "/home/midas", "/home/charlie", "/run", "/var/tmp"} <= tmpfs_destinations
           env = container["Config"]["Env"]
           assert not any(item.startswith(("GITHUB_", "ACTIONS_")) for item in env)
           assert not any(item.startswith("MIDAS_") and "TOKEN" in item for item in env)

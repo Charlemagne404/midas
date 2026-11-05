@@ -12,6 +12,46 @@ if git -c safe.directory=/source -C /source config --local --get-regexp 'http\..
   fail "checkout credentials persisted in source configuration"
 fi
 
+cgroup_relative="$(awk -F: '$1 == "0" && $2 == "" { print $3; exit }' /proc/self/cgroup)"
+test -n "$cgroup_relative" || fail "test container has no cgroup v2 membership"
+case "$cgroup_relative" in
+  /*) ;;
+  *) fail "cgroup path must be absolute" ;;
+esac
+case "/$cgroup_relative/" in
+  */../*|*/./*) fail "cgroup path contains traversal components" ;;
+esac
+preflight_cgroup="/sys/fs/cgroup${cgroup_relative}"
+/opt/venv/bin/python - "$preflight_cgroup" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+group = Path(sys.argv[1])
+if group.is_symlink() or not group.is_dir():
+    raise SystemExit("test container cgroup is missing or unsafe")
+if not group.resolve().is_relative_to(Path("/sys/fs/cgroup").resolve()):
+    raise SystemExit("test container cgroup escaped the cgroup mount")
+for name in ("memory.high", "memory.max"):
+    value = (group / name).read_text(encoding="ascii").strip()
+    if value in {"max", "infinity"} or not value.isdecimal() or int(value) <= 0:
+        raise SystemExit(f"test container {name} is not finite and positive")
+if os.access("/sys/fs/cgroup", os.W_OK):
+    raise SystemExit("candidate UID can write the cgroup hierarchy")
+tmp = os.statvfs("/tmp")
+if tmp.f_bavail * tmp.f_frsize < 6 * 1024**3:
+    raise SystemExit("test temporary filesystem is smaller than the required 6 GiB reserve")
+print(
+    "Bounded container cgroup verified: "
+    f"memory.high={(group / 'memory.high').read_text().strip()} "
+    f"memory.max={(group / 'memory.max').read_text().strip()}"
+)
+print(f"Disposable /tmp available capacity: {tmp.f_bavail * tmp.f_frsize} bytes")
+PY
+export MIDAS_RESOURCE_PREFLIGHT_CGROUP="$preflight_cgroup"
+export MIDAS_RESOURCE_PREFLIGHT_PROFILE=bounded-test
+export MIDAS_RESOURCE_PREFLIGHT_AT_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
 /opt/venv/bin/python - <<'PY'
 import os
 from pathlib import Path
@@ -30,6 +70,8 @@ for point in ("/tmp", "/workspace", "/home/midas", "/home/charlie", "/run"):
         raise SystemExit(f"{point} is not an isolated tmpfs mount")
 if "ro" not in mounts["/home/charlie"][1]:
     raise SystemExit("/home/charlie must be a read-only tmpfs shadow of host paths")
+if os.access("/sys/fs/cgroup", os.W_OK):
+    raise SystemExit("candidate UID can write the cgroup hierarchy")
 if any(Path("/home/midas").iterdir()) or any(Path("/home/charlie").iterdir()):
     raise SystemExit("fresh disposable homes are not empty")
 for path in (
@@ -66,6 +108,15 @@ if not os.environ["MIDAS_DATABASE_URL"].startswith(
     raise SystemExit("default database is not a disposable SQLite file")
 if os.environ.get("GITHUB_TOKEN") or os.environ.get("ACTIONS_RUNTIME_TOKEN"):
     raise SystemExit("GitHub credential was passed into the candidate container")
+secret_like = sorted(
+    name
+    for name in os.environ
+    if name.startswith(("GITHUB_", "ACTIONS_", "AWS_", "AZURE_", "DEPLOY_"))
+    or name in {"KUBECONFIG", "GH_TOKEN", "GH_ENTERPRISE_TOKEN"}
+    or name.endswith(("_TOKEN", "_SECRET", "_PASSWORD", "_CREDENTIALS"))
+)
+if secret_like:
+    raise SystemExit(f"credential-like environment variables reached candidate: {secret_like}")
 print("Isolation mounts, runtime roots, database target, and absent host sockets verified.")
 PY
 
@@ -80,6 +131,8 @@ test "$systemd_run_status" -eq 125 || fail "systemd-run was not rejected"
 test "$(realpath "$(command -v systemctl)")" = /opt/isolation/bin/midas-deny-command || fail "systemctl shim is not first on PATH"
 test "$(realpath /usr/bin/systemctl)" = /opt/isolation/bin/midas-deny-command || fail "absolute systemctl path is not intercepted"
 test "$(realpath /usr/bin/systemd-run)" = /opt/isolation/bin/midas-deny-command || fail "absolute systemd-run path is not intercepted"
+test "$(realpath /bin/systemctl)" = /opt/isolation/bin/midas-deny-command || fail "absolute /bin/systemctl path is not intercepted"
+test "$(realpath /bin/systemd-run)" = /opt/isolation/bin/midas-deny-command || fail "absolute /bin/systemd-run path is not intercepted"
 grep -q '^blocked systemctl ' /tmp/midas-blocked-command.log || fail "systemctl rejection was not recorded"
 grep -q '^blocked systemd-run ' /tmp/midas-blocked-command.log || fail "systemd-run rejection was not recorded"
 
@@ -107,6 +160,17 @@ else:
 finally:
     outside.close()
 
+outside_v6 = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+outside_v6.settimeout(2)
+try:
+    outside_v6.connect(("2606:4700:4700::1111", 443))
+except OSError:
+    print("External IPv6 connection is blocked.")
+else:
+    raise SystemExit("external IPv6 access is available")
+finally:
+    outside_v6.close()
+
 deadline = time.monotonic() + 5
 while True:
     try:
@@ -126,6 +190,10 @@ mkdir -p /tmp/midas-phase5/runtime /tmp/midas-phase5/recordings \
   /tmp/home-cache /tmp/home-config /tmp/home-state /tmp/reports
 chmod 0700 /tmp/midas-phase5/xdg-runtime
 cp -R /source/. /workspace/
+test "$(git -C /workspace rev-parse 'HEAD^{tree}')" = "$MIDAS_PHASE5_SOURCE_TREE" || fail "writable source copy has the wrong tree"
+git -C /workspace diff --exit-code >/dev/null || fail "writable source copy differs from its commit"
+git -C /workspace diff --cached --exit-code >/dev/null || fail "writable source copy index differs from its commit"
+test -z "$(git -C /workspace ls-files --others --exclude-standard)" || fail "writable source copy contains unexpected untracked files"
 ln -s /opt/web-deps/node_modules /workspace/node_modules
 # Vite writes its temporary bundled-config file under apps/web/node_modules.
 # Keep the dependency graph from the lockfile install, but place the app-level
@@ -170,13 +238,9 @@ print("Application settings resolve to disposable roots and demo mode.")
 PY
 
 printf '\n=== Stage A: Static verification ===\n'
-static_gate_failures=0
 /opt/venv/bin/python -m compileall -q packages/midas apps/api scripts
 /opt/venv/bin/ruff check packages apps/api tests infra scripts
-if ! /opt/venv/bin/ruff format --check packages apps/api tests infra scripts; then
-  printf 'Static gate failure: Ruff formatting check found pre-existing formatting in the unchanged main-side autonomy script. Continuing to collect functional validation results.\n' >&2
-  static_gate_failures=1
-fi
+/opt/venv/bin/ruff format --check packages apps/api tests infra scripts
 /opt/venv/bin/mypy packages/midas apps/api
 /opt/venv/bin/python - <<'PY'
 import apps.api.main
@@ -190,6 +254,18 @@ corepack pnpm format:check
 corepack pnpm lint
 corepack pnpm typecheck
 corepack pnpm build
+
+# Runtime variables were checked above. Remove them before tests so explicit
+# tmp_path fixtures and disposable CWDs remain authoritative.
+unset MIDAS_MODE MIDAS_RUNTIME_ROOT MIDAS_DATABASE_URL MIDAS_RECORDING_ROOT \
+  MIDAS_LABORATORY_ROOT MIDAS_ARENA_ROOT MIDAS_FRONTIER_ROOT \
+  MIDAS_REALITY_WORKSPACE MIDAS_VERITAS_WORKSPACE \
+  MIDAS_FRONTIER_POLYMARKET_PUBLIC_PROBE_ENABLED \
+  MIDAS_FRONTIER_KALSHI_PUBLIC_PROBE_ENABLED \
+  MIDAS_FRONTIER_KRAKEN_PUBLIC_PROBE_ENABLED \
+  MIDAS_FRONTIER_COINBASE_PUBLIC_PROBE_ENABLED
+mkdir -p /tmp/midas-phase5/test-runtime
+cd /tmp/midas-phase5/test-runtime
 
 run_pytest() {
   local label="$1"
@@ -228,51 +304,53 @@ PY
 
 printf '\n=== Stage B: Focused integration suites ===\n'
 focused=(
-  tests/arena
-  tests/frontier
-  tests/laboratory
-  tests/simulation
-  tests/test_autonomy_campaign.py
-  tests/test_api_contract_diff.py
-  tests/test_host_capacity_summary.py
-  tests/test_readiness_resources.py
-  tests/test_midas_candidate_db_smoke.py
-  tests/test_midas_resource_preflight.py
-  tests/test_midas_sqlite_snapshot.py
+  /workspace/tests/arena
+  /workspace/tests/frontier
+  /workspace/tests/laboratory
+  /workspace/tests/simulation
+  /workspace/tests/test_autonomy_campaign.py
+  /workspace/tests/test_api_contract_diff.py
+  /workspace/tests/test_host_capacity_summary.py
+  /workspace/tests/test_readiness_resources.py
+  /workspace/tests/test_midas_candidate_db_smoke.py
+  /workspace/tests/test_midas_resource_preflight.py
+  /workspace/tests/test_midas_sqlite_snapshot.py
 )
-while IFS= read -r file; do focused+=("$file"); done < <(find tests -maxdepth 1 -type f \( -name 'test_reality*.py' -o -name 'test_veritas*.py' -o -name 'test_reconcile_reality_source_quality.py' \) | sort)
+while IFS= read -r file; do focused+=("$file"); done < <(find /workspace/tests -maxdepth 1 -type f \( -name 'test_reality*.py' -o -name 'test_veritas*.py' -o -name 'test_reconcile_reality_source_quality.py' \) | sort)
 run_pytest focused-integration "${focused[@]}"
 
 printf '\n=== Stage C: Frontend component and browser suites ===\n'
-corepack pnpm --dir apps/web exec vitest run --maxWorkers=2 --minWorkers=1
-corepack pnpm --dir apps/web exec playwright test --workers=1 --reporter=line
+corepack pnpm --dir /workspace/apps/web exec vitest run --maxWorkers=2 --minWorkers=1
+export MIDAS_FRONTIER_E2E_ROOT=/tmp/midas-browser-phase5
+corepack pnpm --dir /workspace/apps/web exec playwright test --workers=1 --reporter=line
+corepack pnpm --dir /workspace/apps/web exec playwright test --config playwright.reality.config.ts --workers=1 --reporter=line
+unset MIDAS_FRONTIER_E2E_ROOT
 
 printf '\n=== Stage D: Full backend regression ===\n'
-run_pytest full-backend
+run_pytest full-backend /workspace/tests
 
 printf '\n=== Stage E: Native process-pool and recovery ===\n'
 run_pytest native-process-pool \
-  tests/laboratory/test_campaigns.py::test_campaign_parallel_results_deterministic_and_compact_reconstruction \
-  tests/laboratory/test_campaigns.py::test_interrupt_checkpoint_cancel_resume_and_reopen
+  /workspace/tests/laboratory/test_campaigns.py::test_campaign_parallel_results_deterministic_and_compact_reconstruction \
+  /workspace/tests/laboratory/test_campaigns.py::test_interrupt_checkpoint_cancel_resume_and_reopen
 
 printf '\n=== Stage F: Storage, migration, archive, and replay ===\n'
 export MIDAS_DATABASE_URL='postgresql+asyncpg://midas:phase5_synthetic_only@postgres:5432/midas_ci'
 export MIDAS_TEST_POSTGRES_URL="$MIDAS_DATABASE_URL"
+cd /workspace
 /opt/venv/bin/alembic upgrade head
 /opt/venv/bin/python scripts/storage_smoke.py
-run_pytest postgres-integration tests/integration/test_postgres_paper.py
+cd /tmp/midas-phase5/test-runtime
+run_pytest postgres-integration /workspace/tests/integration/test_postgres_paper.py
 unset MIDAS_DATABASE_URL MIDAS_TEST_POSTGRES_URL
 export MIDAS_DATABASE_URL='sqlite+aiosqlite:////tmp/midas-phase5/runtime/offline.sqlite3'
 run_pytest offline-recovery-replay \
-  tests/test_reality_recovery.py \
-  tests/test_reality_full_scale_validation.py \
-  tests/test_veritas_scan_catalog.py \
-  tests/test_veritas_v6_offline_replay.py \
-  tests/frontier/test_historical_replay.py
+  /workspace/tests/test_reality_recovery.py \
+  /workspace/tests/test_reality_full_scale_validation.py \
+  /workspace/tests/test_veritas_scan_catalog.py \
+  /workspace/tests/test_veritas_v6_offline_replay.py \
+  /workspace/tests/frontier/test_historical_replay.py
+cd /workspace
 /opt/venv/bin/python scripts/replay.py
 
 printf '\nAll requested validation stages completed. Review per-stage counts above.\n'
-if [[ "$static_gate_failures" -ne 0 ]]; then
-  printf 'Required static validation remains failed; candidate is not fully validated.\n' >&2
-  exit 1
-fi
