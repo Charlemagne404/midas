@@ -217,6 +217,7 @@ ln -s /opt/web-deps/node_modules /workspace/node_modules
 # links in the writable tmpfs workspace so this cache write cannot target the
 # read-only image layer.
 cp -a /opt/web-deps/apps/web/node_modules /workspace/apps/web/node_modules
+export TMPDIR=/tmp/midas-phase5/tmp
 
 printf '\n=== Candidate source ===\n'
 printf 'commit=%s\ntree=%s\n' \
@@ -252,6 +253,27 @@ if settings.mode != "demo":
     raise SystemExit("runtime mode is not simulation-only")
 print("Application settings resolve to disposable roots and demo mode.")
 PY
+
+validation_mode="${MIDAS_PHASE5_MODE:-full}"
+if [[ "$validation_mode" == "diagnostic-browser" ]]; then
+  export MIDAS_FRONTIER_E2E_ROOT="$TMPDIR/midas-browser-phase5"
+  set +e
+  corepack pnpm --dir /workspace/apps/web exec playwright test --workers=1 --reporter=line \
+    --grep 'configure, launch|controlled adversarial|renders isolated Reality|discover, inspect, simulate|shows historical evidence'
+  playwright_status=$?
+  set -e
+  for context in \
+    "$MIDAS_FRONTIER_E2E_ROOT"/test-results/laboratory-*/error-context.md \
+    "$MIDAS_FRONTIER_E2E_ROOT"/test-results/veritas-*/error-context.md; do
+    if [[ -f "$context" ]]; then
+      printf '\n--- Browser failure context: %s ---\n' "$context"
+      sed -n '1,180p' "$context"
+    fi
+  done
+  exit "$playwright_status"
+elif [[ "$validation_mode" != "full" ]]; then
+  fail "unknown MIDAS_PHASE5_MODE=$validation_mode"
+fi
 
 printf '\n=== Stage A: Static verification ===\n'
 /opt/venv/bin/python -m compileall -q packages/midas apps/api scripts
