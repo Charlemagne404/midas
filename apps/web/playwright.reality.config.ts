@@ -7,6 +7,12 @@ import { fileURLToPath } from 'node:url';
 const webRoot = dirname(fileURLToPath(import.meta.url));
 const repository = resolve(webRoot, '../..');
 const isolatedData = mkdtempSync(join(tmpdir(), 'midas-reality-browser-'));
+const runtimeRoot = join(isolatedData, 'runtime');
+const recordingRoot = join(isolatedData, 'recordings');
+const laboratoryRoot = join(isolatedData, 'laboratory');
+const arenaRoot = join(isolatedData, 'arena');
+const frontierRoot = join(isolatedData, 'frontier');
+const realityRoot = join(isolatedData, 'reality');
 const python =
   process.env.MIDAS_PYTHON ??
   (existsSync(join(repository, '.venv/bin/python'))
@@ -22,7 +28,7 @@ export default defineConfig({
     headless: true,
     viewport: { width: 1600, height: 1100 },
   },
-  outputDir: 'test-results/reality-isolated',
+  outputDir: join(isolatedData, 'test-results'),
   reporter: 'list',
   webServer: [
     {
@@ -33,9 +39,14 @@ export default defineConfig({
       env: {
         PYTHONPATH: join(repository, 'packages'),
         MIDAS_MODE: 'demo',
+        MIDAS_RUNTIME_ROOT: runtimeRoot,
         MIDAS_DATABASE_URL: `sqlite+aiosqlite:///${join(isolatedData, 'paper.db')}`,
-        MIDAS_ARENA_ROOT: join(isolatedData, 'arena'),
-        MIDAS_REALITY_WORKSPACE: process.env.MIDAS_REALITY_WORKSPACE ?? repository,
+        MIDAS_RECORDING_ROOT: recordingRoot,
+        MIDAS_LABORATORY_ROOT: laboratoryRoot,
+        MIDAS_ARENA_ROOT: arenaRoot,
+        MIDAS_FRONTIER_ROOT: frontierRoot,
+        MIDAS_REALITY_WORKSPACE: realityRoot,
+        MIDAS_VERITAS_WORKSPACE: repository,
       },
     },
     {

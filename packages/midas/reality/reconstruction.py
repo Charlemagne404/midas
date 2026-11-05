@@ -1,8 +1,10 @@
 """Receipt-ordered exact books; unsequenced continuity is always explicit."""
 
 import hashlib
+import heapq
 import json
 from collections import Counter, deque
+from collections.abc import Iterable, Iterator
 from decimal import Decimal, DecimalException, localcontext
 from typing import Any
 
@@ -29,6 +31,42 @@ def spread(bid: Decimal | None, ask: Decimal | None) -> str | None:
     with localcontext() as context:
         context.prec = 160  # exceeds validated wire coefficient/exponent bounds
         return str(ask - bid)
+
+
+class _CanonicalStream:
+    """A lazily encoded JSON value used by the full-state digest."""
+
+    def __init__(self, chunks: Iterable[bytes]) -> None:
+        self.chunks = chunks
+
+
+def _canonical_chunks(value: Any) -> Iterator[bytes]:
+    """Yield canonical JSON bytes without materializing nested state arrays."""
+    if isinstance(value, _CanonicalStream):
+        yield from value.chunks
+    elif isinstance(value, dict):
+        yield b"{"
+        for index, key in enumerate(sorted(value)):
+            if index:
+                yield b","
+            yield from _canonical_chunks(key)
+            yield b":"
+            yield from _canonical_chunks(value[key])
+        yield b"}"
+    elif isinstance(value, (list, tuple)):
+        yield b"["
+        for index, item in enumerate(value):
+            if index:
+                yield b","
+            yield from _canonical_chunks(item)
+        yield b"]"
+    else:
+        yield json.dumps(
+            value,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode()
 
 
 class Engine:
@@ -101,7 +139,7 @@ class Engine:
         if kind == "gap":
             if record["payload"].get("reason") == "process_start":
                 version = record["payload"].get("reconstruction_version", 1)
-                if version not in (1, 2, 3, 4):
+                if version not in (1, 2, 3, 4, 5):
                     raise ValueError("Unsupported reconstruction revision")
                 self.reconstruction_version = version
             if "stale_ns" in record["payload"]:
@@ -140,7 +178,11 @@ class Engine:
             except (ValueError, TypeError, KeyError, DecimalException):
                 self.counts["malformed_frame"] += 1
                 self.invalidate("malformed_frame")
-        self.invalidate_stale()
+        # Revisions 1-4 treated per-token silence as invalid reconstruction.
+        # Revision 5 reports the book age separately and allows a quiet but
+        # internally consistent book to remain valid while the transport lives.
+        if self.reconstruction_version < 5:
+            self.invalidate_stale()
         return parsed_events
 
     def invalidate_stale(self) -> None:
@@ -395,14 +437,26 @@ class Engine:
             book["issue"] = None
             book.pop("pending_top_advertisement", None)
 
-    def state(self) -> dict[str, Any]:
+    def state(self, *, max_depth: int | None = None) -> dict[str, Any]:
+        """Return the complete replay state or a bounded status projection."""
+        if max_depth is not None and (type(max_depth) is not int or max_depth < 1):
+            raise ValueError("max_depth must be a positive integer")
         books = {}
         for asset, book in sorted(self.books.items()):
-            bid, ask = self.top(book)
-            books[asset] = {
+            if max_depth is None:
+                bids = sorted(book["bids"].items(), reverse=True)
+                asks = sorted(book["asks"].items())
+            else:
+                # Status consumers retain only this bounded top-of-book view.
+                # Avoid sorting and materializing every deep level on each poll.
+                bids = heapq.nlargest(max_depth, book["bids"].items())
+                asks = heapq.nsmallest(max_depth, book["asks"].items())
+            bid = bids[0][0] if bids else None
+            ask = asks[0][0] if asks else None
+            view = {
                 **{k: v for k, v in book.items() if k not in {"bids", "asks"}},
-                "bids": [[str(p), str(q)] for p, q in sorted(book["bids"].items(), reverse=True)],
-                "asks": [[str(p), str(q)] for p, q in sorted(book["asks"].items())],
+                "bids": [[str(p), str(q)] for p, q in bids],
+                "asks": [[str(p), str(q)] for p, q in asks],
                 "best_bid": str(bid) if bid is not None else None,
                 "best_ask": str(ask) if ask is not None else None,
                 "spread": spread(bid, ask),
@@ -410,6 +464,15 @@ class Engine:
                 "internally_consistent": book["issue"] is None,
                 "sequence_verified": False,
             }
+            if max_depth is not None:
+                view.update(
+                    bid_depth_levels=len(book["bids"]),
+                    ask_depth_levels=len(book["asks"]),
+                    depth_truncated=(
+                        len(book["bids"]) > max_depth or len(book["asks"]) > max_depth
+                    ),
+                )
+            books[asset] = view
         return dict(
             schema_version=1,
             **(
@@ -429,4 +492,49 @@ class Engine:
         )
 
     def digest(self) -> str:
-        return hashlib.sha256(canonical(self.state())).hexdigest()
+        books = {}
+        for asset, book in sorted(self.books.items()):
+            bid, ask = self.top(book)
+            books[asset] = {
+                **{k: v for k, v in book.items() if k not in {"bids", "asks"}},
+                "bids": _CanonicalStream(self._level_array(book["bids"], reverse=True)),
+                "asks": _CanonicalStream(self._level_array(book["asks"], reverse=False)),
+                "best_bid": str(bid) if bid is not None else None,
+                "best_ask": str(ask) if ask is not None else None,
+                "spread": spread(bid, ask),
+                "age_ns": self.now_ns - book["received_ns"],
+                "internally_consistent": book["issue"] is None,
+                "sequence_verified": False,
+            }
+        state = dict(
+            schema_version=1,
+            **(
+                dict(reconstruction_version=self.reconstruction_version)
+                if self.reconstruction_version != 1
+                else {}
+            ),
+            **(
+                dict(last_gap_ordinal=self.last_gap_ordinal)
+                if self.reconstruction_version >= 4
+                else {}
+            ),
+            books=books,
+            counts=dict(sorted(self.counts.items())),
+            gaps=self.gaps,
+            ordinal=self.last_ordinal,
+        )
+        digest = hashlib.sha256()
+        for chunk in _canonical_chunks(state):
+            digest.update(chunk)
+        return digest.hexdigest()
+
+    @staticmethod
+    def _level_array(levels: dict[Decimal, Decimal], *, reverse: bool) -> Iterator[bytes]:
+        yield b"["
+        for index, (price, quantity) in enumerate(sorted(levels.items(), reverse=reverse)):
+            if index:
+                yield b","
+            # Decimal.__str__ emits only JSON-safe ASCII characters, so this
+            # avoids a JSON encoder call for every individual price and size.
+            yield b'["' + str(price).encode() + b'","' + str(quantity).encode() + b'"]'
+        yield b"]"

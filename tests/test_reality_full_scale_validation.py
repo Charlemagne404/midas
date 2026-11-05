@@ -378,6 +378,10 @@ def test_failed_admission_does_not_create_snapshot(tmp_path, monkeypatch):
     source = fixture(tmp_path)
     output = tmp_path / "never-created"
 
+    # The test isolates the systemd read boundary; candidate validation keeps
+    # systemctl unavailable so it cannot inspect or affect a host user manager.
+    monkeypatch.setattr(validation, "ensure_no_active_validation_units", lambda: None)
+
     def reject():
         raise ValueError("resource gate")
 

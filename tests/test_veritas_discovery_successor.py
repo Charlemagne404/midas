@@ -245,9 +245,10 @@ def test_successor_applies_usdc_and_share_minimums_as_separate_gates(tmp_path):
         "5": 30,
         "10": 30,
     }
+    assert report["counts"]["minimum_order_notional_unit_status"] == "unverified"
     assert report["counts"]["positive_minimum_notional_by_quantity"] == {
-        "5": 30,
-        "10": 30,
+        "5": 0,
+        "10": 0,
     }
     assert report["counts"]["positive_minimum_order_shares_by_quantity"] == {
         "5": 0,
@@ -259,10 +260,11 @@ def test_successor_applies_usdc_and_share_minimums_as_separate_gates(tmp_path):
     }
     for row in report["market_observations"]:
         q5, q10 = row["audit"]["quantity_results"]
-        assert q5["minimum_order_notional_satisfied"] is True
+        assert q5["minimum_order_notional_satisfied"] is None
         assert q5["minimum_order_shares_satisfied"] is False
-        assert q5["minimum_order_constraints_satisfied"] is False
-        assert q10["minimum_order_constraints_satisfied"] is True
+        assert q5["minimum_order_constraints_satisfied"] is None
+        assert q10["minimum_order_notional_satisfied"] is None
+        assert q10["minimum_order_constraints_satisfied"] is None
 
 
 def test_direct_lookup_missing_control_is_not_reused_from_frame(tmp_path):

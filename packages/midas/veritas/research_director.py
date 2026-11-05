@@ -13,10 +13,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from midas.arena.admission import ResourceAdmissionDenied
 from midas.arena.artifacts import atomic_json
 from midas.arena.datasets import research_hash
 from midas.arena.scheduling import resources_ready
-from midas.veritas.continuous_analysis import VERSION as SNAPSHOT_ANALYSIS_VERSION
+from midas.veritas.continuous_analysis import event_path_for_scan
 from midas.veritas.economic_experiment import compare_qualification_rules
 
 DIRECTOR_ID = "director-veritas-opportunity-v1"
@@ -82,16 +83,22 @@ def _evidence(repository: Path, now: float) -> tuple[dict[str, Any] | None, str,
     if age > MAX_EVIDENCE_AGE_SECONDS:
         return None, "WAITING_FOR_FRESH_EVIDENCE", "Latest finalized scan is older than two hours"
 
-    event_root = data_root / "analysis-events" / "v4"
-    event_path = event_root / f"{scan_id}.json"
-    if data_root.joinpath("analysis-events").is_symlink() or event_root.is_symlink():
+    event_path, selected_analysis_version = event_path_for_scan(data_root, scan_id)
+    if data_root.joinpath("analysis-events").is_symlink() or (
+        event_path is not None and event_path.parent.is_symlink()
+    ):
         return None, "BLOCKED_INVALID_EVIDENCE", "Finalized event directory is a symlink"
-    if event_path.is_symlink() or not event_path.is_file():
-        return None, "WAITING_FOR_FINALIZATION", "Latest scan has not reached finalized v4 analysis"
+    if event_path is None or event_path.is_symlink() or not event_path.is_file():
+        return (
+            None,
+            "WAITING_FOR_FINALIZATION",
+            "Latest scan has not reached a supported finalized analysis version",
+        )
     try:
         event = _read_json(event_path, MAX_EVENT_BYTES)
-        if event.get("scan_id") != scan_id or event.get("analysis_version") != (
-            SNAPSHOT_ANALYSIS_VERSION
+        if (
+            event.get("scan_id") != scan_id
+            or event.get("analysis_version") != selected_analysis_version
         ):
             raise ValueError("Latest finalized event identity or version does not match")
         # Reuse the economic verifier's event digest and snapshot-lineage checks.
@@ -117,7 +124,7 @@ def _evidence(repository: Path, now: float) -> tuple[dict[str, Any] | None, str,
             "captured_ns": event["captured_ns"],
         },
         "READY",
-        "Newest v2 scan and its v4 analysis event agree and pass digest validation",
+        "Newest v2 scan and its current versioned analysis event agree and pass digest validation",
     )
 
 
@@ -325,6 +332,7 @@ def _finding_summary(root: Path, job: dict[str, Any], expected_scan_id: str) -> 
         "no_positive_gross_candidate_observed",
         "preliminary_gross_edge_failed_economic_qualification",
         "candidate_requires_independent_replay",
+        "minimum_notional_semantics_unverified",
     }:
         raise ValueError("Qualification result has an unsupported status")
     source_snapshots = experiment.get("source_snapshots")
@@ -413,18 +421,37 @@ def _finding_summary(root: Path, job: dict[str, Any], expected_scan_id: str) -> 
             raise ValueError("Qualification result has invalid independent replay qualification")
         minimum_count = independent_replay.get("positive_full_depth_and_both_minimums")
         fee_count = independent_replay.get("positive_under_both_fee_sensitivities")
+        minimum_unit_status = str(
+            independent_replay.get("minimum_order_notional_unit_status")
+            or experiment.get("minimum_order_notional_unit_status")
+            or "unverified"
+        )
+        if minimum_unit_status not in {"verified_usdc", "unverified", "mixed", "unmeasured"}:
+            raise ValueError(
+                "Completed independent replay has an invalid minimum-notional unit status"
+            )
         if replay_complete:
-            if (
-                not isinstance(minimum_count, int)
-                or isinstance(minimum_count, bool)
-                or not isinstance(fee_count, int)
-                or isinstance(fee_count, bool)
-                or minimum_count < 0
-                or fee_count < 0
-                or fee_count > minimum_count
-                or minimum_count > replayed_count
-            ):
-                raise ValueError("Completed independent replay qualification counts are invalid")
+            if candidate_count == 0:
+                if minimum_count != 0 or fee_count != 0:
+                    raise ValueError("Empty independent replay qualification counts are invalid")
+            elif minimum_unit_status == "verified_usdc":
+                if (
+                    not isinstance(minimum_count, int)
+                    or isinstance(minimum_count, bool)
+                    or not isinstance(fee_count, int)
+                    or isinstance(fee_count, bool)
+                    or minimum_count < 0
+                    or fee_count < 0
+                    or fee_count > minimum_count
+                    or minimum_count > replayed_count
+                ):
+                    raise ValueError(
+                        "Completed independent replay qualification counts are invalid"
+                    )
+            elif minimum_count is not None or fee_count is not None:
+                raise ValueError(
+                    "Unverified minimum-notional units must keep qualification counts unknown"
+                )
         elif minimum_count is not None or fee_count is not None:
             raise ValueError("Incomplete independent replay qualification must keep counts unknown")
     return {
@@ -435,6 +462,13 @@ def _finding_summary(root: Path, job: dict[str, Any], expected_scan_id: str) -> 
         "dataset_sha256": experiment.get("dataset_sha256"),
         "experiment_source_code_sha256": experiment.get("experiment_source_code_sha256"),
         "status": experiment.get("status"),
+        "minimum_order_notional_unit_status": experiment.get("minimum_order_notional_unit_status")
+        or (
+            independent_replay.get("minimum_order_notional_unit_status")
+            if isinstance(independent_replay, dict)
+            else None
+        )
+        or "unverified",
         "snapshot_count": sample.get("snapshot_count"),
         "attempted_market_pairs": sample.get("attempted_market_pairs"),
         "quality_valid_pairs": sample.get("quality_valid_pairs"),
@@ -481,6 +515,37 @@ def _record_event(directory: Path, event: dict[str, Any]) -> None:
         os.fsync(directory_fd)
     finally:
         os.close(directory_fd)
+
+
+def _qualification_readiness(status: Any) -> dict[str, str]:
+    if status == "no_positive_gross_candidate_observed":
+        return {
+            "strategy_readiness": "NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE",
+            "model_readiness": "NOT_READY_NO_CANDIDATE_RELEVANT_TARGET",
+            "recommendation": (
+                "Keep no-trade; continue bounded collection and qualify only when a new finalized "
+                "scan arrives. Do not train or run a strategy tournament without an eligible gross "
+                "candidate and candidate-relevant target labels."
+            ),
+        }
+    if status == "candidate_requires_independent_replay":
+        return {
+            "strategy_readiness": "CANDIDATE_REQUIRES_INDEPENDENT_REPLAY",
+            "recommendation": "Preserve the candidate evidence and request an independent source replay before any strategy comparison.",
+        }
+    if status == "minimum_notional_semantics_unverified":
+        return {
+            "strategy_readiness": "GROSS_CANDIDATE_NOTIONAL_SEMANTICS_UNVERIFIED",
+            "recommendation": (
+                "Keep no-trade. Preserve positive gross and depth evidence, but do not claim "
+                "minimum-notional qualification until provider units are verified through "
+                "provider provenance."
+            ),
+        }
+    return {
+        "strategy_readiness": "GROSS_EDGE_REQUIRES_ECONOMIC_REVIEW",
+        "recommendation": "Preserve the candidate evidence and review depth, minimum-notional, and fee exclusions before any strategy comparison.",
+    }
 
 
 def _manifest(root: Path) -> tuple[Path, Path, dict[str, Any]]:
@@ -701,22 +766,7 @@ def tick(
                     pending_scan_id=None,
                 )
                 status = summary.get("status")
-                if status == "no_positive_gross_candidate_observed":
-                    record.update(
-                        strategy_readiness="NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE",
-                        model_readiness="NOT_READY_NO_CANDIDATE_RELEVANT_TARGET",
-                        recommendation="Keep no-trade; continue bounded collection and qualify only when a new finalized scan arrives. Do not train or run a strategy tournament without an eligible gross candidate and candidate-relevant target labels.",
-                    )
-                elif status == "candidate_requires_independent_replay":
-                    record.update(
-                        strategy_readiness="CANDIDATE_REQUIRES_INDEPENDENT_REPLAY",
-                        recommendation="Preserve the candidate evidence and request an independent source replay before any strategy comparison.",
-                    )
-                else:
-                    record.update(
-                        strategy_readiness="GROSS_EDGE_REQUIRES_ECONOMIC_REVIEW",
-                        recommendation="Preserve the candidate evidence and review depth, minimum-notional, and fee exclusions before any strategy comparison.",
-                    )
+                record.update(_qualification_readiness(status))
                 _record_event(
                     directory,
                     {
@@ -736,6 +786,9 @@ def tick(
                         "positive_states_by_gate": summary.get("positive_states_by_gate"),
                         "independent_candidate_replay_qualification": summary.get(
                             "independent_candidate_replay_qualification"
+                        ),
+                        "minimum_order_notional_unit_status": summary.get(
+                            "minimum_order_notional_unit_status"
                         ),
                         "strategy_readiness": record.get("strategy_readiness"),
                         "model_readiness": record.get("model_readiness"),
@@ -814,6 +867,18 @@ def tick(
         atomic_json(manifest_path, record)
         try:
             job = existing or _create_job(arena_root, latest["scan_id"], launch_jobs)
+        except ResourceAdmissionDenied as error:
+            record.update(
+                current_job_id=None,
+                current_job_state="WAITING_RESOURCES",
+                current_job_error=str(error),
+                pending_scan_id=latest["scan_id"],
+            )
+            return save(
+                "WAITING_RESOURCES",
+                "Waiting for a host-wide Arena admission window",
+                str(error),
+            )
         except (OSError, ValueError, RuntimeError) as error:
             record.update(
                 current_job_id=None,
@@ -858,22 +923,7 @@ def tick(
                 current_job_state="COMPLETED",
                 current_job_error=None,
             )
-            if summary.get("status") == "no_positive_gross_candidate_observed":
-                record.update(
-                    strategy_readiness="NOT_READY_NO_QUALIFIED_GROSS_CANDIDATE",
-                    model_readiness="NOT_READY_NO_CANDIDATE_RELEVANT_TARGET",
-                    recommendation="Keep no-trade; continue bounded collection and qualify only when a new finalized scan arrives. Do not train or run a strategy tournament without an eligible gross candidate and candidate-relevant target labels.",
-                )
-            elif summary.get("status") == "candidate_requires_independent_replay":
-                record.update(
-                    strategy_readiness="CANDIDATE_REQUIRES_INDEPENDENT_REPLAY",
-                    recommendation="Preserve the candidate evidence and request an independent source replay before any strategy comparison.",
-                )
-            else:
-                record.update(
-                    strategy_readiness="GROSS_EDGE_REQUIRES_ECONOMIC_REVIEW",
-                    recommendation="Preserve the candidate evidence and review depth, minimum-notional, and fee exclusions before any strategy comparison.",
-                )
+            record.update(_qualification_readiness(summary.get("status")))
             record["last_qualified_scan_id"] = latest["scan_id"]
             _record_event(
                 directory,
@@ -892,6 +942,9 @@ def tick(
                     "positive_states_by_gate": summary.get("positive_states_by_gate"),
                     "independent_candidate_replay_qualification": summary.get(
                         "independent_candidate_replay_qualification"
+                    ),
+                    "minimum_order_notional_unit_status": summary.get(
+                        "minimum_order_notional_unit_status"
                     ),
                     "strategy_readiness": record.get("strategy_readiness"),
                     "model_readiness": record.get("model_readiness"),

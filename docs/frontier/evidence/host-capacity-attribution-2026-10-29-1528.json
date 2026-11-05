@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "source": {
+    "sampler": "scripts/host_capacity_sample.py",
+    "raw_sample_path": "/tmp/frontier-host-attribution-20261029-1528.jsonl",
+    "raw_sample_sha256": "ab9c091b18d2cdc4bca17cbb4a89bc73a896ae8db4d373fdad8ccfc7f8b49018",
+    "derived_summary_path": "/tmp/frontier-host-attribution-20261029-1528.summary.json",
+    "derived_summary_sha256": "87864eeeb98bbe3b425d2ea4985c8d5ad763cd6f2531df005f51b46389d9c8c8"
+  },
+  "sample": {
+    "start_local": "2026-10-29T15:27:59.489+01:00",
+    "end_local": "2026-10-29T15:28:28.989+01:00",
+    "observations": 6,
+    "scope": {
+      "memory_high_bytes": 268435456,
+      "memory_max_bytes": 402653184,
+      "memory_swap_max_bytes": 0,
+      "cpu_quota_percent": 15,
+      "tasks_max": 64,
+      "runtime_max_seconds": 45
+    }
+  },
+  "host_window": {
+    "memory_available_bytes": {"min": 11389788160, "mean": 11397044224, "max": 11407122432},
+    "swap_free_bytes": {"min": 16363520, "mean": 16371029.333333334, "max": 16408576},
+    "memory_psi_percent": {
+      "some_avg10": 0,
+      "some_avg60": 0,
+      "some_avg300": 0,
+      "full_avg10": 0,
+      "full_avg60": 0,
+      "full_avg300": 0
+    }
+  },
+  "selected_cgroups": [
+    {
+      "name": "user@1000.service",
+      "path": "/user.slice/user-1000.slice/user@1000.service",
+      "memory_current_mean_bytes": 10645071189.333334,
+      "memory_current_max_bytes": 10653380608,
+      "memory_swap_mean_bytes": 2855866368,
+      "limits_bytes": {"memory.high": "max", "memory.max": "max", "memory.swap.max": "max"}
+    },
+    {
+      "name": "app.slice",
+      "path": "/user.slice/user-1000.slice/user@1000.service/app.slice",
+      "memory_current_mean_bytes": 10241455445.333334,
+      "memory_current_max_bytes": 10250039296,
+      "memory_swap_mean_bytes": 2228334592,
+      "limits_bytes": {"memory.high": "max", "memory.max": "max", "memory.swap.max": "max"}
+    },
+    {
+      "name": "app-org.gnome.Terminal.slice",
+      "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/app-org.gnome.Terminal.slice",
+      "memory_current_mean_bytes": 5269912917.333333,
+      "memory_current_max_bytes": 5276274688,
+      "memory_swap_mean_bytes": 1647218688,
+      "limits_bytes": {"memory.high": "max", "memory.max": "max", "memory.swap.max": "max"}
+    },
+    {
+      "name": "midas-api.service",
+      "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-api.service",
+      "memory_current_mean_bytes": 1204927146.6666667,
+      "memory_current_max_bytes": 1205026816,
+      "memory_swap_mean_bytes": 0,
+      "limits_bytes": {"memory.high": "1610612736", "memory.max": "1879048192", "memory.swap.max": "0"}
+    },
+    {
+      "name": "midas-reality.service",
+      "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-reality.service",
+      "memory_current_mean_bytes": 741779456,
+      "memory_current_max_bytes": 742309888,
+      "memory_swap_mean_bytes": 0,
+      "limits_bytes": {"memory.high": "1207959552", "memory.max": "1342177280", "memory.swap.max": "0"}
+    },
+    {
+      "name": "midas-reality-api.service",
+      "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/midas-reality-api.service",
+      "memory_current_mean_bytes": 527994880,
+      "memory_current_max_bytes": 528179200,
+      "memory_swap_mean_bytes": 0,
+      "limits_bytes": {"memory.high": "max", "memory.max": "536870912", "memory.swap.max": "0"}
+    }
+  ],
+  "event_deltas_for_each_selected_cgroup": {
+    "hierarchical": {"high": 0, "max": 0, "oom": 0, "oom_kill": 0},
+    "local": {"high": 0, "max": 0, "oom": 0, "oom_kill": 0}
+  },
+  "post_sample_check": {
+    "observed_local": "2026-10-29T15:33:39+01:00",
+    "memory_total_bytes": 16665567232,
+    "memory_available_bytes": 11369766912,
+    "swap_total_bytes": 4294963200,
+    "swap_used_bytes": 4278546432,
+    "swap_free_bytes": 16416768,
+    "memory_psi_percent": {"some_avg10": 0, "some_avg60": 0, "some_avg300": 0, "full_avg10": 0, "full_avg60": 0, "full_avg300": 0},
+    "user_manager_hierarchical_events": {"high": 16437792, "max": 730632, "oom": 19, "oom_kill": 15},
+    "leaf_local_counters": {
+      "midas-api.service": {"high": 11692, "oom": 0, "oom_kill": 0},
+      "midas-reality.service": {"high": 33176, "oom": 0, "oom_kill": 0},
+      "midas-reality-api.service": {"max": 5030, "oom": 0, "oom_kill": 0}
+    },
+    "services": {
+      "midas-api.service": {"state": "active", "restarts": 9},
+      "midas-reality.service": {"state": "active", "restarts": 14},
+      "midas-reality-api.service": {"state": "active", "restarts": 0},
+      "midas-veritas-gap-detail-v2.timer": {"state": "inactive", "substate": "dead"},
+      "midas-reality-capacity.timer": {"state": "active", "substate": "waiting"}
+    },
+    "matching_kernel_oom_systemd_oomd_or_service_kill_journal_entries_since_1528": 0
+  },
+  "interpretation": "The sample and follow-up read show no selected hierarchical or local high/max/oom/oom_kill counter growth and no matching OOM/kill journal entries. The earlier 106 user-manager high-event increase remains unattributed. Swap is nearly exhausted and user-manager parents remain uncapped; this brief quiet interval does not establish durable recovery. Parent and child memory/swap charges are hierarchical and must not be summed."
+}

@@ -1,0 +1,12 @@
+[Unit]
+Description=Poll MIDAS unified finite research schedules for release %i
+
+[Timer]
+OnCalendar=minutely
+Persistent=true
+RandomizedDelaySec=5
+AccuracySec=5
+Unit=midas-arena-scheduler-release@%i.service
+
+[Install]
+WantedBy=timers.target
