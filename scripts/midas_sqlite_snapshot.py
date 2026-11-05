@@ -19,6 +19,21 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+try:
+    from midas_backup_support import (
+        BackupAdmissionError,
+        require_admitted_scope,
+        validate_receipt_path,
+        write_receipt,
+    )
+except ModuleNotFoundError:
+    from scripts.midas_backup_support import (
+        BackupAdmissionError,
+        require_admitted_scope,
+        validate_receipt_path,
+        write_receipt,
+    )
+
 FORMAT_VERSION = 1
 LARGE_DATABASE_BYTES = 5 * 1024**3
 DATABASE_NAME = "database.sqlite"
@@ -44,35 +59,10 @@ def _boot_id() -> str:
 
 
 def _require_admitted_scope(*, require_heavy_profile: bool = False) -> dict[str, Any]:
-    declared = os.environ.get("MIDAS_RESOURCE_PREFLIGHT_CGROUP")
-    if not declared:
-        raise SnapshotError("run this command through scripts/midas_resource_preflight.py run")
-    lines = Path("/proc/self/cgroup").read_text(encoding="utf-8").splitlines()
-    actual = next((line.split(":", 2)[2] for line in lines if line.startswith("0::")), None)
-    if actual is None or f"/sys/fs/cgroup{actual}" != declared:
-        raise SnapshotError("resource-preflight cgroup does not match this process")
-    cgroup = Path(declared)
     try:
-        current = int((cgroup / "memory.current").read_text().strip())
-        high = (cgroup / "memory.high").read_text().strip()
-        maximum = (cgroup / "memory.max").read_text().strip()
-    except (OSError, ValueError) as error:
-        raise SnapshotError(f"cannot verify bounded task cgroup: {error}") from error
-    if high in {"max", "infinity"} or maximum in {"max", "infinity"}:
-        raise SnapshotError("the backup task cgroup must have finite MemoryHigh and MemoryMax")
-    profile = os.environ.get("MIDAS_RESOURCE_PREFLIGHT_PROFILE")
-    if profile not in {"heavy", "bounded-test"}:
-        raise SnapshotError("resource preflight profile is missing or invalid")
-    if require_heavy_profile and profile != "heavy":
-        raise SnapshotError("large SQLite work requires a successful heavy resource preflight")
-    return {
-        "cgroup": actual,
-        "memory_current_bytes": current,
-        "memory_high_bytes": int(high),
-        "memory_max_bytes": int(maximum),
-        "preflight_at_utc": os.environ.get("MIDAS_RESOURCE_PREFLIGHT_AT_UTC"),
-        "preflight_profile": profile,
-    }
+        return require_admitted_scope(require_heavy_profile=require_heavy_profile)
+    except BackupAdmissionError as error:
+        raise SnapshotError(str(error)) from error
 
 
 def _sqlite_connection(path: Path, *, readonly: bool) -> sqlite3.Connection:
@@ -282,6 +272,7 @@ def create_snapshot(
         manifest = {
             "format": "midas-sqlite-snapshot",
             "format_version": FORMAT_VERSION,
+            "destination": str(destination),
             "created_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "source": {
                 **source_stat_before,
@@ -490,10 +481,12 @@ def build_parser() -> argparse.ArgumentParser:
     backup.add_argument("--integrity", choices=("quick", "full"), default="quick")
     backup.add_argument("--reserve-mib", type=int, default=5120)
     backup.add_argument("--allow-large", action="store_true")
+    backup.add_argument("--receipt", type=Path, help="new durable JSON run receipt")
 
     verify = commands.add_parser("verify", help="verify snapshot checksums and SQLite integrity")
     verify.add_argument("--snapshot", type=Path, required=True)
     verify.add_argument("--integrity", choices=("quick", "full"), default="quick")
+    verify.add_argument("--receipt", type=Path, help="new durable JSON run receipt")
 
     restore = commands.add_parser(
         "restore", help="restore a verified snapshot to a new isolated file"
@@ -506,6 +499,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="new database file; existing files are never overwritten",
     )
     restore.add_argument("--integrity", choices=("quick", "full"), default="quick")
+    restore.add_argument("--receipt", type=Path, help="new durable JSON run receipt")
 
     cleanup = commands.add_parser(
         "cleanup-incomplete", help="review or remove stale snapshots created by this tool"
@@ -525,7 +519,11 @@ def _handle_sigterm(_signum: int, _frame: Any) -> None:
 def main(argv: list[str] | None = None) -> int:
     signal.signal(signal.SIGTERM, _handle_sigterm)
     args = build_parser().parse_args(argv)
+    started_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    receipt_path: Path | None = None
     try:
+        if getattr(args, "receipt", None) is not None:
+            receipt_path = validate_receipt_path(args.receipt)
         if args.action == "backup":
             result = create_snapshot(
                 args.source,
@@ -544,10 +542,57 @@ def main(argv: list[str] | None = None) -> int:
                 older_than_seconds=args.older_than_seconds,
                 delete=args.delete,
             )
+        if receipt_path is not None:
+            write_receipt(
+                receipt_path,
+                {
+                    "operation": args.action,
+                    "decision": result.get(
+                        "decision",
+                        {
+                            "backup": "CREATED",
+                            "verify": "VERIFIED",
+                            "restore": "RESTORED",
+                            "cleanup-incomplete": "CLEANUP_REVIEW",
+                        }[args.action],
+                    ),
+                    "started_at_utc": started_at,
+                    "finished_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    "source": str(args.source) if getattr(args, "source", None) else None,
+                    "destination": (
+                        str(args.destination) if getattr(args, "destination", None) else None
+                    ),
+                    "snapshot": (str(args.snapshot) if getattr(args, "snapshot", None) else None),
+                    "result": result,
+                },
+            )
         print(json.dumps(result, sort_keys=True, indent=2))
         return 0
     except (SnapshotError, OSError, sqlite3.Error, ValueError, KeyError) as error:
-        print(json.dumps({"decision": "FAILED", "error": str(error)}, indent=2), file=sys.stderr)
+        failure = {"decision": "FAILED", "error": str(error)}
+        if receipt_path is not None:
+            try:
+                write_receipt(
+                    receipt_path,
+                    {
+                        "operation": args.action,
+                        "decision": "FAILED",
+                        "started_at_utc": started_at,
+                        "finished_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                        "source": str(args.source) if getattr(args, "source", None) else None,
+                        "destination": (
+                            str(args.destination) if getattr(args, "destination", None) else None
+                        ),
+                        "snapshot": (
+                            str(args.snapshot) if getattr(args, "snapshot", None) else None
+                        ),
+                        "error_type": type(error).__name__,
+                        "error": str(error),
+                    },
+                )
+            except (OSError, ValueError) as receipt_error:
+                failure["receipt_error"] = str(receipt_error)
+        print(json.dumps(failure, indent=2), file=sys.stderr)
         return 1
 
 

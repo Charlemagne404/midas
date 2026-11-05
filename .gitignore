@@ -39,6 +39,7 @@ data/arena-cold/
 # Bounded worktree-local Frontier Arena validation artifacts; summaries live in docs.
 data/frontier-arena-validation-*/
 data/exports/
+# Local backup files are not versioned or an independent recovery copy.
 data/backups/
 data/runtime/
 data/autonomy/
