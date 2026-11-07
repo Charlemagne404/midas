@@ -156,12 +156,13 @@ def test_capture_preserves_v1_to_v2_migration_lineage(tmp_path: Path) -> None:
         "source-analysis-state-v2.json",
     }
     assert manifest["ledger"]["event_count"] == 2
+    assert (destination / "checkpoints/source-analysis-state-v1.json").read_bytes() == fixture[
+        "legacy_bytes"
+    ]
     assert (
-        destination / "checkpoints/source-analysis-state-v1.json"
-    ).read_bytes() == fixture["legacy_bytes"]
-    assert snapshot.verify_snapshot(destination)["ledger"]["last_chain_sha256"] == fixture[
-        "event_chain"
-    ][-1]
+        snapshot.verify_snapshot(destination)["ledger"]["last_chain_sha256"]
+        == fixture["event_chain"][-1]
+    )
 
 
 def test_systemd_configuration_redacts_secret_like_values(tmp_path: Path) -> None:
@@ -195,7 +196,9 @@ def test_missing_event_rejects_capture_without_publishing_partial_snapshot(tmp_p
     assert list(destination.parent.iterdir()) == []
 
 
-def test_interrupted_capture_cleans_its_private_partial_directory(tmp_path: Path, monkeypatch) -> None:
+def test_interrupted_capture_cleans_its_private_partial_directory(
+    tmp_path: Path, monkeypatch
+) -> None:
     fixture = _fixture(tmp_path)
     destination = tmp_path / "backup" / "veritas"
     destination.parent.mkdir()
@@ -288,7 +291,9 @@ def test_snapshot_verification_rejects_corrupted_archive_file(tmp_path: Path) ->
         snapshot.verify_snapshot(destination)
 
 
-def test_disposable_restic_restore_verifies_veritas_checkpoint_and_ledger(tmp_path: Path, monkeypatch) -> None:
+def test_disposable_restic_restore_verifies_veritas_checkpoint_and_ledger(
+    tmp_path: Path, monkeypatch
+) -> None:
     if shutil.which("restic") is None:
         pytest.skip("Restic executable is required for the disposable integration test")
     fixture = _fixture(tmp_path)

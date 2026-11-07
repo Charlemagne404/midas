@@ -177,9 +177,7 @@ def test_policy_loader_requires_known_format_version(tmp_path: Path):
         backup.load_config(config)
 
 
-def test_restic_credential_can_come_from_systemd_credentials_directory(
-    tmp_path: Path, monkeypatch
-):
+def test_restic_credential_can_come_from_systemd_credentials_directory(tmp_path: Path, monkeypatch):
     credential_dir = tmp_path / "credentials"
     credential_dir.mkdir(mode=0o700)
     password = credential_dir / "midas-restic-password"

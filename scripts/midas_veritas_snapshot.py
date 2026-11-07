@@ -101,8 +101,10 @@ def _read_checkpoint(path: Path) -> tuple[dict[str, Any], bytes, os.stat_result]
     if not isinstance(value.get("analysis_code_files"), dict):
         raise SnapshotError(f"{path.name} omits its analysis source digests")
     for name, digest in value["analysis_code_files"].items():
-        if not isinstance(name, str) or not isinstance(digest, str) or not re.fullmatch(
-            r"[0-9a-f]{64}", digest
+        if (
+            not isinstance(name, str)
+            or not isinstance(digest, str)
+            or not re.fullmatch(r"[0-9a-f]{64}", digest)
         ):
             raise SnapshotError(f"{path.name} contains malformed source digest metadata")
     for key in ("campaign_sha256", "analysis_code_sha256"):
@@ -196,7 +198,13 @@ def _unit_properties(units: list[str]) -> dict[str, dict[str, str]]:
     for unit in units:
         try:
             completed = subprocess.run(
-                ["systemctl", "--user", "show", unit, *[item for p in properties for item in ("-p", p)]],
+                [
+                    "systemctl",
+                    "--user",
+                    "show",
+                    unit,
+                    *[item for p in properties for item in ("-p", p)],
+                ],
                 check=False,
                 capture_output=True,
                 text=True,
@@ -392,12 +400,15 @@ def create_snapshot(
             state_stats[filename] = info
     if not states:
         raise SnapshotError("no supported Veritas source-analysis checkpoint exists")
-    if len(
-        {
-            (item.get("campaign_id"), item.get("campaign_sha256"), item.get("analysis_version"))
-            for item in states.values()
-        }
-    ) != 1:
+    if (
+        len(
+            {
+                (item.get("campaign_id"), item.get("campaign_sha256"), item.get("analysis_version"))
+                for item in states.values()
+            }
+        )
+        != 1
+    ):
         raise SnapshotError("Veritas checkpoint files disagree about campaign provenance")
     prior_chains: dict[int, str | None] = {}
     for item in states.values():
@@ -405,7 +416,9 @@ def create_snapshot(
         current = item.get("last_event_sha256")
         if count == 0 and current not in (None, ""):
             raise SnapshotError("empty Veritas checkpoint has a nonempty event chain")
-        if count > 0 and (not isinstance(current, str) or not re.fullmatch(r"[0-9a-f]{64}", current)):
+        if count > 0 and (
+            not isinstance(current, str) or not re.fullmatch(r"[0-9a-f]{64}", current)
+        ):
             raise SnapshotError("Veritas checkpoint has an invalid event chain")
         if count in prior_chains and prior_chains[count] != current:
             raise SnapshotError("Veritas checkpoints disagree about the same event prefix")
@@ -417,13 +430,17 @@ def create_snapshot(
             not isinstance(migrated, dict)
             or migrated.get("from_state_schema_version") != 1
             or migrated.get("from_state_sha256") != legacy.get("state_sha256")
-            or migrated.get("from_processed_segment_count")
-            != legacy.get("processed_segment_count")
-            or migrated.get("from_analysis_code_sha256")
-            != legacy.get("analysis_code_sha256")
+            or migrated.get("from_processed_segment_count") != legacy.get("processed_segment_count")
+            or migrated.get("from_analysis_code_sha256") != legacy.get("analysis_code_sha256")
         ):
-            raise SnapshotError("v2 checkpoint migration lineage differs from the preserved v1 state")
-    authoritative = "source-analysis-state-v2.json" if "source-analysis-state-v2.json" in states else "source-analysis-state-v1.json"
+            raise SnapshotError(
+                "v2 checkpoint migration lineage differs from the preserved v1 state"
+            )
+    authoritative = (
+        "source-analysis-state-v2.json"
+        if "source-analysis-state-v2.json" in states
+        else "source-analysis-state-v1.json"
+    )
     latest = states[authoritative]
     _source_lock_is_free(root)
 
@@ -436,7 +453,9 @@ def create_snapshot(
     if any(value in {"active", "activating", "reloading"} for value in service_states):
         raise SnapshotError("Veritas source-analysis service is active")
     timer_values = [
-        values for unit, values in units_before.items() if unit.endswith(".timer") and "source-analysis" in unit
+        values
+        for unit, values in units_before.items()
+        if unit.endswith(".timer") and "source-analysis" in unit
     ]
     gap_seconds: int | None = None
     if timer_values and timer_values[0].get("ActiveState") == "active":
@@ -481,7 +500,9 @@ def create_snapshot(
             chain = _sha256(bytes.fromhex(chain) + bytes.fromhex(event_digest))
             expected_at_count = checks_at_count.get(index)
             if expected_at_count and expected_at_count[1] != chain:
-                raise SnapshotError(f"checkpoint {expected_at_count[0]} does not match event {index}")
+                raise SnapshotError(
+                    f"checkpoint {expected_at_count[0]} does not match event {index}"
+                )
             target = ledger / source.name
             _write_new(target, data)
             file_records.append(
@@ -602,9 +623,12 @@ def create_snapshot(
                 "ExecMainStartTimestampMonotonic"
             ):
                 raise SnapshotError("Veritas analysis service ran during checkpoint capture")
-            if unit.endswith(".service") and "source-analysis" in unit and units_after.get(
-                unit, {}
-            ).get("ActiveState") in {"active", "activating", "reloading"}:
+            if (
+                unit.endswith(".service")
+                and "source-analysis" in unit
+                and units_after.get(unit, {}).get("ActiveState")
+                in {"active", "activating", "reloading"}
+            ):
                 raise SnapshotError("Veritas source-analysis service became active during capture")
 
         ledger_info = {
@@ -716,33 +740,38 @@ def verify_snapshot(directory: Path) -> dict[str, Any]:
     if authoritative not in states:
         raise SnapshotError("Veritas manifest authoritative checkpoint is missing")
     state = states[authoritative]
-    if len(
-        {
-            (item.get("campaign_id"), item.get("campaign_sha256"), item.get("analysis_version"))
-            for item in states.values()
-        }
-    ) != 1:
+    if (
+        len(
+            {
+                (item.get("campaign_id"), item.get("campaign_sha256"), item.get("analysis_version"))
+                for item in states.values()
+            }
+        )
+        != 1
+    ):
         raise SnapshotError("Veritas checkpoint files disagree about campaign provenance")
 
     maximum_count = max(int(item["processed_segment_count"]) for item in states.values())
     checkpoint_counts: dict[int, dict[str, Any]] = {}
     for item in states.values():
         count = int(item["processed_segment_count"])
-        if count in checkpoint_counts and checkpoint_counts[count].get("last_event_sha256") != item.get(
+        if count in checkpoint_counts and checkpoint_counts[count].get(
             "last_event_sha256"
-        ):
+        ) != item.get("last_event_sha256"):
             raise SnapshotError("Veritas checkpoint files disagree about the same event prefix")
         checkpoint_counts[count] = item
     migrated = states.get("source-analysis-state-v2.json", {}).get("migration")
     legacy = states.get("source-analysis-state-v1.json")
-    if migrated is not None and legacy is not None and (
-        not isinstance(migrated, dict)
-        or migrated.get("from_state_schema_version") != 1
-        or migrated.get("from_state_sha256") != legacy.get("state_sha256")
-        or migrated.get("from_processed_segment_count")
-        != legacy.get("processed_segment_count")
-        or migrated.get("from_analysis_code_sha256")
-        != legacy.get("analysis_code_sha256")
+    if (
+        migrated is not None
+        and legacy is not None
+        and (
+            not isinstance(migrated, dict)
+            or migrated.get("from_state_schema_version") != 1
+            or migrated.get("from_state_sha256") != legacy.get("state_sha256")
+            or migrated.get("from_processed_segment_count") != legacy.get("processed_segment_count")
+            or migrated.get("from_analysis_code_sha256") != legacy.get("analysis_code_sha256")
+        )
     ):
         raise SnapshotError("v2 checkpoint migration lineage differs from the preserved v1 state")
     observed: set[str] = set()
@@ -781,13 +810,14 @@ def verify_snapshot(directory: Path) -> dict[str, Any]:
                 event = _event_value(data, index=event_count)
                 for key in ("campaign_id", "campaign_sha256", "analysis_version"):
                     if event.get(key) != state.get(key):
-                        raise SnapshotError(f"Veritas event {event_count} differs from checkpoint {key}")
+                        raise SnapshotError(
+                            f"Veritas event {event_count} differs from checkpoint {key}"
+                        )
                 event_bytes += len(data)
                 if event_bytes > MAX_LEDGER_BYTES:
                     raise SnapshotError("Veritas snapshot event ledger exceeds its size bound")
                 event_chain = _sha256(
-                    bytes.fromhex(event_chain)
-                    + bytes.fromhex(event["analysis_event_sha256"])
+                    bytes.fromhex(event_chain) + bytes.fromhex(event["analysis_event_sha256"])
                 )
                 checkpoint = checkpoint_counts.get(event_count)
                 if checkpoint and checkpoint.get("last_event_sha256") != event_chain:
@@ -800,7 +830,9 @@ def verify_snapshot(directory: Path) -> dict[str, Any]:
     if any(
         (count == 0 and item.get("last_event_sha256") not in (None, ""))
         or (count > 0 and count == maximum_count and item.get("last_event_sha256") != event_chain)
-        for count, item in ((int(value["processed_segment_count"]), value) for value in states.values())
+        for count, item in (
+            (int(value["processed_segment_count"]), value) for value in states.values()
+        )
     ):
         raise SnapshotError("Veritas snapshot checkpoint chain is inconsistent")
     ledger = {

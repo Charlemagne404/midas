@@ -519,7 +519,9 @@ def _snapshot_veritas_analysis(
         script_root = Path(str(source_spec["script_root"])).absolute()
         campaign = Path(str(source_spec["campaign_path"])).absolute()
         unit_names = [str(value) for value in source_spec["systemd_units"]]
-        config_paths = [Path(str(value)).absolute() for value in source_spec["systemd_config_paths"]]
+        config_paths = [
+            Path(str(value)).absolute() for value in source_spec["systemd_config_paths"]
+        ]
     except (KeyError, TypeError, ValueError) as error:
         raise BackupError("Veritas source-analysis backup policy is incomplete") from error
     if max_capture <= 0 or max_capture > 512 * 1024**2:
@@ -606,12 +608,12 @@ def _snapshot_veritas_analysis(
             },
             "event_count": manifest["ledger"]["event_count"],
             "last_event_chain_sha256": manifest["ledger"]["last_chain_sha256"],
-            "campaign_sha256": manifest["checkpoints"][
-                manifest["authoritative_checkpoint"]
-            ]["campaign_sha256"],
-            "analysis_code_sha256": manifest["checkpoints"][
-                manifest["authoritative_checkpoint"]
-            ]["analysis_code_sha256"],
+            "campaign_sha256": manifest["checkpoints"][manifest["authoritative_checkpoint"]][
+                "campaign_sha256"
+            ],
+            "analysis_code_sha256": manifest["checkpoints"][manifest["authoritative_checkpoint"]][
+                "analysis_code_sha256"
+            ],
             "verification_scope": (
                 "sealed checkpoint and event-chain verification before Restic capture; "
                 "Restic metadata check; full restore verification remains a separate operation"
@@ -810,7 +812,9 @@ def restore_check(config: dict[str, Any], source_name: str) -> dict[str, Any]:
                 )
                 manifests = list(restore_root.rglob("manifest.json"))
                 if len(manifests) != 1 or manifests[0].is_symlink():
-                    raise BackupError("Restic restore did not produce exactly one safe source manifest")
+                    raise BackupError(
+                        "Restic restore did not produce exactly one safe source manifest"
+                    )
                 restored_source = manifests[0].parent
                 veritas_spec = config.get("veritas_source_analysis")
                 if isinstance(veritas_spec, dict) and source is veritas_spec:
@@ -837,7 +841,9 @@ def restore_check(config: dict[str, Any], source_name: str) -> dict[str, Any]:
                         "schema_sha256": evidence["metadata"]["schema_sha256"],
                     }
         except (SnapshotError, midas_sqlite_snapshot.SnapshotError) as error:
-            raise BackupError(f"restored {source_name} failed source validation: {error}") from error
+            raise BackupError(
+                f"restored {source_name} failed source validation: {error}"
+            ) from error
 
     result = {
         "format": "midas-local-restore-check",

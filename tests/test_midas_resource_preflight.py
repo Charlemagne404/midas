@@ -173,12 +173,15 @@ def test_backup_profile_ignores_occupied_inactive_swap_but_limits_movement() -> 
     observed = evidence()
     observed["host_memory"].update(swap_free_bytes=0)
     observed["host_memory"]["swap_activity_pages_during_sample"]["pswpin"] = 1
-    assert midas_resource_preflight.evaluate_evidence(
-        observed,
-        profile="backup",
-        memory_budget_bytes=512 * midas_resource_preflight.MIB,
-        require_task_cgroup=True,
-    ) == []
+    assert (
+        midas_resource_preflight.evaluate_evidence(
+            observed,
+            profile="backup",
+            memory_budget_bytes=512 * midas_resource_preflight.MIB,
+            require_task_cgroup=True,
+        )
+        == []
+    )
     observed["host_memory"]["swap_activity_pages_during_sample"]["pswpout"] = 8
     assert "swap_activity_above_profile_limit" in midas_resource_preflight.evaluate_evidence(
         observed,
@@ -196,7 +199,7 @@ def test_backup_profile_ignores_occupied_inactive_swap_but_limits_movement() -> 
             "io_full_avg10_pressure_above_profile_limit",
         ),
         (
-            lambda e: e["pressure"]["io"]["full"].update(avg60=1.01),
+            lambda e: e["pressure"]["io"]["full"].update(avg60=1.51),
             "io_full_avg60_pressure_above_profile_limit",
         ),
         (

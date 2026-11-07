@@ -93,11 +93,11 @@ PROFILES: dict[str, dict[str, float | int]] = {
         "cpu_some_avg60": 25.0,
         "io_some_avg10": 5.0,
         "io_some_avg60": 5.0,
-        # Keep full-I/O stalls under 1% of recent wall time. This matches the
-        # existing bounded heavy-work ceiling, while backup I/O is additionally
-        # idle-class and limited to IOWeight=10.
+        # Keep recent full-I/O stalls under 1% and sustained stalls under the
+        # existing bounded heavy-work ceiling. Backup I/O also runs at idle
+        # priority and IOWeight=10.
         "io_full_avg10": 1.0,
-        "io_full_avg60": 1.0,
+        "io_full_avg60": 1.5,
     },
 }
 

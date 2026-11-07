@@ -40,9 +40,7 @@ def require_admitted_scope(
     if profile not in {"heavy", "backup", "bounded-test"}:
         raise BackupAdmissionError("resource preflight profile is missing or invalid")
     if require_heavy_profile and profile != "heavy":
-        raise BackupAdmissionError(
-            "this operation requires a successful heavy resource preflight"
-        )
+        raise BackupAdmissionError("this operation requires a successful heavy resource preflight")
     if require_backup_profile and profile not in {"heavy", "backup"}:
         raise BackupAdmissionError(
             "large backup work requires a successful heavy or backup-specific resource preflight"
