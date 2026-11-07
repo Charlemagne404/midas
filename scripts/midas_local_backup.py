@@ -705,7 +705,7 @@ def verify(
     config: dict[str, Any], *, read_data_subset: str, full_read: bool = False
 ) -> dict[str, Any]:
     try:
-        require_admitted_scope(require_heavy_profile=True)
+        require_admitted_scope(require_backup_profile=True)
     except BackupAdmissionError as error:
         raise BackupError(str(error)) from error
     root, repository, volume = verify_destination(config)
@@ -862,7 +862,7 @@ def restore_check(config: dict[str, Any], source_name: str) -> dict[str, Any]:
 
 def prune(config: dict[str, Any]) -> dict[str, Any]:
     try:
-        require_admitted_scope(require_heavy_profile=True)
+        require_admitted_scope(require_backup_profile=True)
     except BackupAdmissionError as error:
         raise BackupError(str(error)) from error
     root, repository, _ = verify_destination(config)
