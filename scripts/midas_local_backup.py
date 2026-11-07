@@ -33,6 +33,7 @@ MIB = 1024 * 1024
 FORMAT_VERSION = 1
 PROJECTED_RESTIC_OVERHEAD = 2 * 1024**3
 HARD_MAX_BACKUP_BYTES = 100_000_000_000
+RESTORE_VERIFICATION_MAX_AGE_SECONDS = 35 * 86400
 
 
 class BackupError(RuntimeError):
@@ -327,6 +328,44 @@ def _latest_snapshot(
         and tag in snapshot["tags"]
     ]
     return max(matching, key=lambda item: str(item.get("time", "")), default=None)
+
+
+def _restore_check_record(
+    root: Path,
+    *,
+    source_name: str,
+    snapshot_ids: set[str],
+    mount_uuid: str | None,
+    now: float,
+    max_age_seconds: int | None,
+) -> dict[str, Any]:
+    path = root / "status" / f"latest-restore-check-{source_name}.json"
+    if path.is_symlink() or not path.is_file():
+        return {"state": "missing", "snapshot_id": None, "age_seconds": None}
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(value, dict):
+            return {"state": "invalid", "snapshot_id": None, "age_seconds": None}
+        verified = datetime.fromisoformat(str(value["verified_at_utc"]).replace("Z", "+00:00"))
+        age = max(0, int(now - verified.timestamp()))
+        snapshot_id = value.get("restic_snapshot_id")
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError, OSError):
+        return {"state": "invalid", "snapshot_id": None, "age_seconds": None}
+    matches = (
+        value.get("status") == "RESTORED_AND_VERIFIED"
+        and value.get("source_name") == source_name
+        and value.get("mount_uuid") == mount_uuid
+        and value.get("restic_restore_verify") == "passed"
+        and isinstance(snapshot_id, str)
+        and snapshot_id in snapshot_ids
+    )
+    expired = max_age_seconds is not None and age > max_age_seconds
+    state = "verified" if matches and not expired else "expired" if matches else "stale"
+    return {
+        "state": state,
+        "snapshot_id": snapshot_id if isinstance(snapshot_id, str) else None,
+        "age_seconds": age,
+    }
 
 
 def _source_specs(config: dict[str, Any]) -> list[dict[str, Any]]:
@@ -888,6 +927,8 @@ def prune(config: dict[str, Any]) -> dict[str, Any]:
     with _repository_lock(root):
         inventory = _snapshots(repository, password)
         skipped: list[str] = []
+        unverified: list[str] = []
+        outside_retention: list[str] = []
         for source in sources:
             tag = f"midas-{source['name']}"
             matching = [
@@ -911,11 +952,36 @@ def prune(config: dict[str, Any]) -> dict[str, Any]:
                 raise BackupError(
                     f"refusing to prune {tag}: latest receipt is not in the repository"
                 )
-        if skipped:
+            recovery = _restore_check_record(
+                root,
+                source_name=str(source["name"]),
+                snapshot_ids={str(item.get("id")) for item in matching if item.get("id")},
+                mount_uuid=str(config.get("target", {}).get("uuid", "")),
+                now=time.time(),
+                max_age_seconds=None,
+            )
+            if recovery["state"] != "verified":
+                unverified.append(tag)
+                continue
+            retained = sorted(
+                matching,
+                key=lambda item: (str(item.get("time", "")), str(item.get("id", ""))),
+                reverse=True,
+            )[:minimum]
+            if recovery["snapshot_id"] not in {item.get("id") for item in retained}:
+                outside_retention.append(tag)
+        if skipped or unverified or outside_retention:
+            status = (
+                "SKIPPED_NEEDS_MORE_RECOVERY_POINTS"
+                if skipped and not unverified and not outside_retention
+                else "SKIPPED_UNPROTECTED_RECOVERY_POINT"
+            )
             result = {
-                "status": "SKIPPED_NEEDS_MORE_RECOVERY_POINTS",
+                "status": status,
                 "completed_at_utc": datetime.now(UTC).isoformat(timespec="seconds"),
                 "sources_with_too_few_snapshots": skipped,
+                "sources_without_verified_recovery_point": unverified,
+                "verified_recovery_points_outside_retention_window": outside_retention,
                 "minimum_snapshots_per_source": minimum,
             }
             _atomic_status(root, "last-prune.json", result)
@@ -993,16 +1059,12 @@ def status(config: dict[str, Any]) -> dict[str, Any]:
     repository_initialized = repository.is_dir() and not repository.is_symlink()
     expected_sources = [str(item["name"]) for item in _source_specs(config)]
     records: dict[str, Any] = {}
-    known_snapshots: set[str] = set()
+    inventory: list[dict[str, Any]] = []
     repository_readable = False
     repository_error: str | None = None
     if repository_initialized:
         try:
-            known_snapshots = {
-                str(item.get("id"))
-                for item in _snapshots(repository, _credential_path())
-                if item.get("id")
-            }
+            inventory = _snapshots(repository, _credential_path())
             repository_readable = True
         except (BackupError, OSError) as error:
             repository_error = str(error)
@@ -1012,20 +1074,51 @@ def status(config: dict[str, Any]) -> dict[str, Any]:
         if path.is_symlink() or not path.is_file():
             records[name] = {"state": "missing"}
             continue
-        value = json.loads(path.read_text(encoding="utf-8"))
-        created = datetime.fromisoformat(str(value["created_at_utc"]).replace("Z", "+00:00"))
-        age = max(0, int(now - created.timestamp()))
-        snapshot_id = value.get("restic_snapshot_id")
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(value, dict):
+                records[name] = {"state": "invalid", "recovery_point_state": "unverified"}
+                continue
+            created = datetime.fromisoformat(str(value["created_at_utc"]).replace("Z", "+00:00"))
+            age = max(0, int(now - created.timestamp()))
+            snapshot_id = value.get("restic_snapshot_id")
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError, OSError):
+            records[name] = {"state": "invalid", "recovery_point_state": "unverified"}
+            continue
+        source_tag = f"midas-{name}"
+        matching = [
+            item
+            for item in inventory
+            if item.get("hostname") == os.uname().nodename
+            and isinstance(item.get("tags"), list)
+            and "midas-local" in item["tags"]
+            and source_tag in item["tags"]
+        ]
+        matching_ids = {str(item.get("id")) for item in matching if item.get("id")}
+        backup_state = (
+            "fresh"
+            if value.get("status") == "VERIFIED"
+            and value.get("source_name") == name
+            and age <= 8 * 86400
+            and isinstance(snapshot_id, str)
+            and snapshot_id in matching_ids
+            else "stale"
+        )
+        recovery = _restore_check_record(
+            root,
+            source_name=name,
+            snapshot_ids=matching_ids,
+            mount_uuid=str(target.get("uuid", "")),
+            now=now,
+            max_age_seconds=RESTORE_VERIFICATION_MAX_AGE_SECONDS,
+        )
         records[name] = {
-            "state": (
-                "fresh"
-                if value.get("status") == "VERIFIED"
-                and age <= 8 * 86400
-                and snapshot_id in known_snapshots
-                else "stale"
-            ),
+            "state": backup_state,
             "age_seconds": age,
             "restic_snapshot_id": snapshot_id,
+            "recovery_point_state": recovery["state"],
+            "recovery_point_age_seconds": recovery["age_seconds"],
+            "recovery_point_snapshot_id": recovery["snapshot_id"],
         }
     integrity_path = root / "status" / "last-integrity-check.json"
     integrity: dict[str, Any] = {"state": "missing"}
@@ -1048,7 +1141,7 @@ def status(config: dict[str, Any]) -> dict[str, Any]:
                 "age_seconds": age,
                 "read_data_subset": check.get("read_data_subset"),
             }
-        except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError, OSError):
             integrity = {"state": "invalid"}
     return {
         "status": (
@@ -1056,7 +1149,10 @@ def status(config: dict[str, Any]) -> dict[str, Any]:
             if repository_initialized
             and repository_readable
             and usage <= int(target["maximum_bytes"])
-            and all(item.get("state") == "fresh" for item in records.values())
+            and all(
+                item.get("state") == "fresh" and item.get("recovery_point_state") == "verified"
+                for item in records.values()
+            )
             and integrity.get("state") == "fresh"
             else "STALE_OR_MISSING"
         ),

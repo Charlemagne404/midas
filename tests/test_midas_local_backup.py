@@ -135,8 +135,21 @@ def test_status_requires_recent_read_data_verification(tmp_path: Path, monkeypat
         json.dumps(
             {
                 "status": "VERIFIED",
+                "source_name": "database",
                 "created_at_utc": now,
                 "restic_snapshot_id": "snapshot-1",
+            }
+        )
+    )
+    (receipt_dir / "latest-restore-check-database.json").write_text(
+        json.dumps(
+            {
+                "status": "RESTORED_AND_VERIFIED",
+                "verified_at_utc": now,
+                "source_name": "database",
+                "restic_snapshot_id": "snapshot-1",
+                "mount_uuid": "fixture",
+                "restic_restore_verify": "passed",
             }
         )
     )
@@ -153,7 +166,17 @@ def test_status_requires_recent_read_data_verification(tmp_path: Path, monkeypat
     )
     monkeypatch.setattr(backup, "verify_destination", lambda _config: (root, repository, {}))
     monkeypatch.setattr(backup, "_credential_path", lambda: tmp_path / "unused")
-    monkeypatch.setattr(backup, "_snapshots", lambda *_args: [{"id": "snapshot-1"}])
+    monkeypatch.setattr(
+        backup,
+        "_snapshots",
+        lambda *_args: [
+            {
+                "id": "snapshot-1",
+                "hostname": os.uname().nodename,
+                "tags": ["midas-local", "tier1", "midas-database"],
+            }
+        ],
+    )
     config = {
         "target": {
             "preferred_bytes": 64_000_000_000,
@@ -167,6 +190,86 @@ def test_status_requires_recent_read_data_verification(tmp_path: Path, monkeypat
 
     assert value["status"] == "READY"
     assert value["integrity_check"]["state"] == "fresh"
+    assert value["sources"]["database"]["recovery_point_state"] == "verified"
+
+
+@pytest.mark.parametrize("restore_age_days", [None, 36])
+def test_status_does_not_call_missing_or_expired_restore_recoverable(
+    tmp_path: Path, monkeypatch, restore_age_days: int | None
+):
+    root = tmp_path / "backup"
+    root.mkdir(mode=0o700)
+    os.chmod(root, 0o700)
+    repository = root / "repository"
+    repository.mkdir()
+    receipt_dir = root / "status"
+    receipt_dir.mkdir(mode=0o700)
+    now = datetime.now(UTC).isoformat()
+    (receipt_dir / "latest-database.json").write_text(
+        json.dumps(
+            {
+                "status": "VERIFIED",
+                "source_name": "database",
+                "created_at_utc": now,
+                "restic_snapshot_id": "snapshot-1",
+            }
+        )
+    )
+    if restore_age_days is not None:
+        (receipt_dir / "latest-restore-check-database.json").write_text(
+            json.dumps(
+                {
+                    "status": "RESTORED_AND_VERIFIED",
+                    "verified_at_utc": (
+                        datetime.now(UTC) - timedelta(days=restore_age_days)
+                    ).isoformat(),
+                    "source_name": "database",
+                    "restic_snapshot_id": "snapshot-1",
+                    "mount_uuid": "fixture",
+                    "restic_restore_verify": "passed",
+                }
+            )
+        )
+    (receipt_dir / "last-integrity-check.json").write_text(
+        json.dumps(
+            {
+                "status": "VERIFIED",
+                "verified_at_utc": now,
+                "snapshot_count": 1,
+                "read_data_subset": "all",
+                "mount_uuid": "fixture",
+            }
+        )
+    )
+    monkeypatch.setattr(backup, "verify_destination", lambda _config: (root, repository, {}))
+    monkeypatch.setattr(backup, "_credential_path", lambda: tmp_path / "unused")
+    monkeypatch.setattr(
+        backup,
+        "_snapshots",
+        lambda *_args: [
+            {
+                "id": "snapshot-1",
+                "hostname": os.uname().nodename,
+                "tags": ["midas-local", "tier1", "midas-database"],
+            }
+        ],
+    )
+    config = {
+        "target": {
+            "preferred_bytes": 64_000_000_000,
+            "maximum_bytes": 100_000_000_000,
+            "uuid": "fixture",
+        },
+        "sqlite_sources": [{"name": "database"}],
+    }
+
+    value = backup.status(config)
+
+    assert value["status"] == "STALE_OR_MISSING"
+    assert value["sources"]["database"]["state"] == "fresh"
+    assert value["sources"]["database"]["recovery_point_state"] == (
+        "missing" if restore_age_days is None else "expired"
+    )
 
 
 def test_policy_loader_requires_known_format_version(tmp_path: Path):
@@ -231,6 +334,113 @@ def test_prune_skips_when_a_source_has_only_one_recovery_point(tmp_path: Path, m
     assert (
         json.loads((root / "status" / "last-prune.json").read_text())["status"] == result["status"]
     )
+
+
+def _prepare_prune_fixture(root: Path, *, snapshot_ids: list[str], restore_id: str | None):
+    root.mkdir(mode=0o700)
+    os.chmod(root, 0o700)
+    repository = root / "repository"
+    repository.mkdir()
+    status_dir = root / "status"
+    status_dir.mkdir(mode=0o700)
+    now = datetime.now(UTC)
+    snapshots = []
+    for index, snapshot_id in enumerate(snapshot_ids):
+        snapshots.append(
+            {
+                "id": snapshot_id,
+                "hostname": os.uname().nodename,
+                "tags": ["midas-local", "tier1", "midas-database"],
+                "time": (now - timedelta(days=len(snapshot_ids) - index)).isoformat(),
+            }
+        )
+    (status_dir / "latest-database.json").write_text(
+        json.dumps(
+            {
+                "status": "VERIFIED",
+                "source_name": "database",
+                "restic_snapshot_id": snapshot_ids[-1],
+            }
+        )
+    )
+    if restore_id is not None:
+        (status_dir / "latest-restore-check-database.json").write_text(
+            json.dumps(
+                {
+                    "status": "RESTORED_AND_VERIFIED",
+                    "verified_at_utc": now.isoformat(),
+                    "source_name": "database",
+                    "restic_snapshot_id": restore_id,
+                    "mount_uuid": "fixture",
+                    "restic_restore_verify": "passed",
+                }
+            )
+        )
+    return repository, snapshots
+
+
+def _prune_test_config():
+    return {
+        "target": {
+            "maximum_bytes": 100_000_000_000,
+            "preferred_bytes": 64_000_000_000,
+            "uuid": "fixture",
+        },
+        "retention": {"minimum_snapshots_per_source": 2, "keep_daily": 7, "keep_weekly": 4},
+        "sqlite_sources": [{"name": "database"}],
+    }
+
+
+def test_prune_skips_when_no_snapshot_has_a_verified_restore(tmp_path: Path, monkeypatch):
+    root = tmp_path / "backup"
+    repository, snapshots = _prepare_prune_fixture(
+        root, snapshot_ids=["point-1", "point-2"], restore_id=None
+    )
+    password = tmp_path / "password"
+    password.write_text("fixture-password\n")
+    password.chmod(0o600)
+    monkeypatch.setenv("RESTIC_PASSWORD_FILE", str(password))
+    monkeypatch.setattr(backup, "require_admitted_scope", lambda **_kwargs: {})
+    monkeypatch.setattr(
+        backup, "verify_destination", lambda _config: (root, repository, {"UUID": "fixture"})
+    )
+    monkeypatch.setattr(backup, "_credential_path", lambda: password)
+    monkeypatch.setattr(backup, "_snapshots", lambda *_args: snapshots)
+    monkeypatch.setattr(
+        backup, "_restic", lambda *_args: pytest.fail("unverified snapshots must not be pruned")
+    )
+
+    result = backup.prune(_prune_test_config())
+
+    assert result["status"] == "SKIPPED_UNPROTECTED_RECOVERY_POINT"
+    assert result["sources_without_verified_recovery_point"] == ["midas-database"]
+
+
+def test_prune_keeps_last_restore_verified_point_inside_retention_window(
+    tmp_path: Path, monkeypatch
+):
+    root = tmp_path / "backup"
+    repository, snapshots = _prepare_prune_fixture(
+        root, snapshot_ids=["point-1", "point-2", "point-3"], restore_id="point-1"
+    )
+    password = tmp_path / "password"
+    password.write_text("fixture-password\n")
+    password.chmod(0o600)
+    monkeypatch.setenv("RESTIC_PASSWORD_FILE", str(password))
+    monkeypatch.setattr(backup, "require_admitted_scope", lambda **_kwargs: {})
+    monkeypatch.setattr(
+        backup, "verify_destination", lambda _config: (root, repository, {"UUID": "fixture"})
+    )
+    monkeypatch.setattr(backup, "_credential_path", lambda: password)
+    monkeypatch.setattr(backup, "_snapshots", lambda *_args: snapshots)
+    monkeypatch.setattr(
+        backup, "_restic", lambda *_args: pytest.fail("prune would remove the last verified point")
+    )
+
+    result = backup.prune(_prune_test_config())
+
+    assert result["status"] == "SKIPPED_UNPROTECTED_RECOVERY_POINT"
+    assert result["verified_recovery_points_outside_retention_window"] == ["midas-database"]
 
 
 def test_full_verification_reads_every_repository_pack(tmp_path: Path, monkeypatch):
