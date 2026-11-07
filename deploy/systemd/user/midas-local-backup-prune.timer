@@ -1,0 +1,12 @@
+[Unit]
+Description=Check and prune verified MIDAS snapshots weekly
+
+[Timer]
+OnCalendar=Sun *-*-* 06:30:00
+RandomizedDelaySec=15min
+AccuracySec=1min
+Persistent=false
+Unit=midas-local-backup-prune.service
+
+[Install]
+WantedBy=timers.target

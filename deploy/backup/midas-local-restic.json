@@ -1,0 +1,53 @@
+{
+  "format_version": 1,
+  "target": {
+    "mountpoint": "/mnt/continental-cloud",
+    "filesystem": "ext4",
+    "uuid": "2be0060d-8620-4c13-ad02-6e2bada0fb9b",
+    "root": "/mnt/continental-cloud/data/midas-backups",
+    "repository": "repository",
+    "preferred_bytes": 64000000000,
+    "maximum_bytes": 100000000000,
+    "free_reserve_bytes": 5368709120,
+    "snapshot_reserve_mib": 5120
+  },
+  "sqlite_sources": [
+    {
+      "name": "midas-api",
+      "tier": 1,
+      "path": "/home/charlie/midas/data/midas.db"
+    },
+    {
+      "name": "reality-interface",
+      "tier": 1,
+      "path": "/home/charlie/midas-reality/data/research/reality/interface/preview.db"
+    }
+  ],
+  "retention": {
+    "minimum_snapshots_per_source": 2,
+    "keep_daily": 7,
+    "keep_weekly": 4,
+    "prune_working_reserve_bytes": 10737418240,
+    "prune_schedule": "weekly-after-bounded-integrity-check"
+  },
+  "not_yet_covered": [
+    {
+      "tier": 1,
+      "path": "/home/charlie/midas-veritas/data/veritas-observatory",
+      "reason": "The active source-analysis timer can update the checkpoint and event ledger; no consistent multi-file online snapshot has been verified."
+    },
+    {
+      "tier": 2,
+      "path": "/home/charlie/midas-reality/data/recordings/reality",
+      "reason": "The recorder owns writer.lock and has an open segment; the existing recording snapshot tool refuses to copy while the writer is active."
+    },
+    {
+      "tier": 2,
+      "path": "/home/charlie/midas-reality/data/research",
+      "reason": "The ignored research inventory is incomplete and the full set does not yet have verified capture semantics or a measured repository footprint."
+    }
+  ],
+  "excluded_reproducible": [
+    "Build output, installed source releases, language caches, and browser caches; source code remains available from Git remotes."
+  ]
+}

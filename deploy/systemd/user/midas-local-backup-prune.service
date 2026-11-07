@@ -1,0 +1,18 @@
+[Unit]
+Description=Verify and prune the MIDAS local Restic repository
+After=local-fs.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/midas
+LoadCredential=midas-restic-password:%h/.config/midas/backup/restic-password
+Environment=RESTIC_PASSWORD_FILE=%d/midas-restic-password
+ExecStart=%h/midas/.venv/bin/python %h/midas/scripts/midas_resource_preflight.py run --profile heavy --memory-budget-mib 256 --storage-path /mnt/continental-cloud/data/midas-backups --storage-required-mib 5120 --storage-reserve-mib 5120 --memory-high-mib 512 --memory-max-mib 768 --cpu-quota-percent 15 --timeout-seconds 21600 --label midas-local-backup-prune -- %h/midas/.venv/bin/python %h/midas/scripts/midas_local_backup.py --config %h/midas/deploy/backup/midas-local-restic.json prune
+TimeoutStartSec=6h
+Restart=no
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/mnt/continental-cloud/data/midas-backups
+PrivateTmp=true

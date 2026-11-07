@@ -1,0 +1,18 @@
+[Unit]
+Description=MIDAS guarded local SQLite backup to the approved second disk
+After=local-fs.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/midas
+LoadCredential=midas-restic-password:%h/.config/midas/backup/restic-password
+Environment=RESTIC_PASSWORD_FILE=%d/midas-restic-password
+ExecStart=%h/midas/.venv/bin/python %h/midas/scripts/midas_resource_preflight.py run --profile heavy --memory-budget-mib 512 --storage-path /mnt/continental-cloud/data/midas-backups --storage-required-mib 40000 --storage-reserve-mib 5120 --memory-high-mib 768 --memory-max-mib 1024 --cpu-quota-percent 20 --timeout-seconds 21600 --label midas-local-backup -- %h/midas/.venv/bin/python %h/midas/scripts/midas_local_backup.py --config %h/midas/deploy/backup/midas-local-restic.json backup
+TimeoutStartSec=6h
+Restart=no
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/mnt/continental-cloud/data/midas-backups
+PrivateTmp=true

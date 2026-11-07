@@ -24,6 +24,11 @@ ALLOW_ACTIVE_UNITS = {
     "midas-reality.service",
     "midas-reality-api.service",
     "midas-reality-web.service",
+    # These oneshot wrappers hold the shared heavy-workload lock while
+    # invoking this preflight for their own bounded Restic operation.
+    "midas-local-backup.service",
+    "midas-local-backup-prune.service",
+    "midas-local-backup-verify.service",
 }
 CRITICAL_UNITS = ("midas-api.service", "midas-reality.service")
 PROFILES: dict[str, dict[str, float | int]] = {

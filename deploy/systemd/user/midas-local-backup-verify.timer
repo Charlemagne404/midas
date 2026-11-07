@@ -1,0 +1,12 @@
+[Unit]
+Description=Run a full MIDAS Restic data integrity check monthly
+
+[Timer]
+OnCalendar=*-*-01 07:30:00
+RandomizedDelaySec=1h
+AccuracySec=1min
+Persistent=false
+Unit=midas-local-backup-verify.service
+
+[Install]
+WantedBy=timers.target
