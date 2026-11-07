@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import shutil
+import tarfile
 from pathlib import Path
 
 import pytest
@@ -42,11 +43,25 @@ def _fixture(tmp_path: Path, *, both_versions: bool = False) -> dict[str, Path |
     module_file.write_bytes(b"fixture runtime v2\n" if both_versions else b"fixture runtime v1\n")
     old_code = b"fixture runtime v1\n"
     new_code = module_file.read_bytes()
+    script_root = tmp_path / "frozen-scripts"
+    script_source_root = tmp_path / "runtime-scripts"
+    script_root.mkdir()
+    script_source_root.mkdir()
+    script_data = b"fixture runtime entry script\n"
+    script_target = script_source_root / "veritas_source_analysis.py"
+    script_target.write_bytes(script_data)
+    (script_root / "veritas_source_analysis.py").symlink_to(script_target)
     campaign = tmp_path / "campaign.json"
     campaign.write_text('{"campaign":"fixture"}\n')
     campaign_sha = _digest(campaign.read_bytes())
-    old_files = {"finalized_source_analysis.py": _digest(old_code)}
-    new_files = {"finalized_source_analysis.py": _digest(new_code)}
+    old_files = {
+        "finalized_source_analysis.py": _digest(old_code),
+        "scripts/veritas_source_analysis.py": _digest(script_data),
+    }
+    new_files = {
+        "finalized_source_analysis.py": _digest(new_code),
+        "scripts/veritas_source_analysis.py": _digest(script_data),
+    }
     old_code_sha = _digest(_canonical(old_files))
     new_code_sha = _digest(_canonical(new_files))
     chain = "0" * 64
@@ -104,6 +119,9 @@ def _fixture(tmp_path: Path, *, both_versions: bool = False) -> dict[str, Path |
         "root": root,
         "events": events,
         "module_root": module_root,
+        "script_root": script_root,
+        "script_source_root": script_source_root,
+        "script_data": script_data,
         "campaign": campaign,
         "legacy_bytes": legacy_bytes,
         "old_code": old_code,
@@ -117,7 +135,8 @@ def _capture(fixture: dict, destination: Path) -> dict:
         source_root=fixture["root"],
         destination=destination,
         module_root=fixture["module_root"],
-        script_root=destination.parent / "scripts",
+        script_root=fixture["script_root"],
+        script_source_root=fixture["script_source_root"],
         campaign_path=fixture["campaign"],
         systemd_units=[],
         systemd_config_paths=[],
@@ -140,6 +159,20 @@ def test_capture_preserves_checkpoint_chain_campaign_and_runtime_code(tmp_path: 
     assert (
         destination / "provenance/runtime-code/veritas/finalized_source_analysis.py"
     ).read_bytes() == fixture["old_code"]
+    assert (
+        destination / "provenance/runtime-code/scripts/veritas_source_analysis.py"
+    ).read_bytes() == fixture["script_data"]
+    origin = next(
+        item
+        for item in manifest["runtime_code_origins"]
+        if item["identity"] == "scripts/veritas_source_analysis.py"
+    )
+    assert origin["symlink_target"] == str(
+        fixture["script_source_root"] / "veritas_source_analysis.py"
+    )
+    assert origin["resolved_source_path"] == str(
+        fixture["script_source_root"] / "veritas_source_analysis.py"
+    )
     assert manifest["credentials_included"] is False
 
 
@@ -183,18 +216,20 @@ def test_systemd_configuration_redacts_secret_like_values(tmp_path: Path) -> Non
     assert records[0]["redacted_secret_material"] is True
 
 
-def test_bulk_event_file_write_can_batch_filesystem_syncs(tmp_path: Path, monkeypatch) -> None:
+def test_event_ledger_uses_one_sequential_archive_sync(tmp_path: Path, monkeypatch) -> None:
+    fixture = _fixture(tmp_path)
     sync_calls = []
     monkeypatch.setattr(snapshot.os, "fsync", lambda descriptor: sync_calls.append(descriptor))
-
-    event = tmp_path / "event.json"
-    snapshot._write_new(event, b"sealed event", sync=False)
-    assert event.read_bytes() == b"sealed event"
-    assert sync_calls == []
-
-    checkpoint = tmp_path / "checkpoint.json"
-    snapshot._write_new(checkpoint, b"sealed checkpoint")
-    assert checkpoint.read_bytes() == b"sealed checkpoint"
+    state = snapshot._read_checkpoint(fixture["root"] / "source-analysis-state-v1.json")[0]
+    event_bytes, chain, _stats = snapshot._write_event_archive(
+        event_root=fixture["events"],
+        archive_path=tmp_path / "ledger.tar",
+        max_count=1,
+        latest=state,
+        checkpoint_counts={1: ("source-analysis-state-v1.json", state["last_event_sha256"])},
+    )
+    assert event_bytes > 0
+    assert chain == fixture["event_chain"][0]
     assert len(sync_calls) == 1
 
 
@@ -204,7 +239,7 @@ def test_missing_event_rejects_capture_without_publishing_partial_snapshot(tmp_p
     destination = tmp_path / "backup" / "veritas"
     destination.parent.mkdir()
 
-    with pytest.raises(snapshot.SnapshotError, match="cannot read Veritas event"):
+    with pytest.raises(snapshot.SnapshotError, match="event ledger contains missing"):
         _capture(fixture, destination)
 
     assert not destination.exists()
@@ -217,19 +252,50 @@ def test_interrupted_capture_cleans_its_private_partial_directory(
     fixture = _fixture(tmp_path)
     destination = tmp_path / "backup" / "veritas"
     destination.parent.mkdir()
-    original = snapshot._write_new
-    interrupted = False
 
-    def fail_after_first_event(path: Path, data: bytes, *, sync: bool = True) -> None:
-        nonlocal interrupted
-        if path.parent.name == "v1" and path.name.endswith(".json") and not interrupted:
-            interrupted = True
-            original(path, data, sync=sync)
-            raise OSError("simulated interrupted event capture")
-        original(path, data, sync=sync)
+    def interrupted_archive(**kwargs) -> None:
+        kwargs["archive_path"].write_bytes(b"partial event archive")
+        raise OSError("simulated interrupted event capture")
 
-    monkeypatch.setattr(snapshot, "_write_new", fail_after_first_event)
+    monkeypatch.setattr(snapshot, "_write_event_archive", interrupted_archive)
     with pytest.raises(OSError, match="interrupted"):
+        _capture(fixture, destination)
+
+    assert not destination.exists()
+    assert list(destination.parent.iterdir()) == []
+
+
+def test_event_change_during_capture_is_rejected(tmp_path: Path, monkeypatch) -> None:
+    fixture = _fixture(tmp_path)
+    destination = tmp_path / "backup" / "veritas"
+    destination.parent.mkdir()
+    original = snapshot._capture_systemd_config
+
+    def mutate_event(paths: list[Path]):
+        result = original(paths)
+        event = fixture["events"] / f"{1:020d}.json"
+        event.write_bytes(event.read_bytes() + b" ")
+        return result
+
+    monkeypatch.setattr(snapshot, "_capture_systemd_config", mutate_event)
+    with pytest.raises(snapshot.SnapshotError, match="event ledger changed during capture"):
+        _capture(fixture, destination)
+
+    assert not destination.exists()
+    assert list(destination.parent.iterdir()) == []
+
+
+def test_runtime_code_symlink_cannot_escape_approved_root(tmp_path: Path) -> None:
+    fixture = _fixture(tmp_path)
+    outside = tmp_path / "outside.py"
+    outside.write_bytes(fixture["script_data"])
+    link = fixture["script_root"] / "veritas_source_analysis.py"
+    link.unlink()
+    link.symlink_to(outside)
+    destination = tmp_path / "backup" / "veritas"
+    destination.parent.mkdir()
+
+    with pytest.raises(snapshot.SnapshotError, match="escapes its approved source root"):
         _capture(fixture, destination)
 
     assert not destination.exists()
@@ -299,10 +365,46 @@ def test_snapshot_verification_rejects_corrupted_archive_file(tmp_path: Path) ->
     destination = tmp_path / "backup" / "veritas"
     destination.parent.mkdir()
     _capture(fixture, destination)
-    event = destination / "source-analysis-events/v1/00000000000000000001.json"
-    event.write_bytes(event.read_bytes() + b"corrupt")
+    archive = destination / snapshot.LEDGER_ARCHIVE_PATH
+    damaged = bytearray(archive.read_bytes())
+    damaged[len(damaged) // 2] ^= 1
+    archive.write_bytes(damaged)
 
     with pytest.raises(snapshot.SnapshotError, match="checksum mismatch"):
+        snapshot.verify_snapshot(destination)
+
+
+def test_snapshot_verification_rejects_missing_event_archive_member(tmp_path: Path) -> None:
+    fixture = _fixture(tmp_path, both_versions=True)
+    destination = tmp_path / "backup" / "veritas"
+    destination.parent.mkdir()
+    _capture(fixture, destination)
+    archive_path = destination / snapshot.LEDGER_ARCHIVE_PATH
+    replacement = destination / "ledger.partial.tar"
+    with (
+        tarfile.open(archive_path, "r:") as original,
+        tarfile.open(replacement, "w:", format=tarfile.USTAR_FORMAT) as changed,
+    ):
+        members = original.getmembers()
+        for member in members[:-1]:
+            stream = original.extractfile(member)
+            assert stream is not None
+            with stream:
+                changed.addfile(member, stream)
+    replacement.replace(archive_path)
+    manifest_path = destination / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    archive_record = next(
+        item for item in manifest["files"] if item["path"] == snapshot.LEDGER_ARCHIVE_PATH
+    )
+    archive_bytes = archive_path.read_bytes()
+    archive_record["bytes"] = len(archive_bytes)
+    archive_record["sha256"] = _digest(archive_bytes)
+    manifest_bytes = (json.dumps(manifest, sort_keys=True, indent=2) + "\n").encode()
+    manifest_path.write_bytes(manifest_bytes)
+    (destination / "manifest.sha256").write_text(_digest(manifest_bytes) + "\n")
+
+    with pytest.raises(snapshot.SnapshotError, match="event count differs from its checkpoint"):
         snapshot.verify_snapshot(destination)
 
 

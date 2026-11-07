@@ -29,6 +29,7 @@
     "root": "/home/charlie/midas-veritas/data/veritas-observatory",
     "module_root": "/home/charlie/.local/share/midas-veritas/frozen-runtime-overlay/packages/midas",
     "script_root": "/home/charlie/.local/share/midas-veritas/frozen-runtime-overlay/scripts",
+    "script_source_root": "/home/charlie/midas-veritas/scripts",
     "campaign_path": "/home/charlie/midas-reality/data/research/reality/forward/mission2/campaign.json",
     "maximum_capture_bytes": 402653184,
     "minimum_timer_gap_seconds": 900,

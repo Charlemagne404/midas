@@ -7,6 +7,7 @@ import argparse
 import ctypes
 import fcntl
 import hashlib
+import io
 import json
 import os
 import re
@@ -14,6 +15,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import tarfile
 import time
 import uuid
 from datetime import UTC, datetime
@@ -21,12 +23,15 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-FORMAT_VERSION = 1
+FORMAT_VERSION = 2
+LEGACY_FORMAT_VERSION = 1
 MAX_CHECKPOINT_BYTES = 24 * 1024**2
 MAX_EVENT_BYTES = 256 * 1024
 MAX_LEDGER_BYTES = 256 * 1024**2
 MAX_EVENT_COUNT = 100_000
+MAX_LEDGER_ARCHIVE_BYTES = MAX_LEDGER_BYTES + MAX_EVENT_COUNT * 512 + 1024 * 1024
 MAX_SMALL_FILE_BYTES = 4 * 1024**2
+LEDGER_ARCHIVE_PATH = "source-analysis-events-v1.tar"
 SENSITIVE_ENVIRONMENT = re.compile(r"(?i)(password|token|secret|api[_-]?key)")
 
 
@@ -40,6 +45,46 @@ def _canonical(value: Any) -> bytes:
 
 def _sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def _stat_identity(value: os.stat_result) -> tuple[int, int, int, int, int]:
+    return (
+        value.st_dev,
+        value.st_ino,
+        value.st_size,
+        value.st_mtime_ns,
+        value.st_ctime_ns,
+    )
+
+
+def _hash_regular_file(path: Path, *, maximum: int, label: str) -> tuple[str, int]:
+    if path.is_symlink():
+        raise SnapshotError(f"{label} must not be a symlink: {path}")
+    try:
+        descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode) or before.st_size > maximum:
+            os.close(descriptor)
+            raise SnapshotError(f"{label} is not a bounded regular file: {path}")
+        digest = hashlib.sha256()
+        total = 0
+        with os.fdopen(descriptor, "rb") as stream:
+            while chunk := stream.read(1024 * 1024):
+                total += len(chunk)
+                if total > maximum:
+                    raise SnapshotError(f"{label} exceeds its size bound: {path}")
+                digest.update(chunk)
+            after_open = os.fstat(stream.fileno())
+        after_path = path.stat(follow_symlinks=False)
+    except OSError as error:
+        raise SnapshotError(f"cannot read {label} {path}: {error}") from error
+    if (
+        total != before.st_size
+        or _stat_identity(before) != _stat_identity(after_open)
+        or _stat_identity(after_open) != _stat_identity(after_path)
+    ):
+        raise SnapshotError(f"{label} changed while being read: {path}")
+    return digest.hexdigest(), total
 
 
 def _read_file(path: Path, *, maximum: int, label: str) -> tuple[bytes, os.stat_result]:
@@ -62,11 +107,18 @@ def _read_file(path: Path, *, maximum: int, label: str) -> tuple[bytes, os.stat_
         raise SnapshotError(f"cannot read {label} {path}: {error}") from error
     if len(data) > maximum or len(data) != before.st_size:
         raise SnapshotError(f"{label} changed size while being read: {path}")
-    if (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) != (
+    if (
+        before.st_dev,
+        before.st_ino,
+        before.st_size,
+        before.st_mtime_ns,
+        before.st_ctime_ns,
+    ) != (
         after.st_dev,
         after.st_ino,
         after.st_size,
         after.st_mtime_ns,
+        after.st_ctime_ns,
     ):
         raise SnapshotError(f"{label} changed while being read: {path}")
     return data, after
@@ -145,6 +197,176 @@ def _event_value(data: bytes, *, index: int) -> dict[str, Any]:
     ):
         raise SnapshotError(f"Veritas event {index} has an inconsistent segment index")
     return value
+
+
+def _event_directory_names(event_root: Path) -> set[str]:
+    try:
+        with os.scandir(event_root) as entries:
+            return {entry.name for entry in entries}
+    except OSError as error:
+        raise SnapshotError(f"cannot inventory Veritas event ledger: {error}") from error
+
+
+def _verify_event_sources_unchanged(
+    event_root: Path,
+    *,
+    max_count: int,
+    source_stats: dict[str, tuple[int, int, int, int, int]],
+) -> None:
+    expected_names = {f"{index:020d}.json" for index in range(1, max_count + 1)}
+    if _event_directory_names(event_root) != expected_names:
+        raise SnapshotError("Veritas event ledger changed during capture")
+    for filename, before in source_stats.items():
+        try:
+            current = (event_root / filename).stat(follow_symlinks=False)
+        except OSError as error:
+            raise SnapshotError("Veritas event ledger changed during capture") from error
+        if _stat_identity(current) != before:
+            raise SnapshotError("Veritas event ledger changed during capture")
+
+
+def _write_event_archive(
+    *,
+    event_root: Path,
+    archive_path: Path,
+    max_count: int,
+    latest: dict[str, Any],
+    checkpoint_counts: dict[int, tuple[str, str | None]],
+) -> tuple[int, str | None, dict[str, tuple[int, int, int, int, int]]]:
+    if not 0 <= max_count <= MAX_EVENT_COUNT:
+        raise SnapshotError("Veritas event count exceeds its capture bound")
+    expected_names = {f"{index:020d}.json" for index in range(1, max_count + 1)}
+    if _event_directory_names(event_root) != expected_names:
+        raise SnapshotError("Veritas event ledger contains missing or unexpected files")
+
+    chain = "0" * 64
+    total_event_bytes = 0
+    source_stats: dict[str, tuple[int, int, int, int, int]] = {}
+    archive_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    try:
+        descriptor = os.open(
+            archive_path,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
+            0o600,
+        )
+        with os.fdopen(descriptor, "wb") as archive_stream:
+            with tarfile.open(
+                fileobj=archive_stream, mode="w", format=tarfile.USTAR_FORMAT
+            ) as archive:
+                for index in range(1, max_count + 1):
+                    filename = f"{index:020d}.json"
+                    source = event_root / filename
+                    data, info = _read_file(source, maximum=MAX_EVENT_BYTES, label="Veritas event")
+                    event = _event_value(data, index=index)
+                    for key in ("campaign_id", "campaign_sha256", "analysis_version"):
+                        if event.get(key) != latest.get(key):
+                            raise SnapshotError(
+                                f"Veritas event {index} differs from checkpoint {key}"
+                            )
+                    event_digest = event["analysis_event_sha256"]
+                    chain = _sha256(bytes.fromhex(chain) + bytes.fromhex(event_digest))
+                    checkpoint = checkpoint_counts.get(index)
+                    if checkpoint and checkpoint[1] != chain:
+                        raise SnapshotError(
+                            f"checkpoint {checkpoint[0]} does not match event {index}"
+                        )
+                    member = tarfile.TarInfo(name=filename)
+                    member.size = len(data)
+                    member.mtime = 0
+                    member.mode = 0o600
+                    member.uid = 0
+                    member.gid = 0
+                    member.uname = ""
+                    member.gname = ""
+                    archive.addfile(member, io.BytesIO(data))
+                    source_stats[filename] = _stat_identity(info)
+                    total_event_bytes += len(data)
+                    if total_event_bytes > MAX_LEDGER_BYTES:
+                        raise SnapshotError(
+                            "Veritas event ledger exceeds its 256 MiB capture bound"
+                        )
+            archive_stream.flush()
+            os.fsync(archive_stream.fileno())
+    except BaseException:
+        archive_path.unlink(missing_ok=True)
+        raise
+
+    _verify_event_sources_unchanged(event_root, max_count=max_count, source_stats=source_stats)
+    return total_event_bytes, None if max_count == 0 else chain, source_stats
+
+
+def _verify_event_archive(
+    path: Path,
+    *,
+    maximum_count: int,
+    checkpoint_counts: dict[int, dict[str, Any]],
+    state: dict[str, Any],
+) -> tuple[int, int, str | None]:
+    if path.is_symlink():
+        raise SnapshotError("Veritas event archive must not be a symlink")
+    try:
+        descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        before = os.fstat(descriptor)
+        if not stat.S_ISREG(before.st_mode) or before.st_size > MAX_LEDGER_ARCHIVE_BYTES:
+            os.close(descriptor)
+            raise SnapshotError("Veritas event archive is not a bounded regular file")
+        with os.fdopen(descriptor, "rb") as stream:
+            try:
+                archive = tarfile.open(fileobj=stream, mode="r:")
+            except (tarfile.TarError, OSError) as error:
+                raise SnapshotError("Veritas event archive is corrupt") from error
+            with archive:
+                event_count = 0
+                event_bytes = 0
+                chain = "0" * 64
+                for member in archive:
+                    event_count += 1
+                    expected_name = f"{event_count:020d}.json"
+                    if (
+                        event_count > maximum_count
+                        or member.name != expected_name
+                        or not member.isfile()
+                        or member.size < 0
+                        or member.size > MAX_EVENT_BYTES
+                    ):
+                        raise SnapshotError("Veritas event archive has an unsafe member")
+                    event_stream = archive.extractfile(member)
+                    if event_stream is None:
+                        raise SnapshotError("Veritas event archive member cannot be read")
+                    with event_stream:
+                        data = event_stream.read(MAX_EVENT_BYTES + 1)
+                    if len(data) != member.size:
+                        raise SnapshotError("Veritas event archive member is truncated")
+                    event = _event_value(data, index=event_count)
+                    for key in ("campaign_id", "campaign_sha256", "analysis_version"):
+                        if event.get(key) != state.get(key):
+                            raise SnapshotError(
+                                f"Veritas event {event_count} differs from checkpoint {key}"
+                            )
+                    chain = _sha256(
+                        bytes.fromhex(chain) + bytes.fromhex(event["analysis_event_sha256"])
+                    )
+                    checkpoint = checkpoint_counts.get(event_count)
+                    if checkpoint and checkpoint.get("last_event_sha256") != chain:
+                        raise SnapshotError("Veritas checkpoint does not match its event chain")
+                    event_bytes += len(data)
+                    if event_bytes > MAX_LEDGER_BYTES:
+                        raise SnapshotError("Veritas snapshot event ledger exceeds its size bound")
+            after_open = os.fstat(stream.fileno())
+        after_path = path.stat(follow_symlinks=False)
+    except SnapshotError:
+        raise
+    except (OSError, tarfile.TarError) as error:
+        raise SnapshotError(f"cannot verify Veritas event archive: {error}") from error
+    if _stat_identity(before) != _stat_identity(after_open) or _stat_identity(
+        after_open
+    ) != _stat_identity(after_path):
+        raise SnapshotError("Veritas event archive changed during verification")
+    if event_count != maximum_count:
+        raise SnapshotError("Veritas snapshot event count differs from its checkpoint")
+    if event_count and checkpoint_counts.get(event_count, {}).get("last_event_sha256") != chain:
+        raise SnapshotError("Veritas snapshot checkpoint chain is inconsistent")
+    return event_count, event_bytes, None if not event_count else chain
 
 
 def _write_new(path: Path, data: bytes, *, sync: bool = True) -> None:
@@ -291,9 +513,14 @@ def _capture_systemd_config(paths: list[Path]) -> tuple[list[dict[str, Any]], di
 
 
 def _runtime_code_files(
-    state: dict[str, Any], *, module_root: Path, script_root: Path
-) -> dict[str, tuple[Path, bytes]]:
+    state: dict[str, Any],
+    *,
+    module_root: Path,
+    script_root: Path,
+    script_source_root: Path | None = None,
+) -> tuple[dict[str, tuple[Path, bytes]], list[dict[str, Any]]]:
     files: dict[str, tuple[Path, bytes]] = {}
+    origins: list[dict[str, Any]] = []
     for relative, expected in sorted(state["analysis_code_files"].items()):
         path_part = Path(relative)
         if path_part.is_absolute() or ".." in path_part.parts:
@@ -309,13 +536,44 @@ def _runtime_code_files(
             archive = _code_archive_path(relative)
         else:
             raise SnapshotError(f"unrecognized runtime code identity path: {relative}")
-        data, _ = _read_file(source, maximum=MAX_SMALL_FILE_BYTES, label="Veritas runtime code")
+        link_target: str | None = None
+        resolved = source
+        if source.is_symlink():
+            if relative != "scripts/veritas_source_analysis.py" or script_source_root is None:
+                raise SnapshotError(f"Veritas runtime code symlink is not allowed: {source}")
+            allowed_root = script_source_root.absolute()
+            if allowed_root.is_symlink() or not allowed_root.is_dir():
+                raise SnapshotError("Veritas script source root is missing or unsafe")
+            try:
+                allowed_root = allowed_root.resolve(strict=True)
+                link_target = os.readlink(source)
+                resolved = source.resolve(strict=True)
+            except OSError as error:
+                raise SnapshotError(
+                    f"cannot resolve Veritas runtime code link: {source}"
+                ) from error
+            if not resolved.is_relative_to(allowed_root):
+                raise SnapshotError("Veritas runtime code symlink escapes its approved source root")
+        data, _ = _read_file(resolved, maximum=MAX_SMALL_FILE_BYTES, label="Veritas runtime code")
         if _sha256(data) != expected:
             raise SnapshotError(f"runtime code digest differs from checkpoint: {relative}")
+        if source.is_symlink() and (
+            os.readlink(source) != link_target or source.resolve(strict=True) != resolved
+        ):
+            raise SnapshotError(f"Veritas runtime code symlink changed during capture: {relative}")
         files[archive.as_posix()] = (source, data)
+        origins.append(
+            {
+                "identity": relative,
+                "overlay_path": str(source),
+                "symlink_target": link_target,
+                "resolved_source_path": str(resolved),
+                "sha256": _sha256(data),
+            }
+        )
     if not files:
         raise SnapshotError("checkpoint contains no runtime source identities")
-    return files
+    return files, origins
 
 
 def _code_archive_path(relative: str) -> Path:
@@ -375,6 +633,7 @@ def create_snapshot(
     campaign_path: Path,
     systemd_units: list[str],
     systemd_config_paths: list[Path],
+    script_source_root: Path | None = None,
     minimum_timer_gap_seconds: int = 900,
 ) -> dict[str, Any]:
     source_root = source_root.absolute()
@@ -478,52 +737,42 @@ def create_snapshot(
                 {"path": archive_path, "bytes": len(data), "sha256": _sha256(data), "mode": 0o600}
             )
 
-        ledger = temp / "source-analysis-events" / "v1"
-        ledger.mkdir(mode=0o700, parents=True, exist_ok=False)
         event_base = root / "source-analysis-events"
         event_root = event_base / "v1"
         if event_base.is_symlink() or event_root.is_symlink() or not event_root.is_dir():
             raise SnapshotError("Veritas v1 event ledger is missing or unsafe")
-        total_event_bytes = 0
-        chain = "0" * 64
         checks_at_count = {
             int(state["processed_segment_count"]): (name, state.get("last_event_sha256"))
             for name, state in states.items()
         }
-        for index in range(1, max_count + 1):
-            source = event_root / f"{index:020d}.json"
-            data, info = _read_file(source, maximum=MAX_EVENT_BYTES, label="Veritas event")
-            event = _event_value(data, index=index)
-            for key in ("campaign_id", "campaign_sha256", "analysis_version"):
-                if event.get(key) != latest.get(key):
-                    raise SnapshotError(f"Veritas event {index} differs from checkpoint {key}")
-            event_digest = event["analysis_event_sha256"]
-            chain = _sha256(bytes.fromhex(chain) + bytes.fromhex(event_digest))
-            expected_at_count = checks_at_count.get(index)
-            if expected_at_count and expected_at_count[1] != chain:
-                raise SnapshotError(
-                    f"checkpoint {expected_at_count[0]} does not match event {index}"
-                )
-            target = ledger / source.name
-            # The ledger can contain tens of thousands of small events.
-            # Fsyncing each temporary file serially turns a bounded copy into
-            # tens of thousands of disk barriers, especially on the backup HDD.
-            # The complete staged tree is hashed before Restic reads it; Restic
-            # handles durability of the repository snapshot itself.
-            _write_new(target, data, sync=False)
-            file_records.append(
-                {
-                    "path": f"source-analysis-events/v1/{source.name}",
-                    "bytes": len(data),
-                    "sha256": _sha256(data),
-                    "mode": 0o600,
-                }
-            )
-            total_event_bytes += len(data)
-            if total_event_bytes > MAX_LEDGER_BYTES:
-                raise SnapshotError("Veritas event ledger exceeds its 256 MiB capture bound")
+        event_archive = temp / LEDGER_ARCHIVE_PATH
+        total_event_bytes, chain, event_source_stats = _write_event_archive(
+            event_root=event_root,
+            archive_path=event_archive,
+            max_count=max_count,
+            latest=latest,
+            checkpoint_counts=checks_at_count,
+        )
+        archive_digest, archive_bytes = _hash_regular_file(
+            event_archive,
+            maximum=MAX_LEDGER_ARCHIVE_BYTES,
+            label="Veritas event archive",
+        )
+        file_records.append(
+            {
+                "path": LEDGER_ARCHIVE_PATH,
+                "bytes": archive_bytes,
+                "sha256": archive_digest,
+                "mode": 0o600,
+            }
+        )
         provenance_files: dict[str, bytes] = {}
-        code_files = _runtime_code_files(latest, module_root=module_root, script_root=script_root)
+        code_files, runtime_code_origins = _runtime_code_files(
+            latest,
+            module_root=module_root,
+            script_root=script_root,
+            script_source_root=script_source_root,
+        )
         for archive_path, (_source, data) in code_files.items():
             provenance_files[archive_path] = data
         campaign_data, _ = _read_file(
@@ -622,6 +871,17 @@ def create_snapshot(
             )
             if summary_after != summary_data:
                 raise SnapshotError("Veritas research summary changed during capture")
+        current_code_files, current_code_origins = _runtime_code_files(
+            latest,
+            module_root=module_root,
+            script_root=script_root,
+            script_source_root=script_source_root,
+        )
+        if current_code_files != code_files or current_code_origins != runtime_code_origins:
+            raise SnapshotError("Veritas runtime code changed during capture")
+        _verify_event_sources_unchanged(
+            event_root, max_count=max_count, source_stats=event_source_stats
+        )
         _source_lock_is_free(root)
         units_after = _unit_properties(systemd_units)
         for unit, values in units_before.items():
@@ -641,6 +901,7 @@ def create_snapshot(
             "event_count": max_count,
             "event_bytes": total_event_bytes,
             "last_chain_sha256": None if not max_count else chain,
+            "archive_path": LEDGER_ARCHIVE_PATH,
         }
         files = sorted(file_records, key=lambda item: item["path"])
         manifest = {
@@ -663,6 +924,7 @@ def create_snapshot(
                 }
                 for name, state in states.items()
             },
+            "runtime_code_origins": runtime_code_origins,
             "ledger": ledger_info,
             "research_summary": summary_info,
             "timer_gap_seconds_at_start": gap_seconds,
@@ -674,7 +936,8 @@ def create_snapshot(
         manifest_data = (json.dumps(manifest, sort_keys=True, indent=2) + "\n").encode()
         _write_new(temp / "manifest.json", manifest_data)
         _write_new(temp / "manifest.sha256", (_sha256(manifest_data) + "\n").encode())
-        for path in (temp, temp / "checkpoints", ledger, temp / "source-analysis-events"):
+        for current, _directories, _files in os.walk(temp):
+            path = Path(current)
             descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
             try:
                 os.fsync(descriptor)
@@ -710,10 +973,11 @@ def verify_snapshot(directory: Path) -> dict[str, Any]:
     if (
         not isinstance(manifest, dict)
         or manifest.get("format") != "midas-veritas-analysis-snapshot"
-        or manifest.get("format_version") != FORMAT_VERSION
+        or manifest.get("format_version") not in {LEGACY_FORMAT_VERSION, FORMAT_VERSION}
         or checksum_data.decode("ascii", errors="replace").strip() != _sha256(manifest_data)
     ):
         raise SnapshotError("Veritas manifest format or checksum is invalid")
+    snapshot_version = int(manifest["format_version"])
     raw_files = manifest.get("files")
     if not isinstance(raw_files, list):
         raise SnapshotError("Veritas manifest file inventory is malformed")
@@ -758,6 +1022,8 @@ def verify_snapshot(directory: Path) -> dict[str, Any]:
         raise SnapshotError("Veritas checkpoint files disagree about campaign provenance")
 
     maximum_count = max(int(item["processed_segment_count"]) for item in states.values())
+    if maximum_count > MAX_EVENT_COUNT:
+        raise SnapshotError("Veritas checkpoint exceeds the event count bound")
     checkpoint_counts: dict[int, dict[str, Any]] = {}
     for item in states.values():
         count = int(item["processed_segment_count"])
@@ -802,11 +1068,25 @@ def verify_snapshot(directory: Path) -> dict[str, Any]:
                 continue
             if path.is_symlink() or not path.is_file() or rel not in expected:
                 raise SnapshotError("Veritas snapshot contains an unmanifested or unsafe file")
-            data, info = _read_file(path, maximum=MAX_LEDGER_BYTES, label="Veritas snapshot file")
             item = expected[rel]
+            if snapshot_version == FORMAT_VERSION and rel == LEDGER_ARCHIVE_PATH:
+                digest, size = _hash_regular_file(
+                    path,
+                    maximum=MAX_LEDGER_ARCHIVE_BYTES,
+                    label="Veritas event archive",
+                )
+                if size != item.get("bytes") or digest != item.get("sha256"):
+                    raise SnapshotError(f"Veritas snapshot file checksum mismatch: {rel}")
+                observed.add(rel)
+                ledger_seen = True
+                continue
+            data, info = _read_file(path, maximum=MAX_LEDGER_BYTES, label="Veritas snapshot file")
             if info.st_size != item.get("bytes") or _sha256(data) != item.get("sha256"):
                 raise SnapshotError(f"Veritas snapshot file checksum mismatch: {rel}")
-            if relative_directory == "source-analysis-events/v1":
+            if (
+                snapshot_version == LEGACY_FORMAT_VERSION
+                and relative_directory == "source-analysis-events/v1"
+            ):
                 match = re.fullmatch(r"([0-9]{20})\.json", filename)
                 if match is None:
                     raise SnapshotError("Veritas snapshot contains a noncanonical event filename")
@@ -831,6 +1111,20 @@ def verify_snapshot(directory: Path) -> dict[str, Any]:
             observed.add(rel)
     if observed != set(expected):
         raise SnapshotError("Veritas snapshot is missing one or more manifest files")
+    if snapshot_version == FORMAT_VERSION:
+        ledger_info = manifest.get("ledger")
+        if (
+            not isinstance(ledger_info, dict)
+            or ledger_info.get("archive_path") != LEDGER_ARCHIVE_PATH
+        ):
+            raise SnapshotError("Veritas manifest event archive identity is invalid")
+        event_count, event_bytes, archived_chain = _verify_event_archive(
+            directory / LEDGER_ARCHIVE_PATH,
+            maximum_count=maximum_count,
+            checkpoint_counts=checkpoint_counts,
+            state=state,
+        )
+        event_chain = "0" * 64 if archived_chain is None else archived_chain
     if not ledger_seen or event_count != maximum_count:
         raise SnapshotError("Veritas snapshot event count differs from its checkpoint")
     if any(
@@ -846,6 +1140,8 @@ def verify_snapshot(directory: Path) -> dict[str, Any]:
         "event_bytes": event_bytes,
         "last_chain_sha256": None if not event_count else event_chain,
     }
+    if snapshot_version == FORMAT_VERSION:
+        ledger["archive_path"] = LEDGER_ARCHIVE_PATH
     if ledger != manifest.get("ledger"):
         raise SnapshotError("Veritas snapshot ledger summary differs from its manifest")
     campaign, _ = _read_file(
@@ -863,6 +1159,25 @@ def verify_snapshot(directory: Path) -> dict[str, Any]:
         )
         if _sha256(code_data) != digest:
             raise SnapshotError(f"archived runtime code digest does not match: {code_name}")
+    if snapshot_version == FORMAT_VERSION:
+        origins = manifest.get("runtime_code_origins")
+        if not isinstance(origins, list):
+            raise SnapshotError("Veritas runtime code origin inventory is missing")
+        origin_map = {item.get("identity"): item for item in origins if isinstance(item, dict)}
+        if set(origin_map) != set(state["analysis_code_files"]):
+            raise SnapshotError("Veritas runtime code origin inventory is inconsistent")
+        for identity, digest in state["analysis_code_files"].items():
+            origin = origin_map[identity]
+            if (
+                origin.get("sha256") != digest
+                or not isinstance(origin.get("overlay_path"), str)
+                or not isinstance(origin.get("resolved_source_path"), str)
+                or (
+                    origin.get("symlink_target") is not None
+                    and not isinstance(origin.get("symlink_target"), str)
+                )
+            ):
+                raise SnapshotError(f"Veritas runtime code origin differs: {identity}")
     if manifest.get("credentials_included") is not False:
         raise SnapshotError("Veritas snapshot does not confirm credential exclusion")
     summary_info = manifest.get("research_summary", {})
@@ -891,6 +1206,7 @@ def build_parser() -> argparse.ArgumentParser:
     capture.add_argument("--destination", type=Path, required=True)
     capture.add_argument("--module-root", type=Path, required=True)
     capture.add_argument("--script-root", type=Path, required=True)
+    capture.add_argument("--script-source-root", type=Path)
     capture.add_argument("--campaign", type=Path, required=True)
     capture.add_argument("--unit", action="append", default=[])
     capture.add_argument("--unit-config", type=Path, action="append", default=[])
@@ -911,6 +1227,7 @@ def main(argv: list[str] | None = None) -> int:
                 destination=args.destination,
                 module_root=args.module_root,
                 script_root=args.script_root,
+                script_source_root=args.script_source_root,
                 campaign_path=args.campaign,
                 systemd_units=args.unit,
                 systemd_config_paths=args.unit_config,

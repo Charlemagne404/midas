@@ -517,6 +517,11 @@ def _snapshot_veritas_analysis(
         source_root = Path(str(source_spec["root"])).absolute()
         module_root = Path(str(source_spec["module_root"])).absolute()
         script_root = Path(str(source_spec["script_root"])).absolute()
+        script_source_root = (
+            Path(str(source_spec["script_source_root"])).absolute()
+            if source_spec.get("script_source_root")
+            else None
+        )
         campaign = Path(str(source_spec["campaign_path"])).absolute()
         unit_names = [str(value) for value in source_spec["systemd_units"]]
         config_paths = [
@@ -544,6 +549,7 @@ def _snapshot_veritas_analysis(
             destination=snapshot_dir,
             module_root=module_root,
             script_root=script_root,
+            script_source_root=script_source_root,
             campaign_path=campaign,
             systemd_units=unit_names,
             systemd_config_paths=config_paths,
