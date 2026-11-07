@@ -147,7 +147,7 @@ def _event_value(data: bytes, *, index: int) -> dict[str, Any]:
     return value
 
 
-def _write_new(path: Path, data: bytes) -> None:
+def _write_new(path: Path, data: bytes, *, sync: bool = True) -> None:
     path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     descriptor = os.open(
         path,
@@ -157,7 +157,8 @@ def _write_new(path: Path, data: bytes) -> None:
     with os.fdopen(descriptor, "wb") as stream:
         stream.write(data)
         stream.flush()
-        os.fsync(stream.fileno())
+        if sync:
+            os.fsync(stream.fileno())
 
 
 def _unit_properties(units: list[str]) -> dict[str, dict[str, str]]:
@@ -504,7 +505,12 @@ def create_snapshot(
                     f"checkpoint {expected_at_count[0]} does not match event {index}"
                 )
             target = ledger / source.name
-            _write_new(target, data)
+            # The ledger can contain tens of thousands of small events.
+            # Fsyncing each temporary file serially turns a bounded copy into
+            # tens of thousands of disk barriers, especially on the backup HDD.
+            # The complete staged tree is hashed before Restic reads it; Restic
+            # handles durability of the repository snapshot itself.
+            _write_new(target, data, sync=False)
             file_records.append(
                 {
                     "path": f"source-analysis-events/v1/{source.name}",

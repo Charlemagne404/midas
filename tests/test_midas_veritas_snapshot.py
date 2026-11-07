@@ -183,6 +183,21 @@ def test_systemd_configuration_redacts_secret_like_values(tmp_path: Path) -> Non
     assert records[0]["redacted_secret_material"] is True
 
 
+def test_bulk_event_file_write_can_batch_filesystem_syncs(tmp_path: Path, monkeypatch) -> None:
+    sync_calls = []
+    monkeypatch.setattr(snapshot.os, "fsync", lambda descriptor: sync_calls.append(descriptor))
+
+    event = tmp_path / "event.json"
+    snapshot._write_new(event, b"sealed event", sync=False)
+    assert event.read_bytes() == b"sealed event"
+    assert sync_calls == []
+
+    checkpoint = tmp_path / "checkpoint.json"
+    snapshot._write_new(checkpoint, b"sealed checkpoint")
+    assert checkpoint.read_bytes() == b"sealed checkpoint"
+    assert len(sync_calls) == 1
+
+
 def test_missing_event_rejects_capture_without_publishing_partial_snapshot(tmp_path: Path) -> None:
     fixture = _fixture(tmp_path)
     (fixture["events"] / f"{1:020d}.json").unlink()
@@ -205,13 +220,13 @@ def test_interrupted_capture_cleans_its_private_partial_directory(
     original = snapshot._write_new
     interrupted = False
 
-    def fail_after_first_event(path: Path, data: bytes) -> None:
+    def fail_after_first_event(path: Path, data: bytes, *, sync: bool = True) -> None:
         nonlocal interrupted
         if path.parent.name == "v1" and path.name.endswith(".json") and not interrupted:
             interrupted = True
-            original(path, data)
+            original(path, data, sync=sync)
             raise OSError("simulated interrupted event capture")
-        original(path, data)
+        original(path, data, sync=sync)
 
     monkeypatch.setattr(snapshot, "_write_new", fail_after_first_event)
     with pytest.raises(OSError, match="interrupted"):
