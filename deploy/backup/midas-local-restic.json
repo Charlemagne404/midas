@@ -23,6 +23,30 @@
       "path": "/home/charlie/midas-reality/data/research/reality/interface/preview.db"
     }
   ],
+  "veritas_source_analysis": {
+    "name": "veritas-source-analysis",
+    "tier": 1,
+    "root": "/home/charlie/midas-veritas/data/veritas-observatory",
+    "module_root": "/home/charlie/.local/share/midas-veritas/frozen-runtime-overlay/packages/midas",
+    "script_root": "/home/charlie/.local/share/midas-veritas/frozen-runtime-overlay/scripts",
+    "campaign_path": "/home/charlie/midas-reality/data/research/reality/forward/mission2/campaign.json",
+    "maximum_capture_bytes": 402653184,
+    "minimum_timer_gap_seconds": 900,
+    "systemd_units": [
+      "midas-veritas-source-analysis.service",
+      "midas-veritas-source-analysis.timer",
+      "midas-reality-capacity.service",
+      "midas-reality-capacity.timer"
+    ],
+    "systemd_config_paths": [
+      "/home/charlie/.config/systemd/user/midas-veritas-source-analysis.service",
+      "/home/charlie/.config/systemd/user/midas-veritas-source-analysis.timer",
+      "/home/charlie/.config/systemd/user/midas-veritas-source-analysis.service.d/20-frozen-campaign-import.conf",
+      "/home/charlie/.config/systemd/user/midas-reality-capacity.service",
+      "/home/charlie/.config/systemd/user/midas-reality-capacity.timer",
+      "/home/charlie/.config/systemd/user/midas-reality-capacity.service.d/90-frontier-memory-bound.conf"
+    ]
+  },
   "retention": {
     "minimum_snapshots_per_source": 2,
     "keep_daily": 7,
@@ -31,11 +55,6 @@
     "prune_schedule": "weekly-after-bounded-integrity-check"
   },
   "not_yet_covered": [
-    {
-      "tier": 1,
-      "path": "/home/charlie/midas-veritas/data/veritas-observatory",
-      "reason": "The active source-analysis timer can update the checkpoint and event ledger; no consistent multi-file online snapshot has been verified."
-    },
     {
       "tier": 2,
       "path": "/home/charlie/midas-reality/data/recordings/reality",

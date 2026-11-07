@@ -5,12 +5,14 @@ import os
 import shutil
 import sqlite3
 import stat
+import subprocess
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
 
 from scripts import midas_local_backup as backup
+from scripts import midas_sqlite_snapshot
 
 
 def test_budget_projection_fails_closed_at_hard_limit():
@@ -175,6 +177,20 @@ def test_policy_loader_requires_known_format_version(tmp_path: Path):
         backup.load_config(config)
 
 
+def test_restic_credential_can_come_from_systemd_credentials_directory(
+    tmp_path: Path, monkeypatch
+):
+    credential_dir = tmp_path / "credentials"
+    credential_dir.mkdir(mode=0o700)
+    password = credential_dir / "midas-restic-password"
+    password.write_text("fixture credential\n")
+    password.chmod(0o400)
+    monkeypatch.delenv("RESTIC_PASSWORD_FILE", raising=False)
+    monkeypatch.setenv("CREDENTIALS_DIRECTORY", str(credential_dir))
+
+    assert backup._credential_path() == password
+
+
 def test_prune_skips_when_a_source_has_only_one_recovery_point(tmp_path: Path, monkeypatch):
     root = tmp_path / "backup"
     root.mkdir(mode=0o700)
@@ -298,10 +314,37 @@ def test_disposable_restic_backup_check_and_restore(tmp_path: Path, monkeypatch)
         lambda _config: (root, repository, {"UUID": "fixture-uuid"}),
     )
     monkeypatch.setattr(backup, "require_admitted_scope", lambda **_kwargs: {"decision": "ADMIT"})
+
+    # The Restic integration test exercises the disposable database and archive
+    # path. Resource admission is covered by its own tests; keep the helper in
+    # process here so the test does not pretend a user service cgroup is admitted.
+    monkeypatch.setattr(midas_sqlite_snapshot, "_require_admitted_scope", lambda **_kwargs: {})
+    real_subprocess_run = subprocess.run
+
+    def run_sqlite_snapshot(command, **_kwargs):
+        parsed = list(command)
+        if not any(str(part).endswith("midas_sqlite_snapshot.py") for part in parsed):
+            return real_subprocess_run(command, **_kwargs)
+        source_path = Path(parsed[parsed.index("--source") + 1])
+        destination_path = Path(parsed[parsed.index("--destination") + 1])
+        reserve = int(parsed[parsed.index("--reserve-mib") + 1])
+        midas_sqlite_snapshot.create_snapshot(
+            source_path,
+            destination_path,
+            integrity="quick",
+            reserve_mib=reserve,
+            allow_large="--allow-large" in parsed,
+        )
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(backup.subprocess, "run", run_sqlite_snapshot)
     try:
         assert backup.initialize(config)["status"] == "INITIALIZED"
         captured = backup.backup(config)
         assert captured[0]["sqlite_integrity"] == ["ok"]
+        restore_check = backup.restore_check(config, "fixture")
+        assert restore_check["status"] == "RESTORED_AND_VERIFIED"
+        assert restore_check["source_validation"]["integrity_result"] == ["ok"]
         checked = backup.verify(config, read_data_subset="1/32", full_read=True)
         assert checked["read_data_subset"] == "all"
         assert backup.status(config)["status"] == "READY"

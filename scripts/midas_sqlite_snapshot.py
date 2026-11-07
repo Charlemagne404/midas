@@ -58,9 +58,14 @@ def _boot_id() -> str:
     return Path("/proc/sys/kernel/random/boot_id").read_text(encoding="ascii").strip()
 
 
-def _require_admitted_scope(*, require_heavy_profile: bool = False) -> dict[str, Any]:
+def _require_admitted_scope(
+    *, require_heavy_profile: bool = False, require_backup_profile: bool = False
+) -> dict[str, Any]:
     try:
-        return require_admitted_scope(require_heavy_profile=require_heavy_profile)
+        return require_admitted_scope(
+            require_heavy_profile=require_heavy_profile,
+            require_backup_profile=require_backup_profile,
+        )
     except BackupAdmissionError as error:
         raise SnapshotError(str(error)) from error
 
@@ -193,7 +198,7 @@ def create_snapshot(
     if source == destination or source.is_relative_to(destination):
         raise SnapshotError("snapshot destination overlaps the SQLite source")
     admission = _require_admitted_scope(
-        require_heavy_profile=source_info.st_size >= LARGE_DATABASE_BYTES
+        require_backup_profile=source_info.st_size >= LARGE_DATABASE_BYTES
     )
     if source_info.st_size >= LARGE_DATABASE_BYTES and not allow_large:
         raise SnapshotError(
@@ -236,7 +241,7 @@ def create_snapshot(
                 raise SnapshotError(
                     f"logical database size is {estimated_bytes} bytes; pass --allow-large after admission review"
                 )
-            _require_admitted_scope(require_heavy_profile=True)
+            _require_admitted_scope(require_backup_profile=True)
         filesystem = os.statvfs(destination.parent)
         available_bytes = filesystem.f_bavail * filesystem.f_frsize
         required_bytes = estimated_bytes + reserve_mib * 1024 * 1024
@@ -355,7 +360,7 @@ def verify_snapshot(directory: Path, *, integrity: str = "quick") -> dict[str, A
         raise SnapshotError("unsupported snapshot manifest format")
     snapshot = manifest.get("snapshot", {})
     _require_admitted_scope(
-        require_heavy_profile=int(snapshot.get("bytes", 0)) >= LARGE_DATABASE_BYTES
+        require_backup_profile=int(snapshot.get("bytes", 0)) >= LARGE_DATABASE_BYTES
     )
     if database_path.stat().st_size != snapshot.get("bytes"):
         raise SnapshotError("snapshot database size differs from manifest")

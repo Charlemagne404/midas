@@ -167,3 +167,67 @@ def test_bounded_test_allows_incidental_page_but_denies_repeated_swap_activity()
         memory_budget_bytes=32 * midas_resource_preflight.MIB,
         require_task_cgroup=True,
     )
+
+
+def test_backup_profile_ignores_occupied_inactive_swap_but_limits_movement() -> None:
+    observed = evidence()
+    observed["host_memory"].update(swap_free_bytes=0)
+    observed["host_memory"]["swap_activity_pages_during_sample"]["pswpin"] = 1
+    assert midas_resource_preflight.evaluate_evidence(
+        observed,
+        profile="backup",
+        memory_budget_bytes=512 * midas_resource_preflight.MIB,
+        require_task_cgroup=True,
+    ) == []
+    observed["host_memory"]["swap_activity_pages_during_sample"]["pswpout"] = 8
+    assert "swap_activity_above_profile_limit" in midas_resource_preflight.evaluate_evidence(
+        observed,
+        profile="backup",
+        memory_budget_bytes=512 * midas_resource_preflight.MIB,
+        require_task_cgroup=True,
+    )
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected"),
+    [
+        (
+            lambda e: e["pressure"]["io"]["full"].update(avg10=1.01),
+            "io_full_avg10_pressure_above_profile_limit",
+        ),
+        (
+            lambda e: e["pressure"]["io"]["full"].update(avg60=1.01),
+            "io_full_avg60_pressure_above_profile_limit",
+        ),
+        (
+            lambda e: e["user_manager_cgroup"]["pressure"]["full"].update(avg60=1.01),
+            "user_manager_memory_full_avg60_pressure_above_profile_limit",
+        ),
+        (
+            lambda e: e["protected_service_cgroups"]["midas-api.service"].update(
+                memory_headroom_bytes=127 * midas_resource_preflight.MIB
+            ),
+            "midas-api_service_memory_headroom_below_profile_floor",
+        ),
+    ],
+)
+def test_backup_profile_fails_closed_on_io_memory_or_service_pressure(
+    mutation, expected: str
+) -> None:
+    observed = evidence()
+    mutation(observed)
+    reasons = midas_resource_preflight.evaluate_evidence(
+        observed,
+        profile="backup",
+        memory_budget_bytes=512 * midas_resource_preflight.MIB,
+        require_task_cgroup=True,
+    )
+    assert expected in reasons
+
+
+def test_backup_profile_requires_a_full_30_second_sample() -> None:
+    from argparse import Namespace
+
+    args = Namespace(profile="backup", sample_seconds=29)
+    with pytest.raises(midas_resource_preflight.AdmissionError, match="30-second"):
+        midas_resource_preflight._gate(args, include_task_cgroup=False, lock_held=True)

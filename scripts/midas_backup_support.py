@@ -13,7 +13,9 @@ class BackupAdmissionError(RuntimeError):
     """The backup command is not running inside an admitted bounded scope."""
 
 
-def require_admitted_scope(*, require_heavy_profile: bool = False) -> dict[str, Any]:
+def require_admitted_scope(
+    *, require_heavy_profile: bool = False, require_backup_profile: bool = False
+) -> dict[str, Any]:
     declared = os.environ.get("MIDAS_RESOURCE_PREFLIGHT_CGROUP")
     if not declared:
         raise BackupAdmissionError(
@@ -35,11 +37,15 @@ def require_admitted_scope(*, require_heavy_profile: bool = False) -> dict[str, 
             "the backup task cgroup must have finite MemoryHigh and MemoryMax"
         )
     profile = os.environ.get("MIDAS_RESOURCE_PREFLIGHT_PROFILE")
-    if profile not in {"heavy", "bounded-test"}:
+    if profile not in {"heavy", "backup", "bounded-test"}:
         raise BackupAdmissionError("resource preflight profile is missing or invalid")
     if require_heavy_profile and profile != "heavy":
         raise BackupAdmissionError(
-            "large backup work requires a successful heavy resource preflight"
+            "this operation requires a successful heavy resource preflight"
+        )
+    if require_backup_profile and profile not in {"heavy", "backup"}:
+        raise BackupAdmissionError(
+            "large backup work requires a successful heavy or backup-specific resource preflight"
         )
     return {
         "cgroup": actual,

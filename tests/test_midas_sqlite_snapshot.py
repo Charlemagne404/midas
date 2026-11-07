@@ -21,7 +21,7 @@ def admitted_fixture_scope(monkeypatch):
     monkeypatch.setattr(
         midas_sqlite_snapshot,
         "_require_admitted_scope",
-        lambda *, require_heavy_profile=False: {
+        lambda *, require_heavy_profile=False, require_backup_profile=False: {
             "cgroup": "/fixture",
             "memory_current_bytes": 0,
             "memory_high_bytes": 1024**3,
@@ -121,7 +121,7 @@ def test_large_sqlite_work_requires_heavy_preflight_profile(monkeypatch, tmp_pat
     monkeypatch.setattr(Path, "read_text", read_text)
     monkeypatch.setenv("MIDAS_RESOURCE_PREFLIGHT_CGROUP", str(cgroup))
     monkeypatch.setenv("MIDAS_RESOURCE_PREFLIGHT_PROFILE", "bounded-test")
-    with pytest.raises(midas_sqlite_snapshot.SnapshotError, match="requires a successful heavy"):
+    with pytest.raises(midas_sqlite_snapshot.SnapshotError, match="successful heavy resource"):
         midas_sqlite_snapshot._require_admitted_scope(require_heavy_profile=True)
 
 

@@ -8,6 +8,7 @@ import fcntl
 import json
 import os
 import re
+import shutil
 import stat
 import subprocess
 import sys
@@ -71,6 +72,32 @@ PROFILES: dict[str, dict[str, float | int]] = {
         "io_some_avg60": 20.0,
         "io_full_avg10": 5.0,
         "io_full_avg60": 5.0,
+    },
+    # Large sequential backups can tolerate occupied but inactive swap. They
+    # still require a 30-second pressure sample, protected-service headroom,
+    # and tight memory, CPU, and I/O bounds.
+    "backup": {
+        "min_available_mib": 6144,
+        "min_swap_free_mib": 0,
+        "max_swap_activity_pages": 8,
+        "protected_headroom_mib": 128,
+        "memory_some_avg10": 8.0,
+        "memory_some_avg60": 8.0,
+        "memory_full_avg10": 0.25,
+        "memory_full_avg60": 0.5,
+        "user_memory_some_avg10": 15.0,
+        "user_memory_some_avg60": 15.0,
+        "user_memory_full_avg10": 1.0,
+        "user_memory_full_avg60": 1.0,
+        "cpu_some_avg10": 25.0,
+        "cpu_some_avg60": 25.0,
+        "io_some_avg10": 5.0,
+        "io_some_avg60": 5.0,
+        # Keep full-I/O stalls under 1% of recent wall time. This matches the
+        # existing bounded heavy-work ceiling, while backup I/O is additionally
+        # idle-class and limited to IOWeight=10.
+        "io_full_avg10": 1.0,
+        "io_full_avg60": 1.0,
     },
 }
 
@@ -433,6 +460,10 @@ def _check_lock_free() -> None:
 def _gate(
     args: argparse.Namespace, *, include_task_cgroup: bool, lock_held: bool
 ) -> tuple[dict[str, Any], list[str]]:
+    if args.sample_seconds <= 0 or args.sample_seconds > 60:
+        raise AdmissionError("--sample-seconds must be between 0 and 60")
+    if args.profile == "backup" and args.sample_seconds < 30:
+        raise AdmissionError("backup admission requires a 30-second swap and pressure sample")
     evidence = collect_evidence(
         storage_paths=args.storage_path,
         storage_required_bytes=args.storage_required_mib * MIB,
@@ -482,6 +513,16 @@ def _run_command(args: argparse.Namespace) -> int:
         raise AdmissionError("--timeout-seconds and --sample-seconds must be positive")
     if not 1 <= args.cpu_quota_percent <= 1000:
         raise AdmissionError("--cpu-quota-percent must be between 1 and 1000")
+    if args.profile == "backup" and (
+        args.memory_high_mib > 768
+        or args.memory_max_mib > 1024
+        or args.memory_budget_mib > 512
+        or args.cpu_quota_percent > 20
+    ):
+        raise AdmissionError(
+            "backup scope must stay within MemoryHigh=768 MiB, MemoryMax=1024 MiB, "
+            "a 512 MiB task budget, and CPUQuota=20%"
+        )
 
     lock = _acquire_lock()
     unit = f"midas-heavy-{args.label}-{os.getpid()}-{uuid.uuid4().hex[:8]}.scope"
@@ -494,11 +535,20 @@ def _run_command(args: argparse.Namespace) -> int:
             "memory_swap_max_bytes": 0,
             "cpu_quota_percent": args.cpu_quota_percent,
             "io_weight": 10,
+            "io_scheduling": "idle",
+            "cpu_nice": 19,
             "timeout_seconds": args.timeout_seconds,
         }
         _print_evidence(evidence)
         if reasons:
             return 75
+        task_command = args.command[1:] if args.command[0] == "--" else args.command
+        if args.profile == "backup":
+            ionice = shutil.which("ionice")
+            nice = shutil.which("nice")
+            if ionice is None or nice is None:
+                raise AdmissionError("backup jobs require ionice and nice for idle scheduling")
+            task_command = [ionice, "-c", "3", nice, "-n", "19", *task_command]
         inner = [
             sys.executable,
             str(Path(__file__).resolve()),
@@ -515,7 +565,7 @@ def _run_command(args: argparse.Namespace) -> int:
             "--sample-seconds",
             str(args.sample_seconds),
             "--",
-            *(args.command[1:] if args.command[0] == "--" else args.command),
+            *task_command,
         ]
         command = [
             "systemd-run",

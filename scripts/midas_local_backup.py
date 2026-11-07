@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Run bounded local MIDAS SQLite backups into an approved Restic repository.
-
-The command intentionally backs up only databases captured with the existing
-SQLite online-backup tool. Mutable Veritas checkpoints and the active Reality
-recording tree need their own consistent capture windows and are listed as
-uncovered in the policy file.
-"""
+"""Run bounded MIDAS database and Veritas-state backups into local Restic."""
 
 from __future__ import annotations
 
@@ -17,6 +11,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import tempfile
 import time
 import uuid
 from collections.abc import Iterator
@@ -26,9 +21,13 @@ from pathlib import Path
 from typing import Any
 
 try:
+    import midas_sqlite_snapshot
     from midas_backup_support import BackupAdmissionError, require_admitted_scope
+    from midas_veritas_snapshot import SnapshotError, create_snapshot, verify_snapshot
 except ModuleNotFoundError:
+    from scripts import midas_sqlite_snapshot
     from scripts.midas_backup_support import BackupAdmissionError, require_admitted_scope
+    from scripts.midas_veritas_snapshot import SnapshotError, create_snapshot, verify_snapshot
 
 MIB = 1024 * 1024
 FORMAT_VERSION = 1
@@ -216,7 +215,15 @@ def _source_size(source: Path) -> int:
 def _credential_path() -> Path:
     value = os.environ.get("RESTIC_PASSWORD_FILE")
     if not value:
-        raise BackupError("RESTIC_PASSWORD_FILE must be supplied as a systemd credential")
+        credential_directory = os.environ.get("CREDENTIALS_DIRECTORY")
+        if credential_directory:
+            # Transient systemd services expose credentials through this
+            # directory. Installed unit files set RESTIC_PASSWORD_FILE
+            # explicitly; this fallback keeps one-shot recovery runs inside
+            # the same systemd credential boundary.
+            value = str(Path(credential_directory) / "midas-restic-password")
+        else:
+            raise BackupError("Restic password must be supplied as a systemd credential")
     path = Path(value)
     _ensure_real_path(path, label="Restic credential")
     info = path.stat()
@@ -320,6 +327,30 @@ def _latest_snapshot(
         and tag in snapshot["tags"]
     ]
     return max(matching, key=lambda item: str(item.get("time", "")), default=None)
+
+
+def _source_specs(config: dict[str, Any]) -> list[dict[str, Any]]:
+    values = config.get("sqlite_sources", [])
+    if not isinstance(values, list):
+        raise BackupError("SQLite backup policy is malformed")
+    sources = [item for item in values if isinstance(item, dict)]
+    veritas = config.get("veritas_source_analysis")
+    if veritas is not None:
+        if not isinstance(veritas, dict) or not isinstance(veritas.get("name"), str):
+            raise BackupError("Veritas backup policy is malformed")
+        sources.append(veritas)
+    if len(sources) != len(values) + (1 if veritas is not None else 0):
+        raise BackupError("backup policy contains a malformed source entry")
+    names = [str(item.get("name", "")) for item in sources]
+    if any(
+        not name
+        or not name[0].isascii()
+        or not name[0].isalnum()
+        or any(not (char.isascii() and char.isalnum()) and char not in "_-" for char in name)
+        for name in names
+    ) or len(set(names)) != len(names):
+        raise BackupError("backup source names must be safe, present, and unique")
+    return sources
 
 
 def initialize(config: dict[str, Any]) -> dict[str, Any]:
@@ -469,21 +500,163 @@ def _snapshot_database(
         raise
 
 
+def _snapshot_veritas_analysis(
+    *,
+    root: Path,
+    repository: Path,
+    password: Path,
+    config: dict[str, Any],
+    source_spec: dict[str, Any],
+) -> dict[str, Any]:
+    target = config["target"]
+    name = str(source_spec["name"])
+    tag = f"midas-{name}"
+    try:
+        max_capture = int(source_spec["maximum_capture_bytes"])
+        minimum_gap = int(source_spec.get("minimum_timer_gap_seconds", 900))
+        source_root = Path(str(source_spec["root"])).absolute()
+        module_root = Path(str(source_spec["module_root"])).absolute()
+        script_root = Path(str(source_spec["script_root"])).absolute()
+        campaign = Path(str(source_spec["campaign_path"])).absolute()
+        unit_names = [str(value) for value in source_spec["systemd_units"]]
+        config_paths = [Path(str(value)).absolute() for value in source_spec["systemd_config_paths"]]
+    except (KeyError, TypeError, ValueError) as error:
+        raise BackupError("Veritas source-analysis backup policy is incomplete") from error
+    if max_capture <= 0 or max_capture > 512 * 1024**2:
+        raise BackupError("Veritas capture limit must be within 512 MiB")
+    if os.stat(source_root).st_dev == os.stat(root).st_dev:
+        raise BackupError("Veritas source-analysis data is on the backup destination device")
+    maximum = int(target["maximum_bytes"])
+    reserve = int(target["free_reserve_bytes"])
+    current = _allocated_bytes(root)
+    overhead = PROJECTED_RESTIC_OVERHEAD
+    _require_budget(current, 2 * max_capture + overhead, maximum, reserve=reserve)
+
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    stage = root / "staging" / f"{stamp}-{name}-{uuid.uuid4().hex[:8]}"
+    stage.mkdir(mode=0o700, parents=True, exist_ok=False)
+    snapshot_dir = stage / "veritas-snapshot"
+    try:
+        manifest = create_snapshot(
+            source_root=source_root,
+            destination=snapshot_dir,
+            module_root=module_root,
+            script_root=script_root,
+            campaign_path=campaign,
+            systemd_units=unit_names,
+            systemd_config_paths=config_paths,
+            minimum_timer_gap_seconds=minimum_gap,
+        )
+        checked = verify_snapshot(snapshot_dir)
+        if checked != manifest:
+            raise BackupError("Veritas snapshot verification changed its manifest")
+        snapshot_bytes = _allocated_bytes(snapshot_dir)
+        if snapshot_bytes > max_capture:
+            raise BackupError(
+                f"Veritas snapshot is {snapshot_bytes} bytes, above its {max_capture}-byte capture bound"
+            )
+        current = _allocated_bytes(root)
+        _require_budget(current, snapshot_bytes + overhead, maximum, reserve=reserve)
+        backup_result = _restic(
+            repository,
+            password,
+            "backup",
+            "--json",
+            "--host",
+            os.uname().nodename,
+            "--tag",
+            "midas-local",
+            "--tag",
+            "tier1",
+            "--tag",
+            tag,
+            str(snapshot_dir),
+        )
+        summary: dict[str, Any] | None = None
+        for line in backup_result.stdout.splitlines():
+            try:
+                value = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(value, dict) and value.get("message_type") == "summary":
+                summary = value
+        snapshot_id = summary.get("snapshot_id") if summary else None
+        if not isinstance(snapshot_id, str) or len(snapshot_id) < 8:
+            raise BackupError("Restic backup completed without a Veritas snapshot identifier")
+        recorded = _snapshots(repository, password)
+        if not any(item.get("id") == snapshot_id for item in recorded):
+            raise BackupError("new Veritas snapshot is missing from Restic inventory")
+        _restic(repository, password, "check")
+        value = {
+            "format": "midas-local-backup-receipt",
+            "format_version": FORMAT_VERSION,
+            "status": "VERIFIED",
+            "created_at_utc": datetime.now(UTC).isoformat(timespec="seconds"),
+            "source_name": name,
+            "source_path": str(source_root),
+            "source_bytes": snapshot_bytes,
+            "restic_snapshot_id": snapshot_id,
+            "restic_tag": tag,
+            "checkpoint_schema_versions": sorted(
+                {str(item["schema_version"]) for item in manifest["checkpoints"].values()}
+            ),
+            "checkpoint_state_sha256": {
+                filename: value["state_sha256"]
+                for filename, value in manifest["checkpoints"].items()
+            },
+            "event_count": manifest["ledger"]["event_count"],
+            "last_event_chain_sha256": manifest["ledger"]["last_chain_sha256"],
+            "campaign_sha256": manifest["checkpoints"][
+                manifest["authoritative_checkpoint"]
+            ]["campaign_sha256"],
+            "analysis_code_sha256": manifest["checkpoints"][
+                manifest["authoritative_checkpoint"]
+            ]["analysis_code_sha256"],
+            "verification_scope": (
+                "sealed checkpoint and event-chain verification before Restic capture; "
+                "Restic metadata check; full restore verification remains a separate operation"
+            ),
+            "mount_uuid": target["uuid"],
+            "hard_budget_bytes": maximum,
+            "retention": "NOT_RUN_BY_BACKUP_JOB",
+        }
+        _atomic_status(root, f"latest-{name}.json", value)
+        return value
+    except SnapshotError as error:
+        raise BackupError(str(error)) from error
+    finally:
+        shutil.rmtree(stage, ignore_errors=True)
+
+
 def backup(config: dict[str, Any]) -> list[dict[str, Any]]:
     try:
-        admission = require_admitted_scope(require_heavy_profile=True)
+        admission = require_admitted_scope(require_backup_profile=True)
     except BackupAdmissionError as error:
         raise BackupError(str(error)) from error
     root, repository, _ = verify_destination(config)
     password = _credential_path()
     if not repository.is_dir() or repository.is_symlink():
         raise BackupError("Restic repository is not initialized")
-    sources = config.get("sqlite_sources")
-    if not isinstance(sources, list) or not sources:
-        raise BackupError("backup policy contains no SQLite sources")
+    sources = config.get("sqlite_sources", [])
+    all_sources = _source_specs(config)
+    if not all_sources:
+        raise BackupError("backup policy contains no Tier 1 sources")
     results: list[dict[str, Any]] = []
     with _repository_lock(root):
         try:
+            # Preserve the small, irreplaceable research recovery state before
+            # starting the much longer full-database snapshots.
+            veritas_spec = config.get("veritas_source_analysis")
+            if veritas_spec is not None:
+                results.append(
+                    _snapshot_veritas_analysis(
+                        root=root,
+                        repository=repository,
+                        password=password,
+                        config=config,
+                        source_spec=veritas_spec,
+                    )
+                )
             for source_spec in sources:
                 if not isinstance(source_spec, dict):
                     raise BackupError("SQLite source policy entry is malformed")
@@ -565,6 +738,122 @@ def verify(
         return value
 
 
+def restore_check(config: dict[str, Any], source_name: str) -> dict[str, Any]:
+    """Restore one verified snapshot to a private temporary path and validate it."""
+    try:
+        require_admitted_scope(require_backup_profile=True)
+    except BackupAdmissionError as error:
+        raise BackupError(str(error)) from error
+    root, repository, volume = verify_destination(config)
+    password = _credential_path()
+    if not repository.is_dir() or repository.is_symlink():
+        raise BackupError("Restic repository is not initialized")
+    sources = _source_specs(config)
+    matches = [source for source in sources if source.get("name") == source_name]
+    if len(matches) != 1:
+        raise BackupError(f"backup policy has no unique source named {source_name!r}")
+    source = matches[0]
+    receipt_path = root / "status" / f"latest-{source_name}.json"
+    if receipt_path.is_symlink() or not receipt_path.is_file():
+        raise BackupError(f"verified backup receipt is missing for {source_name}")
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise BackupError(f"backup receipt is unreadable for {source_name}") from error
+    snapshot_id = receipt.get("restic_snapshot_id")
+    source_bytes = receipt.get("source_bytes")
+    if (
+        receipt.get("status") != "VERIFIED"
+        or receipt.get("source_name") != source_name
+        or receipt.get("mount_uuid") != volume.get("UUID")
+        or not isinstance(snapshot_id, str)
+        or not isinstance(source_bytes, int)
+        or isinstance(source_bytes, bool)
+        or source_bytes <= 0
+    ):
+        raise BackupError(f"backup receipt is not a valid recovery point for {source_name}")
+
+    base = Path(tempfile.gettempdir())
+    if base.is_symlink() or not base.is_dir():
+        raise BackupError("temporary restore root is missing or unsafe")
+    filesystem = os.statvfs(base)
+    available = filesystem.f_bavail * filesystem.f_frsize
+    reserve = int(config["target"].get("snapshot_reserve_mib", 5120)) * MIB
+    if available < source_bytes + reserve:
+        raise BackupError(
+            f"temporary restore space is insufficient: available={available}, "
+            f"required={source_bytes + reserve}"
+        )
+
+    with _repository_lock(root):
+        snapshots = _snapshots(repository, password)
+        recorded = next((item for item in snapshots if item.get("id") == snapshot_id), None)
+        expected_tag = f"midas-{source_name}"
+        if (
+            recorded is None
+            or not isinstance(recorded.get("tags"), list)
+            or expected_tag not in recorded["tags"]
+            or "tier1" not in recorded["tags"]
+        ):
+            raise BackupError(f"recovery snapshot is absent or mistagged for {source_name}")
+        try:
+            with tempfile.TemporaryDirectory(prefix="midas-restore-check-", dir=base) as name:
+                restore_root = Path(name)
+                _restic(
+                    repository,
+                    password,
+                    "restore",
+                    snapshot_id,
+                    "--target",
+                    str(restore_root),
+                    "--verify",
+                )
+                manifests = list(restore_root.rglob("manifest.json"))
+                if len(manifests) != 1 or manifests[0].is_symlink():
+                    raise BackupError("Restic restore did not produce exactly one safe source manifest")
+                restored_source = manifests[0].parent
+                veritas_spec = config.get("veritas_source_analysis")
+                if isinstance(veritas_spec, dict) and source is veritas_spec:
+                    evidence = verify_snapshot(restored_source)
+                    validation = {
+                        "checkpoint_schemas": sorted(
+                            {
+                                str(item["schema_version"])
+                                for item in evidence["checkpoints"].values()
+                            }
+                        ),
+                        "event_count": evidence["ledger"]["event_count"],
+                        "last_event_chain_sha256": evidence["ledger"]["last_chain_sha256"],
+                    }
+                else:
+                    evidence = midas_sqlite_snapshot.verify_snapshot(
+                        restored_source, integrity="quick"
+                    )
+                    validation = {
+                        "database_bytes": evidence["database_bytes"],
+                        "database_sha256": evidence["database_sha256"],
+                        "integrity_check": evidence["integrity_check"],
+                        "integrity_result": evidence["integrity_result"],
+                        "schema_sha256": evidence["metadata"]["schema_sha256"],
+                    }
+        except (SnapshotError, midas_sqlite_snapshot.SnapshotError) as error:
+            raise BackupError(f"restored {source_name} failed source validation: {error}") from error
+
+    result = {
+        "format": "midas-local-restore-check",
+        "format_version": FORMAT_VERSION,
+        "status": "RESTORED_AND_VERIFIED",
+        "verified_at_utc": datetime.now(UTC).isoformat(timespec="seconds"),
+        "source_name": source_name,
+        "restic_snapshot_id": snapshot_id,
+        "mount_uuid": volume.get("UUID"),
+        "restic_restore_verify": "passed",
+        "source_validation": validation,
+    }
+    _atomic_status(root, f"latest-restore-check-{source_name}.json", result)
+    return result
+
+
 def prune(config: dict[str, Any]) -> dict[str, Any]:
     try:
         require_admitted_scope(require_heavy_profile=True)
@@ -581,15 +870,13 @@ def prune(config: dict[str, Any]) -> dict[str, Any]:
     if minimum < 2 or keep_daily < 1 or keep_weekly < 1:
         raise BackupError("retention policy must preserve at least two snapshots per source")
     hostname = os.uname().nodename
-    sources = config.get("sqlite_sources", [])
-    if not isinstance(sources, list) or not sources:
-        raise BackupError("backup policy contains no SQLite sources")
+    sources = _source_specs(config)
+    if not sources:
+        raise BackupError("backup policy contains no Tier 1 sources")
     with _repository_lock(root):
         inventory = _snapshots(repository, password)
         skipped: list[str] = []
         for source in sources:
-            if not isinstance(source, dict) or not isinstance(source.get("name"), str):
-                raise BackupError("SQLite source policy entry is malformed")
             tag = f"midas-{source['name']}"
             matching = [
                 item
@@ -692,7 +979,7 @@ def status(config: dict[str, Any]) -> dict[str, Any]:
     target = config["target"]
     usage = _allocated_bytes(root)
     repository_initialized = repository.is_dir() and not repository.is_symlink()
-    expected_sources = [str(item["name"]) for item in config.get("sqlite_sources", [])]
+    expected_sources = [str(item["name"]) for item in _source_specs(config)]
     records: dict[str, Any] = {}
     known_snapshots: set[str] = set()
     repository_readable = False
@@ -779,7 +1066,11 @@ def build_parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="action", required=True)
     commands.add_parser("check-destination", help="read-only verification of the backup disk")
     commands.add_parser("init", help="initialize a new empty Restic repository")
-    commands.add_parser("backup", help="transactionally snapshot configured SQLite databases")
+    commands.add_parser("backup", help="snapshot configured Tier 1 databases and Veritas state")
+    restore_parser = commands.add_parser(
+        "restore-check", help="restore one Tier 1 snapshot privately and verify its contents"
+    )
+    restore_parser.add_argument("--source-name", required=True)
     verify_parser = commands.add_parser("verify", help="check repository integrity")
     verify_parser.add_argument("--read-data-subset", default="1/32")
     verify_parser.add_argument(
@@ -808,6 +1099,8 @@ def main(argv: list[str] | None = None) -> int:
             result = initialize(config)
         elif args.action == "backup":
             result = backup(config)
+        elif args.action == "restore-check":
+            result = restore_check(config, args.source_name)
         elif args.action == "verify":
             result = verify(
                 config,
