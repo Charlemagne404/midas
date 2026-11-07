@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
+import sqlite3
 import stat
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -15,6 +17,8 @@ def test_budget_projection_fails_closed_at_hard_limit():
     backup._require_budget(80, 15, 100, reserve=5)
     with pytest.raises(backup.BackupError, match="exceeds hard limit"):
         backup._require_budget(80, 16, 100, reserve=5)
+    with pytest.raises(backup.BackupError, match="approved 100 GB hard limit"):
+        backup._require_budget(0, 0, 100_000_000_001)
 
 
 def test_allocated_size_counts_repository_files_and_rejects_symlinks(tmp_path: Path):
@@ -23,7 +27,7 @@ def test_allocated_size_counts_repository_files_and_rejects_symlinks(tmp_path: P
     payload = root / "pack"
     payload.write_bytes(b"x" * 4096)
 
-    assert backup._allocated_bytes(root) >= payload.stat().st_blocks * 512
+    assert backup._allocated_bytes(root) >= (root.stat().st_blocks + payload.stat().st_blocks) * 512
 
     outside = tmp_path / "outside"
     outside.mkdir()
@@ -249,3 +253,74 @@ def test_full_verification_reads_every_repository_pack(tmp_path: Path, monkeypat
 
     assert calls == [("check", "--read-data")]
     assert result["read_data_subset"] == "all"
+
+
+def test_disposable_restic_backup_check_and_restore(tmp_path: Path, monkeypatch):
+    if shutil.which("restic") is None:
+        pytest.skip("Restic executable is required for the disposable integration test")
+    source_dir = Path("/dev/shm")
+    if not source_dir.is_dir():
+        pytest.skip("a separate temporary filesystem is required by the source safety check")
+    source = source_dir / f"midas-backup-{os.getpid()}-{tmp_path.name}.sqlite"
+    if source.exists():
+        pytest.skip("the disposable source path is already in use")
+    root = tmp_path / "backup"
+    root.mkdir(mode=0o700)
+    os.chmod(root, 0o700)
+    if os.stat(source_dir).st_dev == os.stat(root).st_dev:
+        pytest.skip("temporary source and repository need different devices")
+    with sqlite3.connect(source) as connection:
+        connection.execute("create table state (key text primary key, value text not null)")
+        connection.executemany(
+            "insert into state values (?, ?)",
+            [(f"key-{index:04d}", f"value-{index:04d}") for index in range(128)],
+        )
+    password = tmp_path / "restic-password"
+    password.write_text("disposable test secret\n")
+    password.chmod(0o600)
+    monkeypatch.setenv("RESTIC_PASSWORD_FILE", str(password))
+    repository = root / "repository"
+    config = {
+        "target": {
+            "mountpoint": str(tmp_path),
+            "uuid": "fixture-uuid",
+            "maximum_bytes": 8 * 1024**3,
+            "preferred_bytes": 4 * 1024**3,
+            "free_reserve_bytes": 0,
+            "snapshot_reserve_mib": 64,
+        },
+        "sqlite_sources": [{"name": "fixture", "path": str(source)}],
+        "retention": {"minimum_snapshots_per_source": 2},
+    }
+    monkeypatch.setattr(
+        backup,
+        "verify_destination",
+        lambda _config: (root, repository, {"UUID": "fixture-uuid"}),
+    )
+    monkeypatch.setattr(backup, "require_admitted_scope", lambda **_kwargs: {"decision": "ADMIT"})
+    try:
+        assert backup.initialize(config)["status"] == "INITIALIZED"
+        captured = backup.backup(config)
+        assert captured[0]["sqlite_integrity"] == ["ok"]
+        checked = backup.verify(config, read_data_subset="1/32", full_read=True)
+        assert checked["read_data_subset"] == "all"
+        assert backup.status(config)["status"] == "READY"
+
+        restored = tmp_path / "restored"
+        restored.mkdir()
+        backup._restic(
+            repository,
+            password,
+            "restore",
+            captured[0]["restic_snapshot_id"],
+            "--target",
+            str(restored),
+            "--verify",
+        )
+        restored_db = next(restored.rglob("database.sqlite"))
+        with sqlite3.connect(restored_db) as connection:
+            assert connection.execute("pragma integrity_check").fetchone()[0] == "ok"
+            assert connection.execute("select count(*) from state").fetchone()[0] == 128
+    finally:
+        for path in (source, Path(f"{source}-wal"), Path(f"{source}-shm")):
+            path.unlink(missing_ok=True)

@@ -33,6 +33,7 @@ except ModuleNotFoundError:
 MIB = 1024 * 1024
 FORMAT_VERSION = 1
 PROJECTED_RESTIC_OVERHEAD = 2 * 1024**3
+HARD_MAX_BACKUP_BYTES = 100_000_000_000
 
 
 class BackupError(RuntimeError):
@@ -113,6 +114,17 @@ def verify_destination(config: dict[str, Any]) -> tuple[Path, Path, dict[str, st
     root = Path(str(target.get("root", ""))).absolute()
     if not mount.is_absolute() or not root.is_relative_to(mount) or root == mount:
         raise BackupError("backup root must be a child of the configured mountpoint")
+    try:
+        preferred = int(target["preferred_bytes"])
+        maximum = int(target["maximum_bytes"])
+        reserve = int(target["free_reserve_bytes"])
+    except (KeyError, TypeError, ValueError) as error:
+        raise BackupError("backup storage limits are missing or malformed") from error
+    if preferred <= 0 or maximum < preferred or maximum > HARD_MAX_BACKUP_BYTES or reserve < 0:
+        raise BackupError("backup storage limits exceed the approved 100 GB hard budget")
+    repository_name = str(target.get("repository", "repository"))
+    if repository_name in {"", ".", ".."} or Path(repository_name).name != repository_name:
+        raise BackupError("repository must be a single directory name inside the backup root")
     _ensure_real_path(mount, label="backup mountpoint")
     if not os.path.ismount(mount):
         raise BackupError(f"backup mountpoint is not mounted: {mount}")
@@ -128,7 +140,8 @@ def verify_destination(config: dict[str, Any]) -> tuple[Path, Path, dict[str, st
         raise BackupError("backup mount is not on a separate physical device")
     if os.stat(mount).st_dev == os.stat("/").st_dev:
         raise BackupError("backup mount resolves to the primary filesystem")
-    if not root.is_dir() or root.is_symlink():
+    _ensure_real_path(root, label="dedicated backup root")
+    if not root.is_dir():
         raise BackupError("dedicated backup root must already exist as a real directory")
     if os.stat(root).st_dev != os.stat(mount).st_dev:
         raise BackupError("dedicated backup root is not on the approved mounted device")
@@ -138,7 +151,7 @@ def verify_destination(config: dict[str, Any]) -> tuple[Path, Path, dict[str, st
         raise BackupError("dedicated backup root must not grant group or other access")
     if not shutil.disk_usage(mount).free:
         raise BackupError("backup filesystem reports no free space")
-    repository = root / str(target.get("repository", "repository"))
+    repository = root / repository_name
     if not repository.is_relative_to(root):
         raise BackupError("repository path must be inside the dedicated backup root")
     if repository.is_symlink():
@@ -147,12 +160,20 @@ def verify_destination(config: dict[str, Any]) -> tuple[Path, Path, dict[str, st
 
 
 def _allocated_bytes(root: Path) -> int:
-    total = 0
+    root_info = root.lstat()
+    if not stat.S_ISDIR(root_info.st_mode):
+        raise BackupError(f"backup root is not a real directory: {root}")
+    total = root_info.st_blocks * 512
     for current, directories, files in os.walk(root, followlinks=False):
         parent = Path(current)
         for name in directories:
-            if (parent / name).is_symlink():
-                raise BackupError(f"symlink directory in backup destination: {parent / name}")
+            item = parent / name
+            info = item.lstat()
+            if not stat.S_ISDIR(info.st_mode):
+                if stat.S_ISLNK(info.st_mode):
+                    raise BackupError(f"symlink directory in backup destination: {item}")
+                raise BackupError(f"non-directory entry in backup destination: {item}")
+            total += info.st_blocks * 512
         for name in files:
             item = parent / name
             info = item.lstat()
@@ -165,6 +186,8 @@ def _allocated_bytes(root: Path) -> int:
 def _require_budget(current: int, additional: int, maximum: int, *, reserve: int = 0) -> None:
     if min(current, additional, reserve) < 0 or maximum <= 0:
         raise BackupError("storage budget inputs must be non-negative and bounded")
+    if maximum > HARD_MAX_BACKUP_BYTES:
+        raise BackupError("configured backup budget exceeds the approved 100 GB hard limit")
     projected = current + additional + reserve
     if projected > maximum:
         raise BackupError(
@@ -427,7 +450,8 @@ def _snapshot_database(
             "restic_snapshot_id": snapshot_id,
             "restic_tag": tag,
             "sqlite_snapshot_sha256": manifest["snapshot"]["sha256"],
-            "sqlite_integrity": manifest["snapshot"]["integrity_check"],
+            "sqlite_integrity": manifest["snapshot"]["integrity_result"],
+            "sqlite_integrity_mode": manifest["snapshot"]["integrity_check"],
             "verification_scope": (
                 "SQLite quick integrity check and Restic metadata inventory; data packs "
                 "are checked separately"
