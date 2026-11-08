@@ -8,6 +8,7 @@ import fcntl
 import json
 import os
 import shutil
+import signal
 import stat
 import subprocess
 import sys
@@ -38,6 +39,10 @@ RESTORE_VERIFICATION_MAX_AGE_SECONDS = 35 * 86400
 
 class BackupError(RuntimeError):
     """A backup precondition or operation failed closed."""
+
+
+def _handle_sigterm(_signum: int, _frame: Any) -> None:
+    raise KeyboardInterrupt
 
 
 def _run_json_command(command: list[str]) -> dict[str, Any]:
@@ -392,6 +397,29 @@ def _source_specs(config: dict[str, Any]) -> list[dict[str, Any]]:
     return sources
 
 
+def _select_sources(
+    config: dict[str, Any], source_name: str | None
+) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+    sources = _source_specs(config)
+    if not sources:
+        raise BackupError("backup policy contains no Tier 1 sources")
+    selected = (
+        sources
+        if source_name is None
+        else [item for item in sources if item["name"] == source_name]
+    )
+    if source_name is not None and not selected:
+        raise BackupError(f"unknown Tier 1 backup source: {source_name}")
+    veritas_spec = config.get("veritas_source_analysis")
+    selected_veritas = (
+        veritas_spec
+        if veritas_spec is not None
+        and any(item["name"] == veritas_spec["name"] for item in selected)
+        else None
+    )
+    return selected_veritas, [item for item in selected if item is not selected_veritas]
+
+
 def initialize(config: dict[str, Any]) -> dict[str, Any]:
     root, repository, volume = verify_destination(config)
     password = _credential_path()
@@ -675,7 +703,7 @@ def _snapshot_veritas_analysis(
         shutil.rmtree(stage, ignore_errors=True)
 
 
-def backup(config: dict[str, Any]) -> list[dict[str, Any]]:
+def backup(config: dict[str, Any], *, source_name: str | None = None) -> list[dict[str, Any]]:
     try:
         admission = require_admitted_scope(require_backup_profile=True)
     except BackupAdmissionError as error:
@@ -684,24 +712,20 @@ def backup(config: dict[str, Any]) -> list[dict[str, Any]]:
     password = _credential_path()
     if not repository.is_dir() or repository.is_symlink():
         raise BackupError("Restic repository is not initialized")
-    sources = config.get("sqlite_sources", [])
-    all_sources = _source_specs(config)
-    if not all_sources:
-        raise BackupError("backup policy contains no Tier 1 sources")
+    selected_veritas, sources = _select_sources(config, source_name)
     results: list[dict[str, Any]] = []
     with _repository_lock(root):
         try:
             # Preserve the small, irreplaceable research recovery state before
             # starting the much longer full-database snapshots.
-            veritas_spec = config.get("veritas_source_analysis")
-            if veritas_spec is not None:
+            if selected_veritas is not None:
                 results.append(
                     _snapshot_veritas_analysis(
                         root=root,
                         repository=repository,
                         password=password,
                         config=config,
-                        source_spec=veritas_spec,
+                        source_spec=selected_veritas,
                     )
                 )
             for source_spec in sources:
@@ -731,7 +755,12 @@ def backup(config: dict[str, Any]) -> list[dict[str, Any]]:
                 },
             )
             return results
-        except Exception as error:
+        except (Exception, KeyboardInterrupt) as error:
+            failure = (
+                "backup interrupted; incomplete staging is not a recovery point"
+                if isinstance(error, KeyboardInterrupt)
+                else str(error)
+            )
             _atomic_status(
                 root,
                 "last-run.json",
@@ -739,10 +768,12 @@ def backup(config: dict[str, Any]) -> list[dict[str, Any]]:
                     "status": "FAILED",
                     "failed_at_utc": datetime.now(UTC).isoformat(timespec="seconds"),
                     "admission": admission,
-                    "error": str(error),
+                    "error": failure,
                     "verified_this_run": [result["source_name"] for result in results],
                 },
             )
+            if isinstance(error, KeyboardInterrupt):
+                raise BackupError(failure) from error
             raise
 
 
@@ -1174,7 +1205,13 @@ def build_parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(dest="action", required=True)
     commands.add_parser("check-destination", help="read-only verification of the backup disk")
     commands.add_parser("init", help="initialize a new empty Restic repository")
-    commands.add_parser("backup", help="snapshot configured Tier 1 databases and Veritas state")
+    backup_parser = commands.add_parser(
+        "backup", help="snapshot configured Tier 1 databases and Veritas state"
+    )
+    backup_parser.add_argument(
+        "--source-name",
+        help="back up one named Tier 1 source so each large database has its own admission",
+    )
     restore_parser = commands.add_parser(
         "restore-check", help="restore one Tier 1 snapshot privately and verify its contents"
     )
@@ -1206,7 +1243,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.action == "init":
             result = initialize(config)
         elif args.action == "backup":
-            result = backup(config)
+            result = backup(config, source_name=args.source_name)
         elif args.action == "restore-check":
             result = restore_check(config, args.source_name)
         elif args.action == "verify":
@@ -1229,4 +1266,5 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGTERM, _handle_sigterm)
     raise SystemExit(main())

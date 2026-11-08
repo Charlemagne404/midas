@@ -6,8 +6,10 @@ import shutil
 import sqlite3
 import stat
 import subprocess
+from contextlib import nullcontext
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -55,6 +57,69 @@ def test_source_size_rejects_a_symlinked_wal(tmp_path: Path):
 
     with pytest.raises(backup.BackupError, match="sidecar must not be a symlink"):
         backup._source_size(source)
+
+
+def test_backup_source_selection_supports_independent_database_admission():
+    api = {"name": "midas-api", "path": "/source/api.db"}
+    reality = {"name": "reality-interface", "path": "/source/reality.db"}
+    veritas = {"name": "veritas-source-analysis", "root": "/source/veritas"}
+    config = {
+        "sqlite_sources": [api, reality],
+        "veritas_source_analysis": veritas,
+    }
+
+    selected_veritas, selected_sqlite = backup._select_sources(config, "reality-interface")
+    assert selected_veritas is None
+    assert selected_sqlite == [reality]
+    selected_veritas, selected_sqlite = backup._select_sources(config, "veritas-source-analysis")
+    assert selected_veritas is veritas
+    assert selected_sqlite == []
+    with pytest.raises(backup.BackupError, match="unknown Tier 1 backup source"):
+        backup._select_sources(config, "missing")
+
+
+def test_interrupted_backup_records_failure_without_replacing_recovery_state(
+    tmp_path: Path, monkeypatch
+):
+    root = tmp_path / "backup-root"
+    repository = root / "repository"
+    (root / "status").mkdir(parents=True)
+    repository.mkdir()
+    source = tmp_path / "source.db"
+    source.write_bytes(b"fixture")
+    config = {"sqlite_sources": [{"name": "fixture", "path": str(source)}]}
+    real_stat = os.stat
+
+    def source_on_other_device(path, *args, **kwargs):
+        result = real_stat(path, *args, **kwargs)
+        if Path(path) == source:
+            return SimpleNamespace(st_dev=result.st_dev + 1)
+        return result
+
+    monkeypatch.setattr(backup.os, "stat", source_on_other_device)
+    monkeypatch.setattr(backup, "require_admitted_scope", lambda **_kwargs: {"decision": "ADMIT"})
+    monkeypatch.setattr(
+        backup, "verify_destination", lambda _config: (root, repository, {"UUID": "fixture"})
+    )
+    monkeypatch.setattr(backup, "_credential_path", lambda: tmp_path / "password")
+    monkeypatch.setattr(backup, "_repository_lock", lambda _root: nullcontext())
+
+    def interrupted_snapshot(**_kwargs):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(
+        backup,
+        "_snapshot_database",
+        interrupted_snapshot,
+    )
+
+    with pytest.raises(backup.BackupError, match="incomplete staging is not a recovery point"):
+        backup.backup(config, source_name="fixture")
+
+    run = json.loads((root / "status" / "last-run.json").read_text())
+    assert run["status"] == "FAILED"
+    assert run["verified_this_run"] == []
+    assert "incomplete staging is not a recovery point" in run["error"]
 
 
 def test_snapshot_selection_requires_expected_host_and_source_tag():
@@ -527,6 +592,11 @@ def test_disposable_restic_backup_check_and_restore(tmp_path: Path, monkeypatch)
     # path. Resource admission is covered by its own tests; keep the helper in
     # process here so the test does not pretend a user service cgroup is admitted.
     monkeypatch.setattr(midas_sqlite_snapshot, "_require_admitted_scope", lambda **_kwargs: {})
+    monkeypatch.setattr(
+        midas_sqlite_snapshot,
+        "_io_pressure",
+        lambda: {"some": {"avg10": 0.0, "avg60": 0.0}, "full": {"avg10": 0.0, "avg60": 0.0}},
+    )
     real_subprocess_run = subprocess.run
 
     def run_sqlite_snapshot(command, **_kwargs):

@@ -30,6 +30,11 @@ def admitted_fixture_scope(monkeypatch):
             "preflight_profile": "bounded-test",
         },
     )
+    monkeypatch.setattr(
+        midas_sqlite_snapshot,
+        "_io_pressure",
+        lambda: {"some": {"avg10": 0.0, "avg60": 0.0}, "full": {"avg10": 0.0, "avg60": 0.0}},
+    )
 
 
 def test_wal_snapshot_restore_is_consistent_and_never_checkpoints_source(
@@ -51,6 +56,8 @@ def test_wal_snapshot_restore_is_consistent_and_never_checkpoints_source(
     assert manifest["source"]["metadata"]["journal_mode"] == "wal"
     assert manifest["snapshot"]["journal_mode"] == "delete"
     assert manifest["snapshot"]["integrity_result"] == ["ok"]
+    assert manifest["snapshot"]["online_backup"]["pages_per_step"] == 64
+    assert manifest["snapshot"]["online_backup"]["delay_per_step_ms"] == 25.0
     assert wal.exists()
     assert wal.stat().st_size == wal_bytes_before
     assert writer.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
@@ -70,6 +77,101 @@ def test_wal_snapshot_restore_is_consistent_and_never_checkpoints_source(
             ("second",),
         ]
     writer.close()
+
+
+def test_io_pressure_cancels_partial_snapshot_without_touching_live_wal(
+    tmp_path: Path, admitted_fixture_scope, monkeypatch
+) -> None:
+    source = tmp_path / "source.db"
+    writer = sqlite3.connect(source)
+    assert writer.execute("PRAGMA journal_mode=WAL").fetchone()[0] == "wal"
+    writer.execute("PRAGMA wal_autocheckpoint=0")
+    writer.execute("CREATE TABLE payload (id INTEGER PRIMARY KEY, value BLOB NOT NULL)")
+    writer.executemany("INSERT INTO payload(value) VALUES (?)", [(b"x" * 2048,) for _ in range(64)])
+    writer.commit()
+    wal = Path(f"{source}-wal")
+    wal_before = wal.read_bytes()
+    pressure_calls = 0
+
+    def pressure():
+        nonlocal pressure_calls
+        pressure_calls += 1
+        if pressure_calls == 1:
+            return {"some": {"avg10": 0.0, "avg60": 0.0}, "full": {"avg10": 0.0, "avg60": 0.0}}
+        return {"some": {"avg10": 0.0, "avg60": 0.0}, "full": {"avg10": 2.0, "avg60": 0.0}}
+
+    monkeypatch.setattr(midas_sqlite_snapshot, "_io_pressure", pressure)
+    monkeypatch.setattr(midas_sqlite_snapshot, "IO_PRESSURE_CHECK_INTERVAL_SECONDS", 0.0)
+    snapshot = tmp_path / "snapshot"
+    receipt = tmp_path / "failed-backup.json"
+
+    assert (
+        midas_sqlite_snapshot.main(
+            [
+                "backup",
+                "--source",
+                str(source),
+                "--destination",
+                str(snapshot),
+                "--reserve-mib",
+                "0",
+                "--receipt",
+                str(receipt),
+            ]
+        )
+        == 1
+    )
+
+    assert pressure_calls >= 2
+    failure = json.loads(receipt.read_text())
+    assert failure["decision"] == "FAILED"
+    assert "cancelled because host I/O pressure" in failure["error"]
+    assert not snapshot.exists()
+    assert not list(tmp_path.glob(".snapshot.partial.*"))
+    assert wal.read_bytes() == wal_before
+    assert writer.execute("SELECT count(*) FROM payload").fetchone()[0] == 64
+    writer.close()
+
+
+def test_io_pressure_parser_rejects_non_finite_values(monkeypatch):
+    monkeypatch.setattr(
+        midas_sqlite_snapshot.Path,
+        "read_text",
+        lambda *_args, **_kwargs: "some avg10=nan avg60=0 total=0\nfull avg10=0 avg60=0 total=0\n",
+    )
+    with pytest.raises(midas_sqlite_snapshot.SnapshotError, match="I/O pressure data is malformed"):
+        midas_sqlite_snapshot._io_pressure()
+
+
+def test_interrupted_sqlite_backup_writes_failed_receipt_without_snapshot(
+    tmp_path: Path, monkeypatch
+):
+    source = tmp_path / "source.db"
+    with sqlite3.connect(source) as connection:
+        connection.execute("CREATE TABLE state (value TEXT)")
+    destination = tmp_path / "snapshot"
+    receipt = tmp_path / "interrupted.json"
+
+    def interrupted(*_args, **_kwargs):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(midas_sqlite_snapshot, "create_snapshot", interrupted)
+    assert (
+        midas_sqlite_snapshot.main(
+            [
+                "backup",
+                "--source",
+                str(source),
+                "--destination",
+                str(destination),
+                "--receipt",
+                str(receipt),
+            ]
+        )
+        == 1
+    )
+    assert json.loads(receipt.read_text())["decision"] == "FAILED"
+    assert not destination.exists()
 
 
 def test_existing_restore_destination_is_never_overwritten(

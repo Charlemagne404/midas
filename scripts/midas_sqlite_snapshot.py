@@ -7,6 +7,7 @@ import argparse
 import ctypes
 import hashlib
 import json
+import math
 import os
 import shutil
 import signal
@@ -40,6 +41,13 @@ DATABASE_NAME = "database.sqlite"
 MANIFEST_NAME = "manifest.json"
 MANIFEST_HASH_NAME = "manifest.sha256"
 INCOMPLETE_NAME = ".midas-incomplete.json"
+BACKUP_PAGES_PER_STEP = 64
+BACKUP_STEP_DELAY_SECONDS = 0.025
+IO_PRESSURE_CHECK_INTERVAL_SECONDS = 1.0
+MAX_IO_SOME_AVG10 = 5.0
+MAX_IO_SOME_AVG60 = 5.0
+MAX_IO_FULL_AVG10 = 1.0
+MAX_IO_FULL_AVG60 = 1.5
 
 
 class SnapshotError(RuntimeError):
@@ -124,6 +132,91 @@ def _check_integrity(connection: sqlite3.Connection, mode: str) -> list[str]:
     if rows != ["ok"]:
         raise SnapshotError(f"SQLite PRAGMA {pragma} failed: {rows[:20]}")
     return rows
+
+
+def _io_pressure() -> dict[str, dict[str, float]]:
+    """Read host I/O pressure averages used by the backup admission profile."""
+    try:
+        lines = Path("/proc/pressure/io").read_text(encoding="ascii").splitlines()
+    except OSError as error:
+        raise SnapshotError(f"cannot monitor I/O pressure during SQLite backup: {error}") from error
+    result: dict[str, dict[str, float]] = {}
+    try:
+        for line in lines:
+            fields = line.split()
+            if not fields or fields[0] not in {"some", "full"}:
+                continue
+            averages: dict[str, float] = {}
+            for field in fields[1:]:
+                key, separator, value = field.partition("=")
+                if separator and key in {"avg10", "avg60"}:
+                    parsed = float(value)
+                    if not math.isfinite(parsed) or parsed < 0:
+                        raise ValueError(f"invalid {key} value {value!r}")
+                    averages[key] = parsed
+            result[fields[0]] = averages
+    except ValueError as error:
+        raise SnapshotError(f"I/O pressure data is malformed: {error}") from error
+    if any(
+        key not in result.get(name, {}) for name in ("some", "full") for key in ("avg10", "avg60")
+    ):
+        raise SnapshotError("I/O pressure averages are missing during SQLite backup")
+    return result
+
+
+def _check_backup_io_pressure() -> dict[str, dict[str, float]]:
+    pressure = _io_pressure()
+    if (
+        pressure["some"]["avg10"] > MAX_IO_SOME_AVG10
+        or pressure["some"]["avg60"] > MAX_IO_SOME_AVG60
+        or pressure["full"]["avg10"] > MAX_IO_FULL_AVG10
+        or pressure["full"]["avg60"] > MAX_IO_FULL_AVG60
+    ):
+        raise SnapshotError(
+            "SQLite backup cancelled because host I/O pressure exceeded backup admission limits: "
+            f"some avg10/avg60={pressure['some']['avg10']:.2f}/{pressure['some']['avg60']:.2f}, "
+            f"full avg10/avg60={pressure['full']['avg10']:.2f}/{pressure['full']['avg60']:.2f}"
+        )
+    return pressure
+
+
+def _online_backup(source: sqlite3.Connection, destination: sqlite3.Connection) -> dict[str, Any]:
+    """Copy in small paced steps and abort if global I/O pressure rises past admission limits."""
+    started = time.monotonic()
+    next_pressure_check = started
+    last_pressure = _check_backup_io_pressure()
+    pressure_checks = 1
+
+    def progress(_status: int, remaining: int, _total: int) -> None:
+        nonlocal next_pressure_check, last_pressure, pressure_checks
+        now = time.monotonic()
+        if now >= next_pressure_check:
+            last_pressure = _check_backup_io_pressure()
+            pressure_checks += 1
+            next_pressure_check = now + IO_PRESSURE_CHECK_INTERVAL_SECONDS
+        if remaining:
+            time.sleep(BACKUP_STEP_DELAY_SECONDS)
+
+    source.backup(
+        destination,
+        pages=BACKUP_PAGES_PER_STEP,
+        progress=progress,
+        sleep=0.1,
+    )
+    return {
+        "pages_per_step": BACKUP_PAGES_PER_STEP,
+        "delay_per_step_ms": BACKUP_STEP_DELAY_SECONDS * 1000,
+        "pressure_checks": pressure_checks,
+        "pressure_limits": {
+            "some_avg10_percent": MAX_IO_SOME_AVG10,
+            "some_avg60_percent": MAX_IO_SOME_AVG60,
+            "full_avg10_percent": MAX_IO_FULL_AVG10,
+            "full_avg60_percent": MAX_IO_FULL_AVG60,
+        },
+        "last_pressure_percent": last_pressure,
+        "elapsed_seconds": round(time.monotonic() - started, 3),
+        "cancelled_on_pressure": False,
+    }
 
 
 def _regular_file(path: Path, *, what: str) -> os.stat_result:
@@ -252,7 +345,7 @@ def create_snapshot(
 
         destination_connection = _sqlite_connection(destination_file, readonly=False)
         os.chmod(destination_file, 0o600)
-        source_connection.backup(destination_connection, pages=128, sleep=0.1)
+        copy_policy = _online_backup(source_connection, destination_connection)
         journal_mode = str(
             destination_connection.execute("PRAGMA journal_mode=DELETE").fetchone()[0]
         ).lower()
@@ -295,6 +388,7 @@ def create_snapshot(
                 "bytes": destination_info.st_size,
                 "sha256": _sha256_file(destination_file),
                 "journal_mode": "delete",
+                "online_backup": copy_policy,
                 "metadata": snapshot_metadata,
                 "integrity_check": integrity,
                 "integrity_result": integrity_result,
@@ -522,7 +616,6 @@ def _handle_sigterm(_signum: int, _frame: Any) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    signal.signal(signal.SIGTERM, _handle_sigterm)
     args = build_parser().parse_args(argv)
     started_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     receipt_path: Path | None = None
@@ -573,7 +666,18 @@ def main(argv: list[str] | None = None) -> int:
             )
         print(json.dumps(result, sort_keys=True, indent=2))
         return 0
-    except (SnapshotError, OSError, sqlite3.Error, ValueError, KeyError) as error:
+    except (
+        SnapshotError,
+        OSError,
+        sqlite3.Error,
+        ValueError,
+        KeyError,
+        KeyboardInterrupt,
+    ) as error:
+        if isinstance(error, KeyboardInterrupt):
+            error = SnapshotError(
+                "SQLite backup interrupted; incomplete snapshot was not published"
+            )
         failure = {"decision": "FAILED", "error": str(error)}
         if receipt_path is not None:
             try:
@@ -602,4 +706,5 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGTERM, _handle_sigterm)
     raise SystemExit(main())
