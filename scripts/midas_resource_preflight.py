@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import fcntl
 import json
+import math
 import os
 import re
 import shutil
@@ -101,8 +102,9 @@ PROFILES: dict[str, dict[str, float | int]] = {
     },
     # Veritas source analysis is a single bounded batch under a 256 MiB
     # service limit. Occupied swap is not useful headroom for this workload;
-    # require no swap movement during a full sample instead, with stricter
-    # memory, I/O, and protected-service limits than the general heavy profile.
+    # require no swap movement during a full sample instead. Its I/O ceilings
+    # match the existing heavy profile, with repeated samples and hysteresis;
+    # the memory and protected-service limits remain stricter.
     "veritas": {
         "min_available_mib": 6144,
         "min_swap_free_mib": 0,
@@ -120,8 +122,8 @@ PROFILES: dict[str, dict[str, float | int]] = {
         "cpu_some_avg60": 25.0,
         "io_some_avg10": 5.0,
         "io_some_avg60": 5.0,
-        "io_full_avg10": 0.5,
-        "io_full_avg60": 1.0,
+        "io_full_avg10": 1.0,
+        "io_full_avg60": 1.5,
     },
 }
 
@@ -132,6 +134,21 @@ VERITAS_RUN_LIMITS = {
     "cpu_quota_percent": 100,
     "timeout_seconds": 600,
 }
+VERITAS_IO_ADMISSION = {
+    "consecutive_samples": 2,
+    "hard_avg10": 3.0,
+    "hard_avg60": 3.0,
+    "sample_interval_seconds": 10.0,
+}
+VERITAS_IO_RUNTIME = {
+    "poll_interval_seconds": 1.0,
+    "cancel_avg10": 2.0,
+    "cancel_avg60": 1.5,
+    "hard_avg10": 3.0,
+    "hard_avg60": 3.0,
+    "consecutive_samples": 5,
+}
+VERITAS_RUNTIME_PRESSURE_CANCELLED = 76
 VERITAS_SERVICE_ROOT = Path.home() / "midas-veritas"
 VERITAS_OUTPUT_ROOT = VERITAS_SERVICE_ROOT / "data" / "veritas-observatory"
 VERITAS_SERVICE_UNIT = "midas-veritas-source-analysis.service"
@@ -168,7 +185,10 @@ def parse_psi(text: str) -> dict[str, dict[str, float]]:
         for field in parts[1:]:
             key, sep, value = field.partition("=")
             if sep and key.startswith("avg"):
-                values[key] = float(value)
+                number = float(value)
+                if not math.isfinite(number) or number < 0:
+                    raise AdmissionError("PSI average is not finite and nonnegative")
+                values[key] = number
         result[parts[0]] = values
     return result
 
@@ -435,15 +455,34 @@ def collect_evidence(
     storage_reserve_bytes: int,
     sample_seconds: float,
     include_task_cgroup: bool,
+    repeat_pressure_samples: bool = False,
     allow_current_veritas_service: bool = False,
 ) -> dict[str, Any]:
     meminfo = parse_meminfo(Path("/proc/meminfo").read_text(encoding="utf-8"))
-    pressure = {
-        name: parse_psi(Path(f"/proc/pressure/{name}").read_text(encoding="utf-8"))
-        for name in ("memory", "cpu", "io")
-    }
     vmstat_before = parse_vmstat(Path("/proc/vmstat").read_text(encoding="utf-8"))
-    time.sleep(sample_seconds)
+
+    def read_pressure() -> dict[str, dict[str, dict[str, float]]]:
+        return {
+            name: parse_psi(Path(f"/proc/pressure/{name}").read_text(encoding="utf-8"))
+            for name in ("memory", "cpu", "io")
+        }
+
+    pressure_samples: list[dict[str, Any]] = []
+    if repeat_pressure_samples:
+        pressure_samples.append({"elapsed_seconds": 0.0, "pressure": read_pressure()})
+        elapsed = 0.0
+        while elapsed < sample_seconds:
+            delay = min(
+                float(VERITAS_IO_ADMISSION["sample_interval_seconds"]),
+                sample_seconds - elapsed,
+            )
+            time.sleep(delay)
+            elapsed += delay
+            pressure_samples.append({"elapsed_seconds": elapsed, "pressure": read_pressure()})
+        pressure = pressure_samples[-1]["pressure"]
+    else:
+        pressure = read_pressure()
+        time.sleep(sample_seconds)
     vmstat_after = parse_vmstat(Path("/proc/vmstat").read_text(encoding="utf-8"))
     swap_delta = {key: vmstat_after[key] - vmstat_before[key] for key in vmstat_before}
     protected = {unit: _read_service_cgroup(unit) for unit in CRITICAL_UNITS}
@@ -477,6 +516,8 @@ def collect_evidence(
             storage_reserve_bytes,
         ),
     }
+    if repeat_pressure_samples:
+        evidence["pressure_samples"] = pressure_samples
     if include_task_cgroup:
         cgroup_path = _current_cgroup()
         evidence["task_cgroup"] = {
@@ -503,7 +544,7 @@ def evaluate_evidence(
     swap_activity = sum(host["swap_activity_pages_during_sample"].values())
     if swap_activity > int(limits["max_swap_activity_pages"]):
         reasons.append("swap_activity_above_profile_limit")
-    checks = (
+    checks: list[tuple[str, str, str, str]] = [
         ("memory", "some", "memory_some_avg10", "avg10"),
         ("memory", "some", "memory_some_avg60", "avg60"),
         ("memory", "full", "memory_full_avg10", "avg10"),
@@ -512,16 +553,38 @@ def evaluate_evidence(
         ("cpu", "some", "cpu_some_avg60", "avg60"),
         ("io", "some", "io_some_avg10", "avg10"),
         ("io", "some", "io_some_avg60", "avg60"),
-        ("io", "full", "io_full_avg10", "avg10"),
-        ("io", "full", "io_full_avg60", "avg60"),
-    )
+    ]
+    if profile != "veritas":
+        checks.extend(
+            (
+                ("io", "full", "io_full_avg10", "avg10"),
+                ("io", "full", "io_full_avg60", "avg60"),
+            )
+        )
     pressure = evidence["pressure"]
+    pressure_windows = [pressure]
+    if profile == "veritas":
+        samples = evidence.get("pressure_samples")
+        if not isinstance(samples, list) or len(samples) < 4:
+            reasons.append("missing_repeated_io_pressure_samples")
+        else:
+            pressure_windows = [
+                sample.get("pressure")
+                for sample in samples
+                if isinstance(sample, dict) and isinstance(sample.get("pressure"), dict)
+            ]
+            if len(pressure_windows) != len(samples):
+                reasons.append("invalid_repeated_io_pressure_samples")
+
     for resource, kind, limit_key, average in checks:
-        current = pressure[resource].get(kind, {}).get(average)
-        if current is None:
-            reasons.append(f"missing_{resource}_{kind}_{average}_pressure")
-        elif current > float(limits[limit_key]):
-            reasons.append(f"{resource}_{kind}_{average}_pressure_above_profile_limit")
+        for window in pressure_windows:
+            current = window.get(resource, {}).get(kind, {}).get(average)
+            if current is None:
+                reasons.append(f"missing_{resource}_{kind}_{average}_pressure")
+            elif current > float(limits[limit_key]):
+                reasons.append(f"{resource}_{kind}_{average}_pressure_above_profile_limit")
+    if profile == "veritas" and pressure_windows:
+        reasons.extend(_veritas_io_admission_reasons(pressure_windows))
     protected_floor = int(limits["protected_headroom_mib"]) * MIB
     for unit, state in evidence["protected_service_cgroups"].items():
         if state["memory_headroom_bytes"] < protected_floor:
@@ -549,6 +612,85 @@ def evaluate_evidence(
             elif headroom < memory_budget_bytes:
                 reasons.append("task_cgroup_headroom_below_task_budget")
     return reasons
+
+
+def _consecutive_pressure_limit_exceeded(
+    values: list[float], *, limit: float, consecutive: int
+) -> bool:
+    current = 0
+    for value in values:
+        current = current + 1 if value > limit else 0
+        if current >= consecutive:
+            return True
+    return False
+
+
+def _veritas_io_admission_reasons(
+    pressure_windows: list[dict[str, dict[str, dict[str, float]]]],
+) -> list[str]:
+    reasons: list[str] = []
+    full = [window.get("io", {}).get("full", {}) for window in pressure_windows]
+    avg10 = [item.get("avg10") for item in full]
+    avg60 = [item.get("avg60") for item in full]
+    if any(value is None for value in avg10):
+        reasons.append("missing_io_full_avg10_pressure")
+    if any(value is None for value in avg60):
+        reasons.append("missing_io_full_avg60_pressure")
+    if any(value is None for value in avg10 + avg60):
+        return reasons
+
+    avg10_values = [value for value in avg10 if value is not None]
+    avg60_values = [value for value in avg60 if value is not None]
+    hard10 = float(VERITAS_IO_ADMISSION["hard_avg10"])
+    hard60 = float(VERITAS_IO_ADMISSION["hard_avg60"])
+    if any(value > hard10 for value in avg10_values) or any(
+        value > hard60 for value in avg60_values
+    ):
+        reasons.append("io_full_pressure_above_veritas_hard_limit")
+    consecutive = int(VERITAS_IO_ADMISSION["consecutive_samples"])
+    if _consecutive_pressure_limit_exceeded(
+        avg10_values,
+        limit=float(PROFILES["veritas"]["io_full_avg10"]),
+        consecutive=consecutive,
+    ):
+        reasons.append("io_full_avg10_pressure_sustained_above_profile_limit")
+    if _consecutive_pressure_limit_exceeded(
+        avg60_values,
+        limit=float(PROFILES["veritas"]["io_full_avg60"]),
+        consecutive=consecutive,
+    ):
+        reasons.append("io_full_avg60_pressure_sustained_above_profile_limit")
+    return reasons
+
+
+def veritas_runtime_io_cancel_reason(
+    samples: list[dict[str, float]],
+) -> str | None:
+    """Return a fail-closed cancellation reason for sampled runtime I/O PSI."""
+    if not samples:
+        return None
+    for item in samples:
+        for key in ("avg10", "avg60"):
+            value = item.get(key)
+            if not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+                return "io_pressure_sample_invalid"
+    current = samples[-1]
+    avg10 = current.get("avg10")
+    avg60 = current.get("avg60")
+    assert avg10 is not None and avg60 is not None
+    if avg10 > float(VERITAS_IO_RUNTIME["hard_avg10"]):
+        return "io_full_avg10_pressure_above_runtime_hard_limit"
+    if avg60 > float(VERITAS_IO_RUNTIME["hard_avg60"]):
+        return "io_full_avg60_pressure_above_runtime_hard_limit"
+    consecutive = int(VERITAS_IO_RUNTIME["consecutive_samples"])
+    recent = samples[-consecutive:]
+    if len(recent) < consecutive:
+        return None
+    if all(item["avg10"] > float(VERITAS_IO_RUNTIME["cancel_avg10"]) for item in recent):
+        return "io_full_avg10_pressure_sustained_during_veritas_run"
+    if all(item["avg60"] > float(VERITAS_IO_RUNTIME["cancel_avg60"]) for item in recent):
+        return "io_full_avg60_pressure_sustained_during_veritas_run"
+    return None
 
 
 def _lock_path() -> Path:
@@ -610,6 +752,7 @@ def _gate(
         storage_reserve_bytes=args.storage_reserve_mib * MIB,
         sample_seconds=args.sample_seconds,
         include_task_cgroup=include_task_cgroup,
+        repeat_pressure_samples=args.profile == "veritas",
         allow_current_veritas_service=args.profile == "veritas" and include_task_cgroup,
     )
     reasons = evaluate_evidence(
@@ -641,6 +784,84 @@ def _kill_unit(unit: str, grace_seconds: float) -> None:
             return
         time.sleep(0.1)
     _systemctl("kill", "--signal=KILL", "--kill-whom=all", unit, check=False)
+
+
+def _read_veritas_runtime_io_pressure() -> dict[str, float]:
+    try:
+        pressure = parse_psi(Path("/proc/pressure/io").read_text(encoding="utf-8"))
+        full = pressure.get("full", {})
+        avg10 = full.get("avg10")
+        avg60 = full.get("avg60")
+    except (OSError, ValueError, AdmissionError) as error:
+        raise AdmissionError(f"cannot monitor runtime I/O PSI: {error}") from error
+    if avg10 is None or avg60 is None:
+        raise AdmissionError("runtime I/O PSI full averages are missing")
+    return {"avg10": avg10, "avg60": avg60}
+
+
+def _cancel_bounded_unit(process: subprocess.Popen[Any], unit: str, grace_seconds: float) -> None:
+    _kill_unit(unit, grace_seconds)
+    try:
+        process.wait(timeout=grace_seconds + 2)
+    except subprocess.TimeoutExpired:
+        process.terminate()
+        try:
+            process.wait(timeout=1)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=1)
+
+
+def _wait_for_veritas_process(
+    process: subprocess.Popen[Any],
+    unit: str,
+    *,
+    timeout_seconds: float,
+    termination_grace_seconds: float,
+) -> int:
+    deadline = time.monotonic() + timeout_seconds
+    samples: list[dict[str, float]] = []
+    while True:
+        return_code = process.poll()
+        if return_code is not None:
+            return return_code
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            _cancel_bounded_unit(process, unit, termination_grace_seconds)
+            return 124
+        try:
+            sample = _read_veritas_runtime_io_pressure()
+        except AdmissionError as error:
+            return_code = process.poll()
+            if return_code is not None:
+                return return_code
+            _print_evidence(
+                {
+                    "decision": "CANCEL",
+                    "reason": "runtime_io_pressure_unavailable",
+                    "detail": str(error),
+                    "recent_io_pressure": samples,
+                }
+            )
+            _cancel_bounded_unit(process, unit, termination_grace_seconds)
+            return VERITAS_RUNTIME_PRESSURE_CANCELLED
+        samples = (samples + [sample])[-int(VERITAS_IO_RUNTIME["consecutive_samples"]) :]
+        reason = veritas_runtime_io_cancel_reason(samples)
+        if reason:
+            return_code = process.poll()
+            if return_code is not None:
+                return return_code
+            _print_evidence(
+                {
+                    "decision": "CANCEL",
+                    "reason": reason,
+                    "recent_io_pressure": samples,
+                    "sampled_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                }
+            )
+            _cancel_bounded_unit(process, unit, termination_grace_seconds)
+            return VERITAS_RUNTIME_PRESSURE_CANCELLED
+        time.sleep(min(float(VERITAS_IO_RUNTIME["poll_interval_seconds"]), remaining))
 
 
 def _run_command(args: argparse.Namespace) -> int:
@@ -780,18 +1001,17 @@ def _run_command(args: argparse.Namespace) -> int:
         except OSError as error:
             raise AdmissionError(f"could not start bounded systemd scope: {error}") from error
         try:
-            return_code = process.wait(timeout=args.timeout_seconds)
+            if args.profile == "veritas":
+                return_code = _wait_for_veritas_process(
+                    process,
+                    unit,
+                    timeout_seconds=args.timeout_seconds,
+                    termination_grace_seconds=args.termination_grace_seconds,
+                )
+            else:
+                return_code = process.wait(timeout=args.timeout_seconds)
         except subprocess.TimeoutExpired:
-            _kill_unit(unit, args.termination_grace_seconds)
-            try:
-                process.wait(timeout=args.termination_grace_seconds + 2)
-            except subprocess.TimeoutExpired:
-                process.terminate()
-                try:
-                    process.wait(timeout=1)
-                except subprocess.TimeoutExpired:
-                    process.kill()
-                    process.wait(timeout=1)
+            _cancel_bounded_unit(process, unit, args.termination_grace_seconds)
             return 124
         except KeyboardInterrupt:
             _kill_unit(unit, args.termination_grace_seconds)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import importlib.util
 from pathlib import Path
 
@@ -13,23 +14,27 @@ SPEC.loader.exec_module(midas_resource_preflight)
 
 
 def evidence() -> dict:
+    pressure = {
+        "memory": {
+            "some": {"avg10": 0.0, "avg60": 0.0},
+            "full": {"avg10": 0.0, "avg60": 0.0},
+        },
+        "cpu": {"some": {"avg10": 0.0, "avg60": 0.0}},
+        "io": {
+            "some": {"avg10": 0.0, "avg60": 0.0},
+            "full": {"avg10": 0.0, "avg60": 0.0},
+        },
+    }
     return {
         "host_memory": {
             "available_bytes": 12 * 1024 * midas_resource_preflight.MIB,
             "swap_free_bytes": 2 * midas_resource_preflight.MIB,
             "swap_activity_pages_during_sample": {"pswpin": 0, "pswpout": 0},
         },
-        "pressure": {
-            "memory": {
-                "some": {"avg10": 0.0, "avg60": 0.0},
-                "full": {"avg10": 0.0, "avg60": 0.0},
-            },
-            "cpu": {"some": {"avg10": 0.0, "avg60": 0.0}},
-            "io": {
-                "some": {"avg10": 0.0, "avg60": 0.0},
-                "full": {"avg10": 0.0, "avg60": 0.0},
-            },
-        },
+        "pressure": pressure,
+        "pressure_samples": [
+            {"elapsed_seconds": float(index * 10), "pressure": pressure} for index in range(4)
+        ],
         "protected_service_cgroups": {
             "midas-api.service": {"memory_headroom_bytes": 1024 * midas_resource_preflight.MIB},
             "midas-reality.service": {"memory_headroom_bytes": 1024 * midas_resource_preflight.MIB},
@@ -251,8 +256,190 @@ def test_veritas_profile_admits_full_inactive_swap_with_strict_pressure_bounds()
     assert midas_resource_preflight.PROFILES["heavy"]["min_swap_free_mib"] == 256
     assert (
         midas_resource_preflight.PROFILES["veritas"]["io_full_avg10"]
-        < (midas_resource_preflight.PROFILES["heavy"]["io_full_avg10"])
+        == midas_resource_preflight.PROFILES["heavy"]["io_full_avg10"]
     )
+    assert (
+        midas_resource_preflight.PROFILES["veritas"]["io_full_avg60"]
+        == midas_resource_preflight.PROFILES["heavy"]["io_full_avg60"]
+    )
+
+
+def _set_io_full_samples(
+    observed: dict,
+    avg10_values: list[float],
+    avg60_values: list[float],
+) -> None:
+    samples = []
+    for index, (avg10, avg60) in enumerate(zip(avg10_values, avg60_values, strict=True)):
+        pressure = copy.deepcopy(observed["pressure"])
+        pressure["io"]["full"].update(avg10=avg10, avg60=avg60)
+        samples.append({"elapsed_seconds": float(index * 10), "pressure": pressure})
+    observed["pressure_samples"] = samples
+    observed["pressure"] = samples[-1]["pressure"]
+
+
+def test_veritas_admission_accepts_measured_idle_psi_and_one_short_excursion() -> None:
+    observed = evidence()
+    observed["host_memory"].update(swap_free_bytes=0)
+    _set_io_full_samples(observed, [0.52, 0.62, 0.29, 0.88], [0.63, 0.62, 0.55, 0.75])
+    assert (
+        midas_resource_preflight.evaluate_evidence(
+            observed,
+            profile="veritas",
+            memory_budget_bytes=128 * midas_resource_preflight.MIB,
+            require_task_cgroup=True,
+        )
+        == []
+    )
+
+    _set_io_full_samples(observed, [1.2, 0.8, 0.8, 0.8], [0.7, 0.7, 0.7, 0.7])
+    assert (
+        midas_resource_preflight.evaluate_evidence(
+            observed,
+            profile="veritas",
+            memory_budget_bytes=128 * midas_resource_preflight.MIB,
+            require_task_cgroup=True,
+        )
+        == []
+    )
+
+
+@pytest.mark.parametrize(
+    ("avg10_values", "avg60_values", "expected"),
+    [
+        (
+            [0.8, 1.1, 1.2, 0.8],
+            [0.7, 0.8, 0.8, 0.8],
+            "io_full_avg10_pressure_sustained_above_profile_limit",
+        ),
+        (
+            [0.8, 0.8, 0.8, 0.8],
+            [1.4, 1.6, 1.7, 1.4],
+            "io_full_avg60_pressure_sustained_above_profile_limit",
+        ),
+        (
+            [0.8, 0.8, 3.1, 0.8],
+            [0.7, 0.7, 0.7, 0.7],
+            "io_full_pressure_above_veritas_hard_limit",
+        ),
+    ],
+)
+def test_veritas_admission_rejects_sustained_or_severe_io_pressure(
+    avg10_values: list[float], avg60_values: list[float], expected: str
+) -> None:
+    observed = evidence()
+    observed["host_memory"].update(swap_free_bytes=0)
+    _set_io_full_samples(observed, avg10_values, avg60_values)
+    reasons = midas_resource_preflight.evaluate_evidence(
+        observed,
+        profile="veritas",
+        memory_budget_bytes=128 * midas_resource_preflight.MIB,
+        require_task_cgroup=True,
+    )
+    assert expected in reasons
+
+
+def test_veritas_admission_fails_closed_without_repeated_psi_samples() -> None:
+    observed = evidence()
+    observed["pressure_samples"] = []
+    reasons = midas_resource_preflight.evaluate_evidence(
+        observed,
+        profile="veritas",
+        memory_budget_bytes=128 * midas_resource_preflight.MIB,
+        require_task_cgroup=True,
+    )
+    assert "missing_repeated_io_pressure_samples" in reasons
+
+
+def test_veritas_runtime_psi_guard_has_hysteresis_and_a_hard_stop() -> None:
+    guard = midas_resource_preflight.veritas_runtime_io_cancel_reason
+    idle = [{"avg10": 0.88, "avg60": 0.75} for _ in range(5)]
+    assert guard(idle) is None
+    elevated = [{"avg10": 2.1, "avg60": 1.6} for _ in range(4)]
+    assert guard(elevated) is None
+    assert guard(elevated + [{"avg10": 2.1, "avg60": 1.6}]) == (
+        "io_full_avg10_pressure_sustained_during_veritas_run"
+    )
+    assert guard([{"avg10": 3.1, "avg60": 0.8}]) == (
+        "io_full_avg10_pressure_above_runtime_hard_limit"
+    )
+    assert guard([{"avg10": float("nan"), "avg60": 0.8}]) == "io_pressure_sample_invalid"
+    assert guard([{"avg10": "unavailable", "avg60": 0.8}]) == "io_pressure_sample_invalid"
+
+
+@pytest.mark.parametrize("value", ["nan", "inf", "-0.1"])
+def test_psi_parser_rejects_invalid_averages(value: str) -> None:
+    with pytest.raises(midas_resource_preflight.AdmissionError):
+        midas_resource_preflight.parse_psi(f"some avg10={value} avg60=0.1 avg300=0.1 total=1\n")
+
+
+def test_veritas_runtime_pressure_cancels_once_without_retry(monkeypatch) -> None:
+    calls = []
+    reports = []
+
+    class RunningProcess:
+        def poll(self):
+            return None
+
+        def wait(self, timeout=None):
+            return -15
+
+    process = RunningProcess()
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_read_veritas_runtime_io_pressure",
+        lambda: {"avg10": 2.1, "avg60": 1.6},
+    )
+    monkeypatch.setattr(
+        midas_resource_preflight, "_kill_unit", lambda unit, grace: calls.append(unit)
+    )
+    monkeypatch.setattr(midas_resource_preflight, "_print_evidence", reports.append)
+    monkeypatch.setattr(midas_resource_preflight.time, "sleep", lambda _seconds: None)
+    status = midas_resource_preflight._wait_for_veritas_process(
+        process,
+        "midas-heavy-veritas-test.service",
+        timeout_seconds=30,
+        termination_grace_seconds=2,
+    )
+    assert status == midas_resource_preflight.VERITAS_RUNTIME_PRESSURE_CANCELLED
+    assert calls == ["midas-heavy-veritas-test.service"]
+    assert len(reports) == 1
+    assert reports[0]["decision"] == "CANCEL"
+
+
+def test_veritas_runtime_watchdog_fails_closed_when_psi_is_unavailable(monkeypatch) -> None:
+    calls = []
+    reports = []
+
+    def fail_pressure_read() -> dict[str, float]:
+        raise midas_resource_preflight.AdmissionError("synthetic PSI read failure")
+
+    class RunningProcess:
+        def poll(self):
+            return None
+
+        def wait(self, timeout=None):
+            return -15
+
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_read_veritas_runtime_io_pressure",
+        fail_pressure_read,
+    )
+    monkeypatch.setattr(
+        midas_resource_preflight, "_kill_unit", lambda unit, grace: calls.append(unit)
+    )
+    monkeypatch.setattr(midas_resource_preflight, "_print_evidence", reports.append)
+    status = midas_resource_preflight._wait_for_veritas_process(
+        RunningProcess(),
+        "midas-heavy-veritas-test.service",
+        timeout_seconds=30,
+        termination_grace_seconds=2,
+    )
+    assert status == midas_resource_preflight.VERITAS_RUNTIME_PRESSURE_CANCELLED
+    assert calls == ["midas-heavy-veritas-test.service"]
+    assert len(reports) == 1
+    assert reports[0]["reason"] == "runtime_io_pressure_unavailable"
 
 
 @pytest.mark.parametrize(
@@ -273,12 +460,12 @@ def test_veritas_profile_admits_full_inactive_swap_with_strict_pressure_bounds()
             "memory_full_avg10_pressure_above_profile_limit",
         ),
         (
-            lambda e: e["pressure"]["io"]["full"].update(avg10=0.51),
-            "io_full_avg10_pressure_above_profile_limit",
+            lambda e: e["pressure"]["io"]["full"].update(avg10=1.01),
+            "io_full_avg10_pressure_sustained_above_profile_limit",
         ),
         (
-            lambda e: e["pressure"]["io"]["full"].update(avg60=1.01),
-            "io_full_avg60_pressure_above_profile_limit",
+            lambda e: e["pressure"]["io"]["full"].update(avg60=1.51),
+            "io_full_avg60_pressure_sustained_above_profile_limit",
         ),
         (
             lambda e: e["protected_service_cgroups"]["midas-reality.service"].update(
@@ -422,6 +609,9 @@ def test_veritas_run_uses_sandboxed_service_and_existing_resource_limits(
             pass
 
     class Process:
+        def poll(self) -> int:
+            return 0
+
         def wait(self, *, timeout: float) -> int:
             assert timeout == 600
             return 0
