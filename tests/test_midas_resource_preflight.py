@@ -315,6 +315,72 @@ def test_veritas_profile_requires_a_full_30_second_sample() -> None:
         midas_resource_preflight._gate(args, include_task_cgroup=False, lock_held=True)
 
 
+def test_veritas_runtime_context_requires_disabled_timers_and_original_service_limits(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(midas_resource_preflight, "VERITAS_SERVICE_ROOT", Path("/tmp"))
+    monkeypatch.setattr(midas_resource_preflight, "VERITAS_OUTPUT_ROOT", Path("/tmp"))
+    properties = {
+        "midas-veritas-source-analysis.timer": "ActiveState=inactive\nUnitFileState=disabled\n",
+        "midas-reality-capacity.timer": "ActiveState=inactive\nUnitFileState=disabled\n",
+        "midas-veritas-source-analysis.service": "\n".join(
+            [
+                "ActiveState=failed",
+                "MainPID=0",
+                "ControlPID=0",
+                f"MemoryMax={256 * midas_resource_preflight.MIB}",
+                "CPUQuotaPerSecUSec=1s",
+                "Nice=19",
+                "IOSchedulingClass=3",
+                "TimeoutStartUSec=10min",
+                "MemoryHigh=infinity",
+                "MemorySwapMax=infinity",
+                "ProtectSystem=strict",
+                "ProtectHome=read-only",
+                "ReadWritePaths=/tmp",
+                "WorkingDirectory=/tmp",
+                "PrivateTmp=yes",
+                "NoNewPrivileges=yes",
+                "Restart=no",
+            ]
+        ),
+    }
+
+    def show(*args: str, **_kwargs: object):
+        unit = args[1]
+        return type("Result", (), {"stdout": properties[unit]})()
+
+    monkeypatch.setattr(midas_resource_preflight, "_systemctl", show)
+
+    midas_resource_preflight._validate_veritas_runtime_context()
+
+    properties["midas-reality-capacity.timer"] = "ActiveState=active\nUnitFileState=enabled\n"
+    with pytest.raises(midas_resource_preflight.AdmissionError, match="must remain disabled"):
+        midas_resource_preflight._validate_veritas_runtime_context()
+
+
+def test_veritas_inner_gate_ignores_only_its_own_transient_service(monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    current = "midas-heavy-veritas-1234-abcd1234.service"
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_systemctl",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            stdout=f"{current} loaded running validation\nmidas-other-worker.service loaded running other\n"
+        ),
+    )
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_current_cgroup",
+        lambda: Path(f"/sys/fs/cgroup/user.slice/app.slice/{current}"),
+    )
+
+    assert midas_resource_preflight._active_midas_workers(allow_current_veritas_service=True) == [
+        "midas-other-worker.service"
+    ]
+
+
 @pytest.mark.parametrize(
     "overrides",
     [
@@ -340,11 +406,13 @@ def test_veritas_run_cannot_exceed_its_fixed_scope_limits(overrides: dict) -> No
         "sample_seconds": 30,
     }
     values.update(overrides)
-    with pytest.raises(midas_resource_preflight.AdmissionError, match="Veritas scope"):
+    with pytest.raises(midas_resource_preflight.AdmissionError, match="Veritas service"):
         midas_resource_preflight._run_command(Namespace(**values))
 
 
-def test_veritas_run_uses_supported_scope_properties_and_idle_task_priority(monkeypatch) -> None:
+def test_veritas_run_uses_sandboxed_service_and_existing_resource_limits(
+    monkeypatch, tmp_path: Path
+) -> None:
     from argparse import Namespace
 
     commands: list[list[str]] = []
@@ -359,6 +427,9 @@ def test_veritas_run_uses_supported_scope_properties_and_idle_task_priority(monk
             return 0
 
     monkeypatch.setattr(midas_resource_preflight, "_acquire_lock", Lock)
+    monkeypatch.setattr(midas_resource_preflight, "_validate_veritas_runtime_context", lambda: None)
+    monkeypatch.setattr(midas_resource_preflight, "VERITAS_SERVICE_ROOT", tmp_path)
+    monkeypatch.setattr(midas_resource_preflight, "VERITAS_OUTPUT_ROOT", tmp_path)
     monkeypatch.setattr(
         midas_resource_preflight,
         "_gate",
@@ -395,14 +466,16 @@ def test_veritas_run_uses_supported_scope_properties_and_idle_task_priority(monk
     assert "--property=CPUQuota=100%" in command
     assert "--property=IOWeight=10" in command
     assert "--property=TasksMax=256" in command
-    assert "--property=Nice=19" not in command
-    assert "--property=IOSchedulingClass=idle" not in command
-    assert command[command.index("/usr/bin/ionice") :] == [
-        "/usr/bin/ionice",
-        "-c",
-        "3",
-        "/usr/bin/nice",
-        "-n",
-        "19",
-        "/usr/bin/true",
-    ]
+    assert "--property=Nice=19" in command
+    assert "--property=IOSchedulingClass=idle" in command
+    assert "--property=ProtectSystem=strict" in command
+    assert "--property=ProtectHome=read-only" in command
+    assert f"--property=ReadWritePaths={tmp_path}" in command
+    assert "--property=PrivateTmp=yes" in command
+    assert "--property=NoNewPrivileges=yes" in command
+    assert "--property=Restart=no" in command
+    assert f"--property=WorkingDirectory={tmp_path}" in command
+    assert "--service-type=exec" in command
+    assert "--wait" in command
+    assert "--scope" not in command
+    assert command[-1] == "/usr/bin/true"

@@ -132,6 +132,13 @@ VERITAS_RUN_LIMITS = {
     "cpu_quota_percent": 100,
     "timeout_seconds": 600,
 }
+VERITAS_SERVICE_ROOT = Path.home() / "midas-veritas"
+VERITAS_OUTPUT_ROOT = VERITAS_SERVICE_ROOT / "data" / "veritas-observatory"
+VERITAS_SERVICE_UNIT = "midas-veritas-source-analysis.service"
+VERITAS_TIMER_UNITS = (
+    "midas-veritas-source-analysis.timer",
+    "midas-reality-capacity.timer",
+)
 
 
 class AdmissionError(RuntimeError):
@@ -246,7 +253,7 @@ def _finite_limit(value: str) -> int | None:
     return number if number >= 0 else None
 
 
-def _active_midas_workers() -> list[str]:
+def _active_midas_workers(*, allow_current_veritas_service: bool = False) -> list[str]:
     result = _systemctl(
         "list-units",
         "--type=service",
@@ -256,9 +263,15 @@ def _active_midas_workers() -> list[str]:
         "midas-*.service",
     )
     active: list[str] = []
+    current_unit = _current_veritas_service_unit() if allow_current_veritas_service else None
     for line in result.stdout.splitlines():
         fields = line.split()
-        if fields and fields[0].startswith("midas-") and fields[0] not in ALLOW_ACTIVE_UNITS:
+        if (
+            fields
+            and fields[0].startswith("midas-")
+            and fields[0] not in ALLOW_ACTIVE_UNITS
+            and fields[0] != current_unit
+        ):
             active.append(fields[0])
     return active
 
@@ -275,6 +288,98 @@ def _current_cgroup() -> Path:
     if not path.is_dir():
         raise AdmissionError(f"process cgroup does not exist: {path}")
     return path
+
+
+def _current_veritas_service_unit() -> str | None:
+    for part in reversed(_current_cgroup().parts):
+        if part.startswith("midas-heavy-veritas-") and part.endswith(".service"):
+            return part
+    return None
+
+
+def _validate_veritas_runtime_context() -> None:
+    for unit in VERITAS_TIMER_UNITS:
+        properties = _properties(
+            _systemctl("show", unit, "-p", "ActiveState", "-p", "UnitFileState").stdout
+        )
+        if (
+            properties.get("ActiveState") != "inactive"
+            or properties.get("UnitFileState") != "disabled"
+        ):
+            raise AdmissionError(f"{unit} must remain disabled and inactive for a Veritas run")
+
+    service = _properties(
+        _systemctl(
+            "show",
+            VERITAS_SERVICE_UNIT,
+            "-p",
+            "ActiveState",
+            "-p",
+            "MainPID",
+            "-p",
+            "ControlPID",
+            "-p",
+            "MemoryMax",
+            "-p",
+            "CPUQuotaPerSecUSec",
+            "-p",
+            "Nice",
+            "-p",
+            "IOSchedulingClass",
+            "-p",
+            "TimeoutStartUSec",
+            "-p",
+            "MemoryHigh",
+            "-p",
+            "MemorySwapMax",
+            "-p",
+            "ProtectSystem",
+            "-p",
+            "ProtectHome",
+            "-p",
+            "ReadWritePaths",
+            "-p",
+            "PrivateTmp",
+            "-p",
+            "NoNewPrivileges",
+            "-p",
+            "Restart",
+            "-p",
+            "WorkingDirectory",
+        ).stdout
+    )
+    if (
+        service.get("ActiveState") not in {"inactive", "failed"}
+        or service.get("MainPID") != "0"
+        or service.get("ControlPID") != "0"
+    ):
+        raise AdmissionError("Veritas source-analysis service must have no active process")
+    expected = {
+        "MemoryMax": str(256 * MIB),
+        "CPUQuotaPerSecUSec": "1s",
+        "Nice": "19",
+        "IOSchedulingClass": "3",
+        "TimeoutStartUSec": "10min",
+        "MemoryHigh": "infinity",
+        "MemorySwapMax": "infinity",
+        "ProtectSystem": "strict",
+        "ProtectHome": "read-only",
+        "ReadWritePaths": str(VERITAS_OUTPUT_ROOT),
+        "WorkingDirectory": str(VERITAS_SERVICE_ROOT),
+        "PrivateTmp": "yes",
+        "NoNewPrivileges": "yes",
+        "Restart": "no",
+    }
+    mismatches = [key for key, value in expected.items() if service.get(key) != value]
+    if mismatches:
+        raise AdmissionError(
+            "Veritas source-analysis service constraints changed: " + ", ".join(mismatches)
+        )
+    for path in (VERITAS_SERVICE_ROOT, VERITAS_OUTPUT_ROOT):
+        if path.is_symlink() or not path.is_dir():
+            raise AdmissionError(f"Veritas service path is missing or unsafe: {path}")
+    if not VERITAS_OUTPUT_ROOT.resolve().is_relative_to(VERITAS_SERVICE_ROOT.resolve()):
+        raise AdmissionError("Veritas write path is outside its service root")
 
 
 def _cgroup_memory(path: Path) -> dict[str, int | None]:
@@ -330,6 +435,7 @@ def collect_evidence(
     storage_reserve_bytes: int,
     sample_seconds: float,
     include_task_cgroup: bool,
+    allow_current_veritas_service: bool = False,
 ) -> dict[str, Any]:
     meminfo = parse_meminfo(Path("/proc/meminfo").read_text(encoding="utf-8"))
     pressure = {
@@ -346,7 +452,7 @@ def collect_evidence(
     )
     user_memory = _cgroup_memory(user_cgroup)
     user_memory_pressure = parse_psi((user_cgroup / "memory.pressure").read_text(encoding="utf-8"))
-    workers = _active_midas_workers()
+    workers = _active_midas_workers(allow_current_veritas_service=allow_current_veritas_service)
     evidence: dict[str, Any] = {
         "sampled_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "host_memory": {
@@ -504,6 +610,7 @@ def _gate(
         storage_reserve_bytes=args.storage_reserve_mib * MIB,
         sample_seconds=args.sample_seconds,
         include_task_cgroup=include_task_cgroup,
+        allow_current_veritas_service=args.profile == "veritas" and include_task_cgroup,
     )
     reasons = evaluate_evidence(
         evidence,
@@ -566,17 +673,22 @@ def _run_command(args: argparse.Namespace) -> int:
         or args.sample_seconds < 30
     ):
         raise AdmissionError(
-            "Veritas scope must stay within MemoryHigh=192 MiB, MemoryMax=256 MiB, "
+            "Veritas service must stay within MemoryHigh=192 MiB, MemoryMax=256 MiB, "
             "a 128 MiB task budget, CPUQuota=100%, a 600-second timeout, and a "
             "30-second admission sample"
         )
+    if args.profile == "veritas":
+        _validate_veritas_runtime_context()
 
     lock = _acquire_lock()
-    unit = f"midas-heavy-{args.label}-{os.getpid()}-{uuid.uuid4().hex[:8]}.scope"
+    unit_label = "veritas" if args.profile == "veritas" else args.label
+    unit_type = "service" if args.profile == "veritas" else "scope"
+    unit = f"midas-heavy-{unit_label}-{os.getpid()}-{uuid.uuid4().hex[:8]}.{unit_type}"
     try:
         evidence, reasons = _gate(args, include_task_cgroup=False, lock_held=True)
         evidence["planned_cgroup"] = {
             "unit": unit,
+            "unit_type": unit_type,
             "memory_high_bytes": args.memory_high_mib * MIB,
             "memory_max_bytes": args.memory_max_mib * MIB,
             "memory_swap_max_bytes": 0,
@@ -584,14 +696,20 @@ def _run_command(args: argparse.Namespace) -> int:
             "io_weight": 10,
             "timeout_seconds": args.timeout_seconds,
         }
-        if args.profile in {"backup", "veritas"}:
+        if args.profile == "backup":
             evidence["planned_cgroup"]["task_io_scheduling"] = "idle"
             evidence["planned_cgroup"]["task_cpu_nice"] = 19
+        elif args.profile == "veritas":
+            evidence["planned_cgroup"]["io_scheduling_class"] = "idle"
+            evidence["planned_cgroup"]["nice"] = 19
+            evidence["planned_cgroup"]["filesystem_sandbox"] = (
+                "strict; write access limited to Veritas output"
+            )
         _print_evidence(evidence)
         if reasons:
             return 75
         task_command = args.command[1:] if args.command[0] == "--" else args.command
-        if args.profile in {"backup", "veritas"}:
+        if args.profile == "backup":
             ionice = shutil.which("ionice")
             nice = shutil.which("nice")
             if ionice is None or nice is None:
@@ -617,22 +735,46 @@ def _run_command(args: argparse.Namespace) -> int:
             "--",
             *task_command,
         ]
-        command = [
-            "systemd-run",
-            "--user",
-            "--scope",
-            "--collect",
-            "--expand-environment=no",
-            f"--unit={unit}",
-            f"--property=MemoryHigh={args.memory_high_mib}M",
-            f"--property=MemoryMax={args.memory_max_mib}M",
-            "--property=MemorySwapMax=0",
-            f"--property=CPUQuota={args.cpu_quota_percent}%",
-            "--property=IOWeight=10",
-            "--property=TasksMax=256",
-            "--",
-            *inner,
-        ]
+        command = ["systemd-run", "--user"]
+        if args.profile == "veritas":
+            command.extend(
+                [
+                    f"--unit={unit}",
+                    "--service-type=exec",
+                    "--collect",
+                    "--wait",
+                    "--expand-environment=no",
+                ]
+            )
+        else:
+            command.extend(["--scope", "--collect", "--expand-environment=no", f"--unit={unit}"])
+        command.extend(
+            [
+                f"--property=MemoryHigh={args.memory_high_mib}M",
+                f"--property=MemoryMax={args.memory_max_mib}M",
+                "--property=MemorySwapMax=0",
+                f"--property=CPUQuota={args.cpu_quota_percent}%",
+                "--property=IOWeight=10",
+                "--property=TasksMax=256",
+            ]
+        )
+        if args.profile == "veritas":
+            command.extend(
+                [
+                    "--property=Nice=19",
+                    "--property=IOSchedulingClass=idle",
+                    "--property=ProtectSystem=strict",
+                    "--property=ProtectHome=read-only",
+                    f"--property=ReadWritePaths={VERITAS_OUTPUT_ROOT}",
+                    "--property=PrivateTmp=yes",
+                    "--property=NoNewPrivileges=yes",
+                    "--property=UMask=0077",
+                    f"--property=WorkingDirectory={VERITAS_SERVICE_ROOT}",
+                    f"--property=TimeoutStartSec={args.timeout_seconds}s",
+                    "--property=Restart=no",
+                ]
+            )
+        command.extend(["--", *inner])
         try:
             process = subprocess.Popen(command)
         except OSError as error:
