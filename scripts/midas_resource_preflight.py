@@ -99,6 +99,38 @@ PROFILES: dict[str, dict[str, float | int]] = {
         "io_full_avg10": 1.0,
         "io_full_avg60": 1.5,
     },
+    # Veritas source analysis is a single bounded batch under a 256 MiB
+    # service limit. Occupied swap is not useful headroom for this workload;
+    # require no swap movement during a full sample instead, with stricter
+    # memory, I/O, and protected-service limits than the general heavy profile.
+    "veritas": {
+        "min_available_mib": 6144,
+        "min_swap_free_mib": 0,
+        "max_swap_activity_pages": 0,
+        "protected_headroom_mib": 128,
+        "memory_some_avg10": 8.0,
+        "memory_some_avg60": 8.0,
+        "memory_full_avg10": 0.25,
+        "memory_full_avg60": 0.5,
+        "user_memory_some_avg10": 15.0,
+        "user_memory_some_avg60": 15.0,
+        "user_memory_full_avg10": 0.5,
+        "user_memory_full_avg60": 1.0,
+        "cpu_some_avg10": 25.0,
+        "cpu_some_avg60": 25.0,
+        "io_some_avg10": 5.0,
+        "io_some_avg60": 5.0,
+        "io_full_avg10": 0.5,
+        "io_full_avg60": 1.0,
+    },
+}
+
+VERITAS_RUN_LIMITS = {
+    "memory_high_mib": 192,
+    "memory_max_mib": 256,
+    "memory_budget_mib": 128,
+    "cpu_quota_percent": 100,
+    "timeout_seconds": 600,
 }
 
 
@@ -462,8 +494,10 @@ def _gate(
 ) -> tuple[dict[str, Any], list[str]]:
     if args.sample_seconds <= 0 or args.sample_seconds > 60:
         raise AdmissionError("--sample-seconds must be between 0 and 60")
-    if args.profile == "backup" and args.sample_seconds < 30:
-        raise AdmissionError("backup admission requires a 30-second swap and pressure sample")
+    if args.profile in {"backup", "veritas"} and args.sample_seconds < 30:
+        raise AdmissionError(
+            f"{args.profile} admission requires a 30-second swap and pressure sample"
+        )
     evidence = collect_evidence(
         storage_paths=args.storage_path,
         storage_required_bytes=args.storage_required_mib * MIB,
@@ -523,6 +557,19 @@ def _run_command(args: argparse.Namespace) -> int:
             "backup scope must stay within MemoryHigh=768 MiB, MemoryMax=1024 MiB, "
             "a 512 MiB task budget, and CPUQuota=20%"
         )
+    if args.profile == "veritas" and (
+        args.memory_high_mib > VERITAS_RUN_LIMITS["memory_high_mib"]
+        or args.memory_max_mib != VERITAS_RUN_LIMITS["memory_max_mib"]
+        or args.memory_budget_mib > VERITAS_RUN_LIMITS["memory_budget_mib"]
+        or args.cpu_quota_percent > VERITAS_RUN_LIMITS["cpu_quota_percent"]
+        or args.timeout_seconds > VERITAS_RUN_LIMITS["timeout_seconds"]
+        or args.sample_seconds < 30
+    ):
+        raise AdmissionError(
+            "Veritas scope must stay within MemoryHigh=192 MiB, MemoryMax=256 MiB, "
+            "a 128 MiB task budget, CPUQuota=100%, a 600-second timeout, and a "
+            "30-second admission sample"
+        )
 
     lock = _acquire_lock()
     unit = f"midas-heavy-{args.label}-{os.getpid()}-{uuid.uuid4().hex[:8]}.scope"
@@ -535,19 +582,22 @@ def _run_command(args: argparse.Namespace) -> int:
             "memory_swap_max_bytes": 0,
             "cpu_quota_percent": args.cpu_quota_percent,
             "io_weight": 10,
-            "io_scheduling": "idle",
-            "cpu_nice": 19,
             "timeout_seconds": args.timeout_seconds,
         }
+        if args.profile in {"backup", "veritas"}:
+            evidence["planned_cgroup"]["task_io_scheduling"] = "idle"
+            evidence["planned_cgroup"]["task_cpu_nice"] = 19
         _print_evidence(evidence)
         if reasons:
             return 75
         task_command = args.command[1:] if args.command[0] == "--" else args.command
-        if args.profile == "backup":
+        if args.profile in {"backup", "veritas"}:
             ionice = shutil.which("ionice")
             nice = shutil.which("nice")
             if ionice is None or nice is None:
-                raise AdmissionError("backup jobs require ionice and nice for idle scheduling")
+                raise AdmissionError(
+                    f"{args.profile} jobs require ionice and nice for idle scheduling"
+                )
             task_command = [ionice, "-c", "3", nice, "-n", "19", *task_command]
         inner = [
             sys.executable,

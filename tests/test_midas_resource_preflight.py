@@ -234,3 +234,175 @@ def test_backup_profile_requires_a_full_30_second_sample() -> None:
     args = Namespace(profile="backup", sample_seconds=29)
     with pytest.raises(midas_resource_preflight.AdmissionError, match="30-second"):
         midas_resource_preflight._gate(args, include_task_cgroup=False, lock_held=True)
+
+
+def test_veritas_profile_admits_full_inactive_swap_with_strict_pressure_bounds() -> None:
+    observed = evidence()
+    observed["host_memory"].update(swap_free_bytes=0)
+    assert (
+        midas_resource_preflight.evaluate_evidence(
+            observed,
+            profile="veritas",
+            memory_budget_bytes=128 * midas_resource_preflight.MIB,
+            require_task_cgroup=True,
+        )
+        == []
+    )
+    assert midas_resource_preflight.PROFILES["heavy"]["min_swap_free_mib"] == 256
+    assert (
+        midas_resource_preflight.PROFILES["veritas"]["io_full_avg10"]
+        < (midas_resource_preflight.PROFILES["heavy"]["io_full_avg10"])
+    )
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected"),
+    [
+        (
+            lambda e: e["host_memory"].update(
+                available_bytes=(6144 + 128) * midas_resource_preflight.MIB - 1
+            ),
+            "host_memavailable_below_floor_plus_task_budget",
+        ),
+        (
+            lambda e: e["host_memory"]["swap_activity_pages_during_sample"].update(pswpin=1),
+            "swap_activity_above_profile_limit",
+        ),
+        (
+            lambda e: e["pressure"]["memory"]["full"].update(avg10=0.26),
+            "memory_full_avg10_pressure_above_profile_limit",
+        ),
+        (
+            lambda e: e["pressure"]["io"]["full"].update(avg10=0.51),
+            "io_full_avg10_pressure_above_profile_limit",
+        ),
+        (
+            lambda e: e["pressure"]["io"]["full"].update(avg60=1.01),
+            "io_full_avg60_pressure_above_profile_limit",
+        ),
+        (
+            lambda e: e["protected_service_cgroups"]["midas-reality.service"].update(
+                memory_headroom_bytes=127 * midas_resource_preflight.MIB
+            ),
+            "midas-reality_service_memory_headroom_below_profile_floor",
+        ),
+        (
+            lambda e: e["user_manager_cgroup"]["pressure"]["full"].update(avg60=1.01),
+            "user_manager_memory_full_avg60_pressure_above_profile_limit",
+        ),
+    ],
+)
+def test_veritas_profile_fails_closed_on_pressure_or_insufficient_headroom(
+    mutation, expected: str
+) -> None:
+    observed = evidence()
+    observed["host_memory"].update(swap_free_bytes=0)
+    mutation(observed)
+    reasons = midas_resource_preflight.evaluate_evidence(
+        observed,
+        profile="veritas",
+        memory_budget_bytes=128 * midas_resource_preflight.MIB,
+        require_task_cgroup=True,
+    )
+    assert expected in reasons
+
+
+def test_veritas_profile_requires_a_full_30_second_sample() -> None:
+    from argparse import Namespace
+
+    args = Namespace(profile="veritas", sample_seconds=29)
+    with pytest.raises(midas_resource_preflight.AdmissionError, match="30-second"):
+        midas_resource_preflight._gate(args, include_task_cgroup=False, lock_held=True)
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"memory_high_mib": 193},
+        {"memory_max_mib": 257},
+        {"memory_budget_mib": 129},
+        {"cpu_quota_percent": 101},
+        {"timeout_seconds": 601},
+        {"sample_seconds": 29},
+    ],
+)
+def test_veritas_run_cannot_exceed_its_fixed_scope_limits(overrides: dict) -> None:
+    from argparse import Namespace
+
+    values = {
+        "profile": "veritas",
+        "command": ["/usr/bin/true"],
+        "memory_high_mib": 192,
+        "memory_max_mib": 256,
+        "memory_budget_mib": 128,
+        "cpu_quota_percent": 100,
+        "timeout_seconds": 600,
+        "sample_seconds": 30,
+    }
+    values.update(overrides)
+    with pytest.raises(midas_resource_preflight.AdmissionError, match="Veritas scope"):
+        midas_resource_preflight._run_command(Namespace(**values))
+
+
+def test_veritas_run_uses_supported_scope_properties_and_idle_task_priority(monkeypatch) -> None:
+    from argparse import Namespace
+
+    commands: list[list[str]] = []
+
+    class Lock:
+        def close(self) -> None:
+            pass
+
+    class Process:
+        def wait(self, *, timeout: float) -> int:
+            assert timeout == 600
+            return 0
+
+    monkeypatch.setattr(midas_resource_preflight, "_acquire_lock", Lock)
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_gate",
+        lambda *_args, **_kwargs: ({"decision": "ADMIT"}, []),
+    )
+    monkeypatch.setattr(midas_resource_preflight, "_print_evidence", lambda _evidence: None)
+    monkeypatch.setattr(midas_resource_preflight.shutil, "which", lambda name: f"/usr/bin/{name}")
+    monkeypatch.setattr(
+        midas_resource_preflight.subprocess,
+        "Popen",
+        lambda command: commands.append(command) or Process(),
+    )
+    args = Namespace(
+        profile="veritas",
+        command=["--", "/usr/bin/true"],
+        memory_high_mib=192,
+        memory_max_mib=256,
+        memory_budget_mib=128,
+        cpu_quota_percent=100,
+        timeout_seconds=600,
+        sample_seconds=30,
+        label="test",
+        storage_path=["/tmp"],
+        storage_required_mib=0,
+        storage_reserve_mib=0,
+        termination_grace_seconds=2,
+    )
+
+    assert midas_resource_preflight._run_command(args) == 0
+    command = commands[0]
+    assert "--property=MemoryHigh=192M" in command
+    assert "--property=MemoryMax=256M" in command
+    assert "--property=MemorySwapMax=0" in command
+    assert "--property=CPUQuota=100%" in command
+    assert "--property=IOWeight=10" in command
+    assert "--property=TasksMax=256" in command
+    assert "--property=Nice=19" not in command
+    assert "--property=IOSchedulingClass=idle" not in command
+    assert command[command.index("/usr/bin/ionice") :] == [
+        "/usr/bin/ionice",
+        "-c",
+        "3",
+        "/usr/bin/nice",
+        "-n",
+        "19",
+        "/usr/bin/true",
+    ]
