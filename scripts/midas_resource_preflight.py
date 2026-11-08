@@ -1667,14 +1667,18 @@ def _classify_guarded_result(
     runner_error: str | None,
     unit_was_active_after_client_exit: bool,
 ) -> str:
+    if unit_was_active_after_client_exit:
+        return "result_missing_indeterminate"
     if parent_signal is not None:
+        if not _unit_termination_confirmed(unit, inner):
+            return "result_missing_indeterminate"
         return "cancelled_by_parent_signal"
     if watchdog:
+        if not _unit_termination_confirmed(unit, inner):
+            return "result_missing_indeterminate"
         if watchdog.get("kind") == "timeout":
             return "timed_out"
         return "psi_watchdog_cancelled"
-    if unit_was_active_after_client_exit:
-        return "result_missing_indeterminate"
     if inner and inner.get("phase") == "inner_gate_failed":
         return "inner_admission_failed"
     if inner and inner.get("decision") == "DENY":
@@ -1735,6 +1739,14 @@ def _classify_guarded_result(
 
 def _unit_is_active(unit: dict[str, str] | None) -> bool:
     return bool(unit and unit.get("ActiveState") in {"active", "activating", "reloading"})
+
+
+def _unit_termination_confirmed(unit: dict[str, str] | None, inner: dict[str, Any] | None) -> bool:
+    if inner and inner.get("phase") == "worker_finished":
+        return True
+    if not unit or unit.get("ActiveState") not in {"inactive", "failed"}:
+        return False
+    return unit.get("ExecMainStartTimestamp") not in {None, "", "n/a"}
 
 
 def _safe_diagnostic(value: str | None) -> str | None:
@@ -2242,6 +2254,7 @@ def _run_command(args: argparse.Namespace) -> int:
             _update_execution_receipt(receipt, receipt_path, phase="unit_cancellation_requested")
             latest_unit = _unit_snapshot(unit)
             observe_unit_and_inner(force=True)
+            unit_active_after_client_exit = _unit_is_active(latest_unit)
         inner_status = _read_inner_status(status_path, receipt["invocation_id"])
         if inner_status:
             receipt["artifacts"]["inner_status_collected"] = True
@@ -2366,6 +2379,13 @@ def _run_command(args: argparse.Namespace) -> int:
         latest_unit = _unit_snapshot(unit)
         latest_inner = _read_inner_status(status_path, receipt["invocation_id"])
         receipt["transient_unit"]["properties"] = latest_unit or {}
+        receipt["transient_unit"]["invocation_id"] = (
+            latest_unit.get("InvocationID") if latest_unit else None
+        )
+        if latest_unit and latest_unit.get("InvocationID"):
+            receipt["log_references"]["journal_invocation"] = (
+                "journalctl --user _SYSTEMD_INVOCATION_ID=" + latest_unit["InvocationID"]
+            )
         if latest_inner:
             receipt["inner_status_record"] = latest_inner
             receipt["inner_admission"] = {
@@ -2374,7 +2394,22 @@ def _run_command(args: argparse.Namespace) -> int:
                 "evidence": latest_inner.get("admission_evidence"),
             }
         final_code = 128 + parent_signal
-        final_classification = "cancelled_by_parent_signal"
+        final_classification = (
+            "cancelled_by_parent_signal"
+            if process is None
+            else _classify_guarded_result(
+                profile=args.profile,
+                return_code=process.poll(),
+                unit=latest_unit,
+                inner=latest_inner,
+                watchdog=None,
+                parent_signal=parent_signal,
+                runner_error=None,
+                unit_was_active_after_client_exit=_unit_is_active(latest_unit),
+            )
+        )
+        if final_classification == "result_missing_indeterminate":
+            final_code = RUNNER_RESULT_MISSING
         persisted = _try_finish_execution_receipt(
             receipt,
             receipt_path,

@@ -1197,6 +1197,53 @@ def test_runner_exit_while_transient_unit_active_cancels_and_fails_indeterminate
     assert calls and calls[0][0] == receipt["transient_unit"]["name"]
 
 
+def test_cancellation_classification_requires_confirmed_worker_or_unit_termination() -> None:
+    active_unit = _unit_properties(active="active", started=True)
+    running_worker = {"phase": "worker_running"}
+    common = {
+        "profile": "veritas",
+        "return_code": 76,
+        "unit": active_unit,
+        "inner": running_worker,
+        "runner_error": None,
+        "unit_was_active_after_client_exit": False,
+    }
+    assert (
+        midas_resource_preflight._classify_guarded_result(
+            **common,
+            watchdog={"kind": "io_full_avg10_pressure_above_runtime_hard_limit"},
+            parent_signal=None,
+        )
+        == "result_missing_indeterminate"
+    )
+    assert (
+        midas_resource_preflight._classify_guarded_result(
+            **common,
+            watchdog=None,
+            parent_signal=signal.SIGTERM,
+        )
+        == "result_missing_indeterminate"
+    )
+
+    stopped_unit = _unit_properties(active="inactive", result="signal", started=True)
+    assert (
+        midas_resource_preflight._classify_guarded_result(
+            **{**common, "unit": stopped_unit},
+            watchdog={"kind": "io_full_avg10_pressure_above_runtime_hard_limit"},
+            parent_signal=None,
+        )
+        == "psi_watchdog_cancelled"
+    )
+    assert (
+        midas_resource_preflight._classify_guarded_result(
+            **{**common, "unit": stopped_unit},
+            watchdog=None,
+            parent_signal=signal.SIGTERM,
+        )
+        == "cancelled_by_parent_signal"
+    )
+
+
 @pytest.mark.parametrize(
     ("runner_code", "expected", "start_confirmed"),
     [
