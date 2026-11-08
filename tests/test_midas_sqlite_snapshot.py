@@ -79,6 +79,46 @@ def test_wal_snapshot_restore_is_consistent_and_never_checkpoints_source(
     writer.close()
 
 
+def test_paced_backup_restores_a_64_mib_disposable_wal_database(
+    tmp_path: Path, admitted_fixture_scope
+) -> None:
+    source = tmp_path / "large-source.db"
+    writer = sqlite3.connect(source)
+    assert writer.execute("PRAGMA journal_mode=WAL").fetchone()[0] == "wal"
+    writer.execute("PRAGMA wal_autocheckpoint=0")
+    writer.execute("CREATE TABLE payload (id INTEGER PRIMARY KEY, value BLOB NOT NULL)")
+    payload = b"m" * (64 * 1024)
+    batch = [(payload,) for _ in range(128)]
+    with writer:
+        for _ in range(8):
+            writer.executemany("INSERT INTO payload(value) VALUES (?)", batch)
+
+    wal = Path(f"{source}-wal")
+    wal_before = (wal.stat().st_size, wal.stat().st_mtime_ns)
+    snapshot = tmp_path / "large-snapshot"
+    manifest = midas_sqlite_snapshot.create_snapshot(
+        source, snapshot, integrity="full", reserve_mib=0
+    )
+    assert manifest["snapshot"]["bytes"] >= 64 * 1024**2
+    assert manifest["snapshot"]["online_backup"]["pages_per_step"] == 64
+    assert manifest["snapshot"]["online_backup"]["pressure_checks"] >= 1
+    assert manifest["snapshot"]["online_backup"]["elapsed_seconds"] < 60
+    assert midas_sqlite_snapshot.verify_snapshot(snapshot, integrity="full")["decision"] == (
+        "VERIFIED"
+    )
+
+    restored = tmp_path / "large-restored.db"
+    receipt = midas_sqlite_snapshot.restore_snapshot(snapshot, restored, integrity="full")
+    assert receipt["decision"] == "RESTORED"
+    with sqlite3.connect(f"file:{restored}?mode=ro", uri=True) as recovered:
+        count, payload_bytes = recovered.execute(
+            "SELECT count(*), sum(length(value)) FROM payload"
+        ).fetchone()
+    assert (count, payload_bytes) == (1024, 64 * 1024**2)
+    assert (wal.stat().st_size, wal.stat().st_mtime_ns) == wal_before
+    writer.close()
+
+
 def test_io_pressure_cancels_partial_snapshot_without_touching_live_wal(
     tmp_path: Path, admitted_fixture_scope, monkeypatch
 ) -> None:
