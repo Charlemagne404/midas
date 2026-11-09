@@ -73,10 +73,16 @@ jobs:
           for controller in cpu memory io pids; do
             grep -qw "$controller" <<< "$available_controllers"
           done
-          # The user manager enables delegated controllers when it creates a
-          # transient worker. Requiring them to be pre-enabled here rejects a
-          # valid delegated hierarchy before systemd can apply the unit limits.
+          # IOWeight=10 is part of the approved Veritas worker profile. The
+          # controller must be enabled at the delegated manager boundary before
+          # systemd can expose io.weight to the transient service cgroup.
           sudo -u midas-ci test -w "$cgroup/cgroup.subtree_control"
+          if ! grep -qw io <<< "$enabled_controllers"; then
+            printf '%s\n' '+io' | sudo -u midas-ci tee "$cgroup/cgroup.subtree_control" >/dev/null
+          fi
+          enabled_controllers="$(cat "$cgroup/cgroup.subtree_control")"
+          printf 'effective delegated controllers: %s\n' "$enabled_controllers"
+          grep -qw io <<< "$enabled_controllers"
           echo "MIDAS_CI_UID=$uid" >> "$GITHUB_ENV"
           echo "MIDAS_CI_RUNTIME_DIR=$runtime" >> "$GITHUB_ENV"
 

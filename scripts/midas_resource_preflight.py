@@ -1573,9 +1573,16 @@ def _cgroup_execution_metrics(
 class _RunnerOutput:
     """Drain only systemd-run client diagnostics; worker output stays in journald."""
 
-    def __init__(self, process: subprocess.Popen[bytes], command: list[str]) -> None:
+    def __init__(
+        self,
+        process: subprocess.Popen[bytes],
+        command: list[str],
+        *,
+        include_systemd_error: bool = False,
+    ) -> None:
         self.process = process
         self.command = command
+        self.include_systemd_error = include_systemd_error
         self.selector = selectors.DefaultSelector()
         self.streams: dict[int, dict[str, Any]] = {}
         for name, stream in (
@@ -1618,7 +1625,11 @@ class _RunnerOutput:
             for argument in sorted(self.command, key=len, reverse=True):
                 if len(argument) >= 4:
                     tail = tail.replace(argument, "<redacted-argument>")
-            diagnostic_message = _safe_diagnostic(tail)
+            diagnostic_message = (
+                _safe_diagnostic(tail)
+                if self.include_systemd_error and name == "stderr"
+                else None
+            )
             if diagnostic_message:
                 # systemd-run emits manager diagnostics, not worker output. Keep
                 # a short redacted excerpt so failed transient-unit requests
@@ -4470,7 +4481,11 @@ def _run_command(args: argparse.Namespace) -> int:
                 detail=_safe_diagnostic(runner_error),
             )
             return final_code if persisted else RUNNER_RESULT_MISSING
-        output = _RunnerOutput(process, systemd_command)
+        output = _RunnerOutput(
+            process,
+            systemd_command,
+            include_systemd_error=args.profile == "veritas",
+        )
         _update_execution_receipt(receipt, receipt_path, phase="systemd_run_client_started")
 
         def on_watchdog(event: dict[str, Any]) -> None:

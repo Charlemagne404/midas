@@ -1688,10 +1688,6 @@ def test_guarded_run_distinguishes_unit_start_failure_missing_bus_and_popen_fail
     assert receipt["systemd_run_client"]["output"]["stderr"]["diagnostic_type"] == (
         "systemd_bus_unavailable"
     )
-    assert receipt["systemd_run_client"]["output"]["stderr"]["message"] == (
-        "Failed to connect to bus: No medium found token=<redacted> <redacted-path>"
-    )
-
     monkeypatch.undo()
     code, receipt, _path = _fake_guarded_run(
         monkeypatch,
@@ -2178,6 +2174,30 @@ def test_runner_output_receipt_never_stores_raw_worker_or_secret_text(tmp_path: 
     assert "secret-value" not in encoded
     assert summary["stderr"]["bytes"] > 0
     assert "tail" not in summary["stderr"]
+
+
+def test_veritas_systemd_error_excerpt_is_opt_in_and_redacted() -> None:
+    message = (
+        "Failed to start transient service unit: Invalid request descriptor "
+        "token=synthetic-secret /home/private/manager/path"
+    )
+    process = subprocess.Popen(
+        [sys.executable, "-c", "import sys;sys.stderr.write(sys.argv[1])", message],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    collector = midas_resource_preflight._RunnerOutput(
+        process, ["systemd-run"], include_systemd_error=True
+    )
+    process.wait(timeout=5)
+    summary = collector.summary()
+    collector.close()
+    assert summary["stderr"]["message"] == (
+        "Failed to start transient service unit: Invalid request descriptor "
+        "token=<redacted> <redacted-path>"
+    )
+    assert "synthetic-secret" not in json.dumps(summary)
+    assert "/home/private/manager/path" not in json.dumps(summary)
 
 
 @pytest.mark.parametrize(
