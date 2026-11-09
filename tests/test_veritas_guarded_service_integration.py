@@ -13,6 +13,51 @@ import pytest
 
 import scripts.midas_resource_preflight as preflight
 
+sys.path.insert(0, str(Path(__file__).parents[1] / "packages"))
+from scripts import veritas_source_analysis as source_analysis  # noqa: E402
+
+
+@pytest.mark.parametrize("active_state", ["active", "activating"])
+def test_ci_worker_accepts_current_oneshot_parent_state(
+    monkeypatch: pytest.MonkeyPatch, active_state: str
+) -> None:
+    invocation_id = "a" * 32
+    stdout = f"{active_state}\n{invocation_id}\n"
+    monkeypatch.setattr(
+        source_analysis.subprocess,
+        "run",
+        lambda command, **_kwargs: subprocess.CompletedProcess(command, 0, stdout, ""),
+    )
+
+    source_analysis._verify_ci_parent_service_identity(
+        "midas-veritas-source-analysis-ci.service", invocation_id
+    )
+
+
+@pytest.mark.parametrize(
+    ("returncode", "stdout"),
+    [
+        (0, "inactive\n" + "a" * 32 + "\n"),
+        (0, "activating\n" + "b" * 32 + "\n"),
+        (1, "activating\n" + "a" * 32 + "\n"),
+        (0, "activating\n"),
+    ],
+)
+def test_ci_worker_rejects_stale_or_unverified_parent_identity(
+    monkeypatch: pytest.MonkeyPatch, returncode: int, stdout: str
+) -> None:
+    invocation_id = "a" * 32
+    monkeypatch.setattr(
+        source_analysis.subprocess,
+        "run",
+        lambda command, **_kwargs: subprocess.CompletedProcess(command, returncode, stdout, ""),
+    )
+
+    with pytest.raises(SystemExit, match="parent service identity could not be verified"):
+        source_analysis._verify_ci_parent_service_identity(
+            "midas-veritas-source-analysis-ci.service", invocation_id
+        )
+
 
 def _sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()

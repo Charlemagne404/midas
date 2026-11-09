@@ -7,9 +7,9 @@ watchdog, the durable receipt, and the exit status returned to systemd.
 
 ## Release identity
 
-- Release: `veritas-guarded-streaming-683346e0-isolated-imports-v8`
+- Release: `veritas-guarded-streaming-683346e0-isolated-imports-v9`
 - Streaming module SHA-256: `683346e0f14a594528158676343dd1c63e5731fcb2c5beec9739abc96d1898ff`
-- Veritas worker wrapper SHA-256: `5c912ed80fba851dc75fc6de19df34de3c8d5d3179b4865ffb79a78998291e59`
+- Veritas worker wrapper SHA-256: `d780b4976442f024a8511f8317ea2299be498017be5662e0264f822eac4bcd79`
 - Guarded launcher SHA-256: `06ec0289f3999502f155ce4357d4eaaabf1b208ff2d4d7d38cbd4ebc014856c0`
 - Previous production module SHA-256: `e6304b6547dc5d285baab4aae3940b0fe7a6828712d995bb677aad582a44f016`
 - Research root: `/home/charlie/midas-veritas/data/veritas-observatory`
@@ -61,9 +61,9 @@ fixture; the live production service, prior immutable release v3, and live
 Veritas files are not changed by the workflow.
 
 The workflow validates a synthetic schema-v1 checkpoint through the real
-systemd parent-to-transient-worker path. The previous v3 immutable release is
-left unchanged; v8 is a new candidate identity for the launcher and service
-integration fix. A fresh restore and migration test against the exact
+systemd parent-to-transient-worker path. The previous immutable releases are
+left unchanged; v9 is a new candidate identity for the worker identity check.
+A fresh restore and migration test against the exact
 production Restic snapshot remain blocked: the latest existing backup-policy
 check denied on the host-memory floor and Reality protected-service headroom.
 

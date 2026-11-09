@@ -19,6 +19,34 @@ from midas.veritas.finalized_source_analysis import (
 )
 
 
+def _verify_ci_parent_service_identity(parent_unit: str, parent_invocation: str) -> None:
+    state = subprocess.run(
+        [
+            "systemctl",
+            "--user",
+            "show",
+            parent_unit,
+            "-p",
+            "ActiveState",
+            "-p",
+            "InvocationID",
+            "--value",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    values = state.stdout.splitlines()
+    if (
+        state.returncode
+        or len(values) != 2
+        or values[0] not in {"active", "activating"}
+        or values[1] != parent_invocation
+    ):
+        raise SystemExit("Veritas CI parent service identity could not be verified")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True, help="Veritas observatory data root")
@@ -62,26 +90,7 @@ def main() -> None:
             or "midas-heavy-veritas-" not in Path("/proc/self/cgroup").read_text()
         ):
             raise SystemExit("Veritas CI overrides require the guarded CI transient worker")
-        state = subprocess.run(
-            [
-                "systemctl",
-                "--user",
-                "show",
-                parent_unit,
-                "-p",
-                "ActiveState",
-                "-p",
-                "InvocationID",
-                "--value",
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        values = state.stdout.splitlines()
-        if state.returncode or values != ["active", parent_invocation]:
-            raise SystemExit("Veritas CI parent service identity could not be verified")
+        _verify_ci_parent_service_identity(parent_unit, parent_invocation)
         try:
             probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         except OSError as error:

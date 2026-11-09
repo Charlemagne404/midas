@@ -249,7 +249,7 @@ VERITAS_SERVICE_UNIT = "midas-veritas-source-analysis.service"
 VERITAS_CI_SERVICE_UNIT = "midas-veritas-source-analysis-ci.service"
 VERITAS_CI_TEST_MARKER = "midas-veritas-systemd-ci-v1"
 VERITAS_CI_ROOT = Path.home() / "midas-veritas-ci"
-VERITAS_RELEASE_ID = "veritas-guarded-streaming-683346e0-isolated-imports-v8"
+VERITAS_RELEASE_ID = "veritas-guarded-streaming-683346e0-isolated-imports-v9"
 VERITAS_RELEASE_ROOT = (
     Path.home() / ".local" / "share" / "midas-veritas" / "releases" / VERITAS_RELEASE_ID
 )
@@ -264,7 +264,7 @@ VERITAS_RUNTIME_SITE_PACKAGES = (
 )
 VERITAS_APPROVED_SOURCE_REVISION = "5679d4d40715ed762b1efaee37fc541852e9d6f5"
 VERITAS_APPROVED_MODULE_SHA256 = "683346e0f14a594528158676343dd1c63e5731fcb2c5beec9739abc96d1898ff"
-VERITAS_APPROVED_WRAPPER_SHA256 = "5c912ed80fba851dc75fc6de19df34de3c8d5d3179b4865ffb79a78998291e59"
+VERITAS_APPROVED_WRAPPER_SHA256 = "d780b4976442f024a8511f8317ea2299be498017be5662e0264f822eac4bcd79"
 VERITAS_PRODUCTION_MODULE_SHA256 = (
     "e6304b6547dc5d285baab4aae3940b0fe7a6828712d995bb677aad582a44f016"
 )
@@ -330,7 +330,7 @@ VERITAS_APPROVED_DISTRIBUTION_VERSIONS = {
     "typing-inspection": "0.4.4",
 }
 VERITAS_RUNTIME_ANALYSIS_CODE_SHA256 = (
-    "4f173bb4b3c2d96e231e217bd0753c34b2acaad1a89c11dea096b7b4eb762999"
+    "c925559060dfd28943feb95e7627628590ff3d005f1a256b1ede294ded29a82d"
 )
 VERITAS_TIMER_UNITS = (
     "midas-veritas-source-analysis.timer",
