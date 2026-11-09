@@ -876,7 +876,7 @@ def test_veritas_runtime_context_requires_exact_service_owner_and_pinned_execsta
                 "ProtectHome=read-only",
                 "ReadWritePaths="
                 f"{tmp_path} {tmp_path / 'receipts'} "
-                f"{midas_resource_preflight.VERITAS_USER_MANAGER_PRIVATE_SOCKET}",
+                f"{midas_resource_preflight.VERITAS_USER_MANAGER_BUS_SOCKET}",
                 f"WorkingDirectory={tmp_path}",
                 "PrivateTmp=yes",
                 "NoNewPrivileges=yes",
@@ -901,7 +901,7 @@ def test_veritas_runtime_context_requires_exact_service_owner_and_pinned_execsta
 
     service_properties = properties["midas-veritas-source-analysis.service"]
     properties["midas-veritas-source-analysis.service"] = service_properties.replace(
-        f" {midas_resource_preflight.VERITAS_USER_MANAGER_PRIVATE_SOCKET}", ""
+        f" {midas_resource_preflight.VERITAS_USER_MANAGER_BUS_SOCKET}", ""
     )
     with pytest.raises(midas_resource_preflight.AdmissionError, match="service write paths"):
         midas_resource_preflight._validate_veritas_runtime_context()

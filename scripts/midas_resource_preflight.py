@@ -249,11 +249,11 @@ VERITAS_SERVICE_UNIT = "midas-veritas-source-analysis.service"
 VERITAS_CI_SERVICE_UNIT = "midas-veritas-source-analysis-ci.service"
 VERITAS_CI_TEST_MARKER = "midas-veritas-systemd-ci-v1"
 VERITAS_CI_ROOT = Path.home() / "midas-veritas-ci"
-VERITAS_RELEASE_ID = "veritas-guarded-streaming-683346e0-isolated-imports-v5"
+VERITAS_RELEASE_ID = "veritas-guarded-streaming-683346e0-isolated-imports-v6"
 VERITAS_RELEASE_ROOT = (
     Path.home() / ".local" / "share" / "midas-veritas" / "releases" / VERITAS_RELEASE_ID
 )
-VERITAS_USER_MANAGER_PRIVATE_SOCKET = Path("/run/user") / str(os.getuid()) / "systemd" / "private"
+VERITAS_USER_MANAGER_BUS_SOCKET = Path("/run/user") / str(os.getuid()) / "bus"
 VERITAS_RUNTIME_PYTHON = Path.home() / "midas" / ".venv" / "bin" / "python"
 VERITAS_RUNTIME_SITE_PACKAGES = (
     VERITAS_RUNTIME_PYTHON.parent.parent
@@ -2665,7 +2665,7 @@ def _validate_veritas_runtime_context(
     expected_rw_paths = {
         str(expected_output_root),
         str(GUARDED_RECEIPT_DIR),
-        str(VERITAS_USER_MANAGER_PRIVATE_SOCKET),
+        str(VERITAS_USER_MANAGER_BUS_SOCKET),
     }
     if rw_paths != expected_rw_paths:
         raise AdmissionError("Veritas service write paths differ from the approved minimal set")
