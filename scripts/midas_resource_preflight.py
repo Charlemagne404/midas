@@ -403,7 +403,9 @@ def _validate_synthetic_limits(args: argparse.Namespace, command: list[str]) -> 
         raise AdmissionError("synthetic-validation must use its private staged launcher copy")
     paths = [Path(path).resolve() for path in args.storage_path]
     if paths != [root.resolve()]:
-        raise AdmissionError("synthetic-validation storage may only reference its private test root")
+        raise AdmissionError(
+            "synthetic-validation storage may only reference its private test root"
+        )
     if args.memory_budget_mib <= 0:
         raise AdmissionError("synthetic-validation memory budget must be positive")
     return expected_exit
@@ -436,9 +438,7 @@ def _new_execution_receipt(
     safe_label = re.sub(r"[^a-zA-Z0-9_-]+", "-", unit_label).strip("-")[:24] or "task"
     unit_type = "service" if args.profile in {"veritas", "synthetic-validation"} else "scope"
     unit_prefix = (
-        "midas-synthetic-validation"
-        if args.profile == "synthetic-validation"
-        else "midas-heavy"
+        "midas-synthetic-validation" if args.profile == "synthetic-validation" else "midas-heavy"
     )
     unit = f"{unit_prefix}-{safe_label}-{invocation_id[:12]}.{unit_type}"
     status_dir = receipt_dir / f"{invocation_id}.control"
@@ -1346,7 +1346,9 @@ def _validate_synthetic_unit_context(
     if not network_probe["restricted"]:
         mismatches.append("systemd did not deny creation of an IP socket")
     if mismatches:
-        raise AdmissionError("synthetic unit isolation or limits were not verified: " + "; ".join(mismatches))
+        raise AdmissionError(
+            "synthetic unit isolation or limits were not verified: " + "; ".join(mismatches)
+        )
     metrics["network_isolation"] = network_probe
     return unit, properties, metrics
 
@@ -1381,7 +1383,14 @@ def _apply_synthetic_filesystem_isolation(status_dir: Path) -> dict[str, Any]:
         raise AdmissionError("Landlock is not configured for this architecture")
     if status_dir.is_symlink() or not status_dir.is_dir():
         raise AdmissionError("synthetic status directory is missing or unsafe")
-    if Path("/proc/self/status").read_text(encoding="ascii").split("NoNewPrivs:", 1)[1].splitlines()[0].strip() != "1":
+    if (
+        Path("/proc/self/status")
+        .read_text(encoding="ascii")
+        .split("NoNewPrivs:", 1)[1]
+        .splitlines()[0]
+        .strip()
+        != "1"
+    ):
         raise AdmissionError("systemd NoNewPrivileges is not active in the worker")
 
     writable_path = str(status_dir.resolve(strict=True))
@@ -1435,9 +1444,7 @@ def _apply_synthetic_filesystem_isolation(status_dir: Path) -> dict[str, Any]:
         readonly = rights["execute"] | rights["read_file"] | rights["read_dir"]
         access_rules = [(Path("/usr"), readonly)]
         access_rules.extend(
-            (path, readonly)
-            for path in (Path("/lib"), Path("/lib64"))
-            if path.exists()
+            (path, readonly) for path in (Path("/lib"), Path("/lib64")) if path.exists()
         )
         status_access = (
             rights["read_file"]
@@ -1448,9 +1455,7 @@ def _apply_synthetic_filesystem_isolation(status_dir: Path) -> dict[str, Any]:
             | rights.get("refer", 0)
             | rights.get("truncate", 0)
         )
-        access_rules.append(
-            (status_dir.resolve(strict=True), status_access)
-        )
+        access_rules.append((status_dir.resolve(strict=True), status_access))
         for loader_file in (Path("/etc/ld.so.cache"), Path("/etc/ld.so.preload")):
             if loader_file.is_file():
                 info = loader_file.stat()
@@ -1461,11 +1466,12 @@ def _apply_synthetic_filesystem_isolation(status_dir: Path) -> dict[str, Any]:
         for path, allowed in access_rules:
             resolved = path.resolve(strict=True)
             metadata = resolved.stat()
-            if (
-                str(resolved) != writable_path
-                and (metadata.st_uid != 0 or metadata.st_mode & 0o022)
+            if str(resolved) != writable_path and (
+                metadata.st_uid != 0 or metadata.st_mode & 0o022
             ):
-                raise AdmissionError(f"synthetic system path is not root-owned and immutable: {resolved}")
+                raise AdmissionError(
+                    f"synthetic system path is not root-owned and immutable: {resolved}"
+                )
             key = (str(resolved), allowed)
             if key in added:
                 continue
@@ -1494,7 +1500,9 @@ def _apply_synthetic_filesystem_isolation(status_dir: Path) -> dict[str, Any]:
             fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
         except OSError as error:
             if error.errno not in {errno.EACCES, errno.EPERM}:
-                raise AdmissionError(f"Landlock could not verify protected path {path}: {error}") from error
+                raise AdmissionError(
+                    f"Landlock could not verify protected path {path}: {error}"
+                ) from error
             denied_paths.append(str(path))
         else:
             os.close(fd)
@@ -1979,7 +1987,8 @@ def _gate(
         include_task_cgroup=include_task_cgroup,
         repeat_pressure_samples=args.profile == "veritas",
         allow_current_veritas_service=args.profile == "veritas" and include_task_cgroup,
-        allow_current_synthetic_service=args.profile == "synthetic-validation" and include_task_cgroup,
+        allow_current_synthetic_service=args.profile == "synthetic-validation"
+        and include_task_cgroup,
         invocation_id=getattr(args, "invocation_id", None),
     )
     reasons = evaluate_evidence(
@@ -2377,7 +2386,9 @@ def _run_inside(args: argparse.Namespace, command: list[str]) -> int:
         raise AdmissionError("internal guarded status path is missing or unsafe")
     if args.profile == "synthetic-validation":
         try:
-            expected_status_dir = (SYNTHETIC_RECEIPT_DIR / f"{args.invocation_id}.control").resolve()
+            expected_status_dir = (
+                SYNTHETIC_RECEIPT_DIR / f"{args.invocation_id}.control"
+            ).resolve()
         except OSError as error:
             raise AdmissionError(f"synthetic status path could not be resolved: {error}") from error
         if status_dir.resolve() != expected_status_dir:
@@ -2458,9 +2469,7 @@ def _run_inside(args: argparse.Namespace, command: list[str]) -> int:
     synthetic_filesystem_isolation = None
     if args.profile == "synthetic-validation":
         try:
-            synthetic_filesystem_isolation = _apply_synthetic_filesystem_isolation(
-                status_dir
-            )
+            synthetic_filesystem_isolation = _apply_synthetic_filesystem_isolation(status_dir)
         except (AdmissionError, OSError) as error:
             _write_inner_status(
                 status_path,
@@ -2534,8 +2543,13 @@ def _run_command(args: argparse.Namespace) -> int:
         if args.profile == "synthetic-validation":
             synthetic_expected_exit = _validate_synthetic_limits(args, command)
             requested_receipts = getattr(args, "receipt_dir", None)
-            if requested_receipts and Path(requested_receipts).resolve() != SYNTHETIC_RECEIPT_DIR.resolve():
-                raise AdmissionError("synthetic receipts must remain in the dedicated validation directory")
+            if (
+                requested_receipts
+                and Path(requested_receipts).resolve() != SYNTHETIC_RECEIPT_DIR.resolve()
+            ):
+                raise AdmissionError(
+                    "synthetic receipts must remain in the dedicated validation directory"
+                )
         receipt_dir = _prepare_receipt_directory(
             Path(
                 getattr(args, "receipt_dir", None)
@@ -2799,9 +2813,7 @@ def _run_command(args: argparse.Namespace) -> int:
                 ["--scope", "--collect", "--expand-environment=no", f"--unit={unit}"]
             )
         tasks_max = (
-            SYNTHETIC_RUN_LIMITS["tasks_max"]
-            if args.profile == "synthetic-validation"
-            else 256
+            SYNTHETIC_RUN_LIMITS["tasks_max"] if args.profile == "synthetic-validation" else 256
         )
         systemd_command.extend(
             [
@@ -2959,7 +2971,11 @@ def _run_command(args: argparse.Namespace) -> int:
             "output": runner_output,
         }
         observe_unit_and_inner(force=True)
-        unit_after_wait = _unit_snapshot_after_wait(unit) if args.profile == "synthetic-validation" else latest_unit
+        unit_after_wait = (
+            _unit_snapshot_after_wait(unit)
+            if args.profile == "synthetic-validation"
+            else latest_unit
+        )
         if unit_after_wait and unit_after_wait.get("LoadState") not in {None, "not-found"}:
             latest_unit = unit_after_wait
         unit_active_after_client_exit = _unit_is_active(
@@ -3011,7 +3027,10 @@ def _run_command(args: argparse.Namespace) -> int:
                         systemd_wait_completed
                         and runner_code == synthetic_expected_exit
                         and bool(latest_unit and latest_unit.get("InvocationID"))
-                        and bool(latest_unit and latest_unit.get("ExecMainStartTimestamp") not in {None, "", "n/a"})
+                        and bool(
+                            latest_unit
+                            and latest_unit.get("ExecMainStartTimestamp") not in {None, "", "n/a"}
+                        )
                     )
                 else:
                     receipt["worker"]["start_confirmed"] = runner_code not in {None, 127}
@@ -3037,7 +3056,9 @@ def _run_command(args: argparse.Namespace) -> int:
             receipt["transient_unit"]["properties_after_wait"] = unit_after_wait or {}
             cleanup = _wait_for_transient_unit_cleanup(unit)
             receipt["transient_unit"]["cleanup"] = cleanup
-            unit_cleanup_confirmed = cleanup.get("confirmed") is True and cleanup.get("unit_absent") is True
+            unit_cleanup_confirmed = (
+                cleanup.get("confirmed") is True and cleanup.get("unit_absent") is True
+            )
             if unit_cleanup_confirmed:
                 receipt["transient_unit"]["last_observed_state"] = "collected"
             context = inner_status.get("synthetic_context") if inner_status else None
