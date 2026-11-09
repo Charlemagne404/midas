@@ -90,10 +90,20 @@ def latest_receipt(
                 receipt = json.loads(path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
                 continue
+            worker = receipt.get("worker", {})
+            inner = receipt.get("inner_admission", {})
+            worker_ready = (
+                worker.get("start_confirmed") is True
+                and inner.get("decision") == "ADMIT"
+                and inner.get("phase") in {"worker_running", "worker_finished"}
+            )
+            execution_finished = receipt.get("phase") == "completed" and receipt.get(
+                "final_classification"
+            ) not in {None, "indeterminate", "result_missing_indeterminate"}
             if (
                 not require_started
-                or receipt.get("worker", {}).get("start_confirmed")
-                or receipt.get("final_classification")
+                or worker_ready
+                or execution_finished
             ):
                 return path, receipt
         time.sleep(0.1)
