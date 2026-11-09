@@ -249,11 +249,12 @@ VERITAS_SERVICE_UNIT = "midas-veritas-source-analysis.service"
 VERITAS_CI_SERVICE_UNIT = "midas-veritas-source-analysis-ci.service"
 VERITAS_CI_TEST_MARKER = "midas-veritas-systemd-ci-v1"
 VERITAS_CI_ROOT = Path.home() / "midas-veritas-ci"
-VERITAS_RELEASE_ID = "veritas-guarded-streaming-683346e0-isolated-imports-v6"
+VERITAS_RELEASE_ID = "veritas-guarded-streaming-683346e0-isolated-imports-v7"
 VERITAS_RELEASE_ROOT = (
     Path.home() / ".local" / "share" / "midas-veritas" / "releases" / VERITAS_RELEASE_ID
 )
-VERITAS_USER_MANAGER_BUS_SOCKET = Path("/run/user") / str(os.getuid()) / "bus"
+VERITAS_USER_MANAGER_RUNTIME_DIR = Path("/run/user") / str(os.getuid())
+VERITAS_USER_MANAGER_PRIVATE_SOCKET = VERITAS_USER_MANAGER_RUNTIME_DIR / "systemd" / "private"
 VERITAS_RUNTIME_PYTHON = Path.home() / "midas" / ".venv" / "bin" / "python"
 VERITAS_RUNTIME_SITE_PACKAGES = (
     VERITAS_RUNTIME_PYTHON.parent.parent
@@ -2665,15 +2666,21 @@ def _validate_veritas_runtime_context(
     expected_rw_paths = {
         str(expected_output_root),
         str(GUARDED_RECEIPT_DIR),
-        str(VERITAS_USER_MANAGER_BUS_SOCKET),
+        str(VERITAS_USER_MANAGER_PRIVATE_SOCKET),
     }
     if rw_paths != expected_rw_paths:
         raise AdmissionError("Veritas service write paths differ from the approved minimal set")
     if _parse_execstart(service.get("ExecStart", "")) != _expected_veritas_service_execstart():
         raise AdmissionError("Veritas service ExecStart differs from the pinned guarded release")
     environment = service.get("Environment", "")
-    if "OMP_NUM_THREADS=1" not in environment or "OPENBLAS_NUM_THREADS=1" not in environment:
-        raise AdmissionError("Veritas service thread limits are missing")
+    required_environment = (
+        "OMP_NUM_THREADS=1",
+        "OPENBLAS_NUM_THREADS=1",
+        f"XDG_RUNTIME_DIR={VERITAS_USER_MANAGER_RUNTIME_DIR}",
+        f"DBUS_SESSION_BUS_ADDRESS=unix:path={VERITAS_USER_MANAGER_PRIVATE_SOCKET}",
+    )
+    if any(value not in environment for value in required_environment):
+        raise AdmissionError("Veritas service thread or manager-bus environment is missing")
     for path in (VERITAS_SERVICE_ROOT, VERITAS_OUTPUT_ROOT, expected_output_root):
         if path.is_symlink() or not path.is_dir():
             raise AdmissionError(f"Veritas service path is missing or unsafe: {path}")

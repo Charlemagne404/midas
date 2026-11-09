@@ -876,7 +876,7 @@ def test_veritas_runtime_context_requires_exact_service_owner_and_pinned_execsta
                 "ProtectHome=read-only",
                 "ReadWritePaths="
                 f"{tmp_path} {tmp_path / 'receipts'} "
-                f"{midas_resource_preflight.VERITAS_USER_MANAGER_BUS_SOCKET}",
+                f"{midas_resource_preflight.VERITAS_USER_MANAGER_PRIVATE_SOCKET}",
                 f"WorkingDirectory={tmp_path}",
                 "PrivateTmp=yes",
                 "NoNewPrivileges=yes",
@@ -885,7 +885,11 @@ def test_veritas_runtime_context_requires_exact_service_owner_and_pinned_execsta
                 "ExecStart={ path=/usr/bin/python3 ; argv[]="
                 + " ".join(expected_execstart)
                 + " ; ignore_errors=no ; }",
-                "Environment=OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1",
+                "Environment=XDG_RUNTIME_DIR="
+                f"{midas_resource_preflight.VERITAS_USER_MANAGER_RUNTIME_DIR} "
+                "DBUS_SESSION_BUS_ADDRESS=unix:path="
+                f"{midas_resource_preflight.VERITAS_USER_MANAGER_PRIVATE_SOCKET} "
+                "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1",
                 "UnsetEnvironment=PYTHONPATH",
             ]
         ),
@@ -901,9 +905,17 @@ def test_veritas_runtime_context_requires_exact_service_owner_and_pinned_execsta
 
     service_properties = properties["midas-veritas-source-analysis.service"]
     properties["midas-veritas-source-analysis.service"] = service_properties.replace(
-        f" {midas_resource_preflight.VERITAS_USER_MANAGER_BUS_SOCKET}", ""
+        f" {midas_resource_preflight.VERITAS_USER_MANAGER_PRIVATE_SOCKET}", ""
     )
     with pytest.raises(midas_resource_preflight.AdmissionError, match="service write paths"):
+        midas_resource_preflight._validate_veritas_runtime_context()
+    properties["midas-veritas-source-analysis.service"] = service_properties
+
+    properties["midas-veritas-source-analysis.service"] = service_properties.replace(
+        f" DBUS_SESSION_BUS_ADDRESS=unix:path={midas_resource_preflight.VERITAS_USER_MANAGER_PRIVATE_SOCKET}",
+        "",
+    )
+    with pytest.raises(midas_resource_preflight.AdmissionError, match="manager-bus environment"):
         midas_resource_preflight._validate_veritas_runtime_context()
     properties["midas-veritas-source-analysis.service"] = service_properties
 

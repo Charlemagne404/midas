@@ -63,8 +63,10 @@ def configure_scenario(scenario: str) -> None:
         "ReadWritePaths=\n"
         f"ReadWritePaths={CONFIG['output_root']}\n"
         f"ReadWritePaths={RECEIPTS}\n"
-        "ReadWritePaths=%t/bus\n"
+        "ReadWritePaths=%t/systemd/private\n"
         "RestrictAddressFamilies=AF_UNIX\n"
+        "Environment=XDG_RUNTIME_DIR=%t\n"
+        "Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=%t/systemd/private\n"
         + "".join(f"Environment={key}={value}\n" for key, value in values.items()),
         encoding="utf-8",
     )

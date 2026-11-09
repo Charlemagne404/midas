@@ -7,7 +7,7 @@ watchdog, the durable receipt, and the exit status returned to systemd.
 
 ## Release identity
 
-- Release: `veritas-guarded-streaming-683346e0-isolated-imports-v6`
+- Release: `veritas-guarded-streaming-683346e0-isolated-imports-v7`
 - Streaming module SHA-256: `683346e0f14a594528158676343dd1c63e5731fcb2c5beec9739abc96d1898ff`
 - Veritas worker wrapper SHA-256: `5c912ed80fba851dc75fc6de19df34de3c8d5d3179b4865ffb79a78998291e59`
 - Guarded launcher SHA-256: `1d216b5e40f7a23bf6bd266b4a8f0a1290d27fcd45c9126e0700fa9da8a24eda`
@@ -36,10 +36,12 @@ launcher. The launcher starts the only transient research worker, waits for its
 systemd result, checks the sealed v2 checkpoint and bounded summary, and returns
 that result to the permanent oneshot. `ExecStartPre`, `ExecStartPost`, and
 `ExecStop` alternatives are rejected. The permanent trigger has a narrow
-`ReadWritePaths` exception for its own user-manager D-Bus socket; this is
-required to inspect protected service state and create the bounded transient
-worker while `ProtectHome=read-only` is active. It does not expose another
-user's manager. `PYTHONPATH` is cleared on the permanent trigger. The worker
+`XDG_RUNTIME_DIR` and `DBUS_SESSION_BUS_ADDRESS` point explicitly at the
+invoking user's systemd manager, and `ReadWritePaths` allows only that manager's
+private socket. This is required to inspect protected service state and create
+the bounded transient worker while `ProtectHome=read-only` is active. It does
+not expose another user's manager. `PYTHONPATH` is cleared on the permanent
+trigger. The worker
 uses `-S` with the release package and validated virtualenv site packages
 explicitly, so editable-install `.pth` files cannot add the old frozen overlay
 or main checkout as fallback import roots.
