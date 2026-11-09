@@ -115,7 +115,7 @@ jobs:
           sudo install -D -o midas-ci -g midas-ci -m 0444 \
             deploy/systemd/user/midas-reality-capacity.timer \
             "$tools/deploy/systemd/user/midas-reality-capacity.timer"
-          sudo install -d -o midas-ci -g midas-ci \
+          sudo install -d -o midas-ci -g midas-ci -m 0700 \
             /home/midas-ci/.local/state/midas/guarded-executions
           sudo -u midas-ci mkdir -p /home/midas-ci/midas-veritas/packages/midas/veritas \
             /home/midas-ci/midas-veritas/data/veritas-observatory
@@ -131,6 +131,8 @@ jobs:
       - name: Run the exact guarded service through the isolated user manager
         run: |
           set -euo pipefail
+          receipt_dir=/home/midas-ci/.local/state/midas/guarded-executions
+          test "$(stat -c '%u:%a' "$receipt_dir")" = "$MIDAS_CI_UID:700"
           sudo -u midas-ci env HOME=/home/midas-ci XDG_RUNTIME_DIR="$MIDAS_CI_RUNTIME_DIR" \
             PYTHONPATH="/home/midas-ci/midas-ci-tools/scripts" \
             /home/midas-ci/midas/.venv/bin/python \
