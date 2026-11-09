@@ -66,12 +66,16 @@ jobs:
           done
           sudo -u midas-ci env XDG_RUNTIME_DIR="$runtime" systemctl --user show-environment >/dev/null
           cgroup="/sys/fs/cgroup/user.slice/user-${uid}.slice/user@${uid}.service"
-          cat "$cgroup/cgroup.controllers"
-          cat "$cgroup/cgroup.subtree_control"
+          available_controllers="$(cat "$cgroup/cgroup.controllers")"
+          enabled_controllers="$(cat "$cgroup/cgroup.subtree_control")"
+          printf 'delegated controllers: %s\nenabled child controllers: %s\n' \
+            "$available_controllers" "$enabled_controllers"
           for controller in cpu memory io pids; do
-            grep -qw "$controller" "$cgroup/cgroup.controllers"
-            grep -qw "$controller" "$cgroup/cgroup.subtree_control"
+            grep -qw "$controller" <<< "$available_controllers"
           done
+          # The user manager enables delegated controllers when it creates a
+          # transient worker. Requiring them to be pre-enabled here rejects a
+          # valid delegated hierarchy before systemd can apply the unit limits.
           sudo -u midas-ci test -w "$cgroup/cgroup.subtree_control"
           echo "MIDAS_CI_UID=$uid" >> "$GITHUB_ENV"
           echo "MIDAS_CI_RUNTIME_DIR=$runtime" >> "$GITHUB_ENV"
