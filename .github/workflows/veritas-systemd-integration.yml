@@ -73,7 +73,18 @@ jobs:
             test -S "$runtime/bus" && break
             sleep 1
           done
-          test -S "$runtime/bus"
+          if ! test -S "$runtime/bus"; then
+            echo "Expected user D-Bus socket missing: $runtime/bus"
+            sudo -u midas-ci env XDG_RUNTIME_DIR="$runtime" \
+              systemctl --user show dbus.socket -p ActiveState -p SubState -p Result \
+                -p Listen -p FragmentPath -p InvocationID || true
+            sudo -u midas-ci env XDG_RUNTIME_DIR="$runtime" \
+              systemctl --user status dbus.socket --no-pager || true
+            sudo -u midas-ci env XDG_RUNTIME_DIR="$runtime" \
+              journalctl --user -u dbus.socket --no-pager -n 40 || true
+            ls -la "$runtime" || true
+            exit 1
+          fi
           sudo -u midas-ci env XDG_RUNTIME_DIR="$runtime" \
             DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime/bus" \
             busctl --user get-property org.freedesktop.systemd1 \
