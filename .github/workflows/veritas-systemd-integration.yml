@@ -91,27 +91,45 @@ jobs:
             pydantic-core==2.50.0 scikit-learn==1.7.2 scipy==1.18.1 \
             threadpoolctl==3.7.0 typing-extensions==4.16.0 typing-inspection==0.4.4 \
             pytest==8.4.2
-          sudo -u midas-ci env HOME=/home/midas-ci XDG_RUNTIME_DIR="$MIDAS_CI_RUNTIME_DIR" \
-            GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" \
-            /home/midas-ci/midas/.venv/bin/python scripts/ci/build_veritas_systemd_release.py \
-            --revision "$GITHUB_SHA"
           release="/home/midas-ci/.local/share/midas-veritas/releases/veritas-guarded-streaming-683346e0-isolated-imports-v4"
-          mkdir -p /home/midas-ci/midas-veritas/packages/midas/veritas \
+          release_source="$RUNNER_TEMP/veritas-guarded-release"
+          test ! -e "$release_source" && test ! -e "$release"
+          "$PYTHON_BIN" scripts/ci/build_veritas_systemd_release.py \
+            --revision "$GITHUB_SHA" --destination "$release_source"
+          sudo install -d -o midas-ci -g midas-ci "$(dirname "$release")"
+          sudo cp -a "$release_source" "$release"
+          sudo chown -R midas-ci:midas-ci "$release"
+          tools="/home/midas-ci/midas-ci-tools"
+          sudo install -D -o midas-ci -g midas-ci -m 0444 scripts/midas_resource_preflight.py \
+            "$tools/scripts/midas_resource_preflight.py"
+          sudo install -D -o midas-ci -g midas-ci -m 0444 scripts/ci/prepare_veritas_systemd_fixture.py \
+            "$tools/scripts/ci/prepare_veritas_systemd_fixture.py"
+          sudo install -D -o midas-ci -g midas-ci -m 0444 scripts/ci/run_veritas_systemd_e2e.py \
+            "$tools/scripts/ci/run_veritas_systemd_e2e.py"
+          sudo install -D -o midas-ci -g midas-ci -m 0444 \
+            deploy/systemd/user/midas-veritas-source-analysis.timer \
+            "$tools/deploy/systemd/user/midas-veritas-source-analysis.timer"
+          sudo install -D -o midas-ci -g midas-ci -m 0444 \
+            deploy/systemd/user/midas-reality-capacity.timer \
+            "$tools/deploy/systemd/user/midas-reality-capacity.timer"
+          sudo -u midas-ci mkdir -p /home/midas-ci/midas-veritas/packages/midas/veritas \
             /home/midas-ci/midas-veritas/data/veritas-observatory \
             /home/midas-ci/.local/state/midas/guarded-executions
-          cp "$release/rollback/previous-finalized_source_analysis.py" \
+          sudo -u midas-ci cp "$release/rollback/previous-finalized_source_analysis.py" \
             /home/midas-ci/midas-veritas/packages/midas/veritas/finalized_source_analysis.py
-          chmod 0444 /home/midas-ci/midas-veritas/packages/midas/veritas/finalized_source_analysis.py
-          chown -R midas-ci:midas-ci /home/midas-ci/midas /home/midas-ci/midas-veritas \
+          sudo -u midas-ci chmod 0444 /home/midas-ci/midas-veritas/packages/midas/veritas/finalized_source_analysis.py
+          sudo chown -R midas-ci:midas-ci /home/midas-ci/midas /home/midas-ci/midas-veritas \
             /home/midas-ci/.local
+          sudo chown -R midas-ci:midas-ci "$tools"
           sudo -u midas-ci env HOME=/home/midas-ci PYTHONPATH="$release/packages" \
-            /home/midas-ci/midas/.venv/bin/python scripts/ci/prepare_veritas_systemd_fixture.py
+            /home/midas-ci/midas/.venv/bin/python "$tools/scripts/ci/prepare_veritas_systemd_fixture.py"
 
       - name: Run the exact guarded service through the isolated user manager
         run: |
           set -euo pipefail
           sudo -u midas-ci env HOME=/home/midas-ci XDG_RUNTIME_DIR="$MIDAS_CI_RUNTIME_DIR" \
-            PYTHONPATH="$GITHUB_WORKSPACE/scripts" \
-            /home/midas-ci/midas/.venv/bin/python scripts/ci/run_veritas_systemd_e2e.py \
+            PYTHONPATH="/home/midas-ci/midas-ci-tools/scripts" \
+            /home/midas-ci/midas/.venv/bin/python \
+            /home/midas-ci/midas-ci-tools/scripts/ci/run_veritas_systemd_e2e.py \
             | tee "$RUNNER_TEMP/veritas-systemd-e2e.json"
           cat "$RUNNER_TEMP/veritas-systemd-e2e.json" >> "$GITHUB_STEP_SUMMARY"
