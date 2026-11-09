@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 import time
+from argparse import Namespace
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -277,6 +278,47 @@ def start_protected_fixtures() -> None:
         command("is-active", "--quiet", unit)
 
 
+def wait_for_admitted_host_window(*, timeout_seconds: float = 600) -> None:
+    """Wait for real host admission to pass after CI setup I/O has subsided."""
+    args = Namespace(
+        profile="veritas",
+        sample_seconds=30,
+        storage_path=[CONFIG["output_root"]],
+        storage_required_mib=0,
+        storage_reserve_mib=5120,
+        memory_budget_mib=128,
+        invocation_id=None,
+        parent_service_invocation_id=None,
+        service_owner_invocation_id=None,
+        parent_service_unit=None,
+        service_owner_unit=None,
+    )
+    deadline = time.monotonic() + timeout_seconds
+    while True:
+        evidence, reasons = preflight._gate(
+            args, include_task_cgroup=False, lock_held=False
+        )
+        print(
+            json.dumps(
+                {
+                    "event": "veritas_ci_host_admission_sample",
+                    "decision": evidence.get("decision"),
+                    "blocking_reasons": reasons,
+                    "io_pressure": evidence.get("pressure", {}).get("io"),
+                },
+                sort_keys=True,
+            )
+        )
+        if not reasons:
+            return
+        if any(not reason.startswith("io_") for reason in reasons):
+            raise RuntimeError(f"host admission denied for a non-I/O condition: {reasons}")
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError(f"host I/O admission did not pass before the deadline: {reasons}")
+        time.sleep(min(10, remaining))
+
+
 def verify_receipt(path: Path, receipt: dict, *, worker_started: bool) -> None:
     if not path.is_file():
         raise AssertionError("durable receipt disappeared")
@@ -326,6 +368,7 @@ def verify_receipt(path: Path, receipt: dict, *, worker_started: bool) -> None:
 def main() -> int:
     install_test_manager_units()
     start_protected_fixtures()
+    wait_for_admitted_host_window()
     fixture = json.loads((preflight.VERITAS_CI_ROOT / "fixture.json").read_text())
     baseline_hash = digest_tree(Path(fixture["output_root"]))
     try:
