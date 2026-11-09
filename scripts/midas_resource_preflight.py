@@ -1625,11 +1625,7 @@ class _RunnerOutput:
             for argument in sorted(self.command, key=len, reverse=True):
                 if len(argument) >= 4:
                     tail = tail.replace(argument, "<redacted-argument>")
-            diagnostic_message = (
-                _safe_diagnostic(tail)
-                if self.include_systemd_error and name == "stderr"
-                else None
-            )
+            diagnostic_message = _safe_diagnostic(tail) if self.include_systemd_error and name == "stderr" else None
             if diagnostic_message:
                 # systemd-run emits manager diagnostics, not worker output. Keep
                 # a short redacted excerpt so failed transient-unit requests
