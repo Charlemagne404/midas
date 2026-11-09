@@ -104,23 +104,25 @@ def test_synthetic_validation_profile_is_separate_and_keeps_production_veritas_p
     )
     assert midas_resource_preflight.PROFILES["veritas"] == veritas_before
     assert midas_resource_preflight.PROFILES["synthetic-validation"]["min_swap_free_mib"] == 0
-    assert midas_resource_preflight.PROFILES["synthetic-validation"]["max_swap_activity_pages"] == 64
     assert (
-        midas_resource_preflight.PROFILES["synthetic-validation"]["max_swap_activity_pages"]
-        > 0
+        midas_resource_preflight.PROFILES["synthetic-validation"]["max_swap_activity_pages"] == 64
     )
+    assert midas_resource_preflight.PROFILES["synthetic-validation"]["max_swap_activity_pages"] > 0
     assert midas_resource_preflight.SYNTHETIC_RUN_LIMITS["memory_budget_mib"] == 8
 
 
 def test_synthetic_validation_allows_only_bounded_incidental_swap_movement() -> None:
     observed = evidence()
     observed["host_memory"]["swap_activity_pages_during_sample"].update(pswpin=64)
-    assert midas_resource_preflight.evaluate_evidence(
-        observed,
-        profile="synthetic-validation",
-        memory_budget_bytes=8 * midas_resource_preflight.MIB,
-        require_task_cgroup=False,
-    ) == []
+    assert (
+        midas_resource_preflight.evaluate_evidence(
+            observed,
+            profile="synthetic-validation",
+            memory_budget_bytes=8 * midas_resource_preflight.MIB,
+            require_task_cgroup=False,
+        )
+        == []
+    )
     observed["host_memory"]["swap_activity_pages_during_sample"]["pswpin"] = 65
     assert "swap_activity_above_profile_limit" in midas_resource_preflight.evaluate_evidence(
         observed,
@@ -133,12 +135,15 @@ def test_synthetic_validation_allows_only_bounded_incidental_swap_movement() -> 
 def test_synthetic_inner_reserve_fits_its_fixed_cgroup_headroom() -> None:
     observed = evidence()
     observed["task_cgroup"] = {"memory_headroom_bytes": 8 * midas_resource_preflight.MIB}
-    assert midas_resource_preflight.evaluate_evidence(
-        observed,
-        profile="synthetic-validation",
-        memory_budget_bytes=8 * midas_resource_preflight.MIB,
-        require_task_cgroup=True,
-    ) == []
+    assert (
+        midas_resource_preflight.evaluate_evidence(
+            observed,
+            profile="synthetic-validation",
+            memory_budget_bytes=8 * midas_resource_preflight.MIB,
+            require_task_cgroup=True,
+        )
+        == []
+    )
     observed["task_cgroup"]["memory_headroom_bytes"] -= 1
     assert "task_cgroup_headroom_below_task_budget" in midas_resource_preflight.evaluate_evidence(
         observed,
@@ -204,7 +209,9 @@ def test_synthetic_landlock_isolation_denies_host_data_and_execs_fixed_binary(
         "arm64",
         "riscv64",
     }:
-        pytest.skip("Landlock syscall verification is supported only on configured Linux architectures")
+        pytest.skip(
+            "Landlock syscall verification is supported only on configured Linux architectures"
+        )
     status_dir = tmp_path / "receipt.control"
     status_dir.mkdir(mode=0o700)
     code = """
@@ -277,7 +284,9 @@ def test_synthetic_validation_rejects_research_or_unexpected_commands(command) -
             "midas-reality_service_memory_headroom_below_profile_floor",
         ),
         (
-            lambda e: e.update(active_midas_worker_services=["midas-veritas-source-analysis.service"]),
+            lambda e: e.update(
+                active_midas_worker_services=["midas-veritas-source-analysis.service"]
+            ),
             "another_midas_worker_service_is_active",
         ),
     ],
@@ -1567,9 +1576,7 @@ def test_synthetic_classification_requires_worker_wait_limits_and_cleanup_eviden
         == "result_missing_indeterminate"
     )
     assert (
-        midas_resource_preflight._classify_guarded_result(
-            **{**common, "unit": None}
-        )
+        midas_resource_preflight._classify_guarded_result(**{**common, "unit": None})
         == "result_missing_indeterminate"
     )
     negative = {**common, "return_code": 1, "synthetic_expected_exit": 1}
@@ -1645,7 +1652,9 @@ def test_synthetic_guarded_run_builds_isolated_service_and_keeps_receipt(
     monkeypatch.setattr(
         midas_resource_preflight, "_cgroup_execution_metrics", lambda *_args: cgroup_metrics
     )
-    unit_properties = _unit_properties(result="success" if runner_code == 0 else "exit-code", status=runner_code)
+    unit_properties = _unit_properties(
+        result="success" if runner_code == 0 else "exit-code", status=runner_code
+    )
     unit_properties.update(
         {
             "Transient": "yes",
@@ -1666,7 +1675,9 @@ def test_synthetic_guarded_run_builds_isolated_service_and_keeps_receipt(
 
     def fake_popen(systemd_command, **kwargs):
         systemd_commands.append(list(systemd_command))
-        unit_name = next(arg.partition("=")[2] for arg in systemd_command if arg.startswith("--unit="))
+        unit_name = next(
+            arg.partition("=")[2] for arg in systemd_command if arg.startswith("--unit=")
+        )
         invocation_id = systemd_command[systemd_command.index("--invocation-id") + 1]
         status_path = Path(systemd_command[systemd_command.index("--status-path") + 1])
         unit_properties["InvocationID"] = "b" * 32
@@ -1712,7 +1723,11 @@ def test_synthetic_guarded_run_builds_isolated_service_and_keeps_receipt(
     monkeypatch.setattr(
         midas_resource_preflight,
         "_wait_for_transient_unit_cleanup",
-        lambda _unit: {"confirmed": True, "unit_absent": True, "last_properties": {"LoadState": "not-found"}},
+        lambda _unit: {
+            "confirmed": True,
+            "unit_absent": True,
+            "last_properties": {"LoadState": "not-found"},
+        },
     )
     args = Namespace(
         profile="synthetic-validation",
@@ -1744,7 +1759,9 @@ def test_synthetic_guarded_run_builds_isolated_service_and_keeps_receipt(
     assert receipt["worker"]["start_confirmed"] is True
     assert receipt["applied_limits_verification"]["passed"] is True
     assert receipt["transient_unit"]["cleanup"]["unit_absent"] is True
-    assert receipt["cgroup_metrics"]["limits"]["memory.max"] == str(64 * midas_resource_preflight.MIB)
+    assert receipt["cgroup_metrics"]["limits"]["memory.max"] == str(
+        64 * midas_resource_preflight.MIB
+    )
     assert receipt_path.is_file()
     assert exit_code == runner_code
     assert "--service-type=exec" in systemd_commands[0]
