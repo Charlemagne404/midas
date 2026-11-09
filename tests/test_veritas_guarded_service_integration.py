@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import shlex
+import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -470,6 +471,11 @@ def test_release_worker_command_is_fixed_to_immutable_candidate(
         },
     )
     command = preflight._veritas_worker_command(root)
+    assert command[:3] == [
+        str(preflight.VERITAS_RUNTIME_PYTHON),
+        "-S",
+        str(root / "scripts" / "veritas_source_analysis.py"),
+    ]
     assert preflight._validate_veritas_worker_command(
         command, root, preflight.VERITAS_APPROVED_MODULE_SHA256
     )["passed"]
@@ -496,6 +502,46 @@ def test_source_service_execstart_is_the_single_guarded_execution_owner() -> Non
     assert "Restart=no" in unit
     assert "KillMode=control-group" in unit
     assert "--max-segments 128 --max-source-mib 32" in unit
+
+
+def test_pinned_worker_python_does_not_load_editable_install_pth(tmp_path: Path) -> None:
+    release_packages = tmp_path / "release-packages"
+    release_midas = release_packages / "midas"
+    release_midas.mkdir(parents=True)
+    (release_midas / "__init__.py").write_text(
+        "from pkgutil import extend_path\n__path__ = extend_path(__path__, __name__)\n",
+        encoding="utf-8",
+    )
+    (release_midas / "pinned.py").write_text("VALUE = 'release'\n", encoding="utf-8")
+
+    editable_root = tmp_path / "checkout-packages"
+    editable_midas = editable_root / "midas"
+    editable_midas.mkdir(parents=True)
+    (editable_midas / "leaked.py").write_text("VALUE = 'checkout'\n", encoding="utf-8")
+    site_packages = tmp_path / "site-packages"
+    site_packages.mkdir()
+    (site_packages / "editable-install.pth").write_text(f"{editable_root}\n", encoding="utf-8")
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-S",
+            "-c",
+            "import importlib.util, midas.pinned; "
+            "assert midas.pinned.VALUE == 'release'; "
+            "assert importlib.util.find_spec('midas.leaked') is None",
+        ],
+        cwd=tmp_path,
+        env={
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "PYTHONPATH": f"{release_packages}:{site_packages}",
+        },
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 def test_transient_veritas_gate_requires_effective_limits_and_both_parent_identities(

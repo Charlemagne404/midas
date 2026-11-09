@@ -246,11 +246,17 @@ RUNNER_RESULT_MISSING = 77
 VERITAS_SERVICE_ROOT = Path.home() / "midas-veritas"
 VERITAS_OUTPUT_ROOT = VERITAS_SERVICE_ROOT / "data" / "veritas-observatory"
 VERITAS_SERVICE_UNIT = "midas-veritas-source-analysis.service"
-VERITAS_RELEASE_ID = "veritas-guarded-streaming-683346e0-runtime-closure-v2"
+VERITAS_RELEASE_ID = "veritas-guarded-streaming-683346e0-isolated-imports-v3"
 VERITAS_RELEASE_ROOT = (
     Path.home() / ".local" / "share" / "midas-veritas" / "releases" / VERITAS_RELEASE_ID
 )
 VERITAS_RUNTIME_PYTHON = Path.home() / "midas" / ".venv" / "bin" / "python"
+VERITAS_RUNTIME_SITE_PACKAGES = (
+    VERITAS_RUNTIME_PYTHON.parent.parent
+    / "lib"
+    / f"python{sys.version_info.major}.{sys.version_info.minor}"
+    / "site-packages"
+)
 VERITAS_APPROVED_SOURCE_REVISION = "5679d4d40715ed762b1efaee37fc541852e9d6f5"
 VERITAS_APPROVED_MODULE_SHA256 = "683346e0f14a594528158676343dd1c63e5731fcb2c5beec9739abc96d1898ff"
 VERITAS_APPROVED_WRAPPER_SHA256 = "783b4c15b2f360c134319502d2037b0bfb110a3a2b7154dbce8e2a77e2454f9d"
@@ -592,6 +598,7 @@ def verify_veritas_release(
 def _veritas_worker_command(release_root: Path) -> list[str]:
     return [
         str(VERITAS_RUNTIME_PYTHON),
+        "-S",
         str(release_root / "scripts" / "veritas_source_analysis.py"),
         "--root",
         str(VERITAS_OUTPUT_ROOT),
@@ -1671,8 +1678,10 @@ def _supervise_veritas_worker(
         return RUNNER_RESULT_MISSING
     try:
         release_root = (
-            Path(command[1]).parent.parent
-            if len(command) > 1 and Path(command[1]).name == "veritas_source_analysis.py"
+            Path(command[2]).parent.parent
+            if len(command) > 2
+            and command[1] == "-S"
+            and Path(command[2]).name == "veritas_source_analysis.py"
             else VERITAS_RELEASE_ROOT
         )
         worker_environment = {
@@ -1680,7 +1689,7 @@ def _supervise_veritas_worker(
             "HOME": str(Path.home()),
             "LANG": "C.UTF-8",
             "LC_ALL": "C.UTF-8",
-            "PYTHONPATH": str(release_root / "packages"),
+            "PYTHONPATH": f"{release_root / 'packages'}:{VERITAS_RUNTIME_SITE_PACKAGES}",
             "OMP_NUM_THREADS": "1",
             "OPENBLAS_NUM_THREADS": "1",
             "MKL_NUM_THREADS": "1",
@@ -4029,7 +4038,7 @@ def _run_command(args: argparse.Namespace) -> int:
                     "--property=Restart=no",
                     "--property=StandardOutput=journal",
                     "--property=StandardError=journal",
-                    f"--setenv=PYTHONPATH={release_packages}",
+                    f"--setenv=PYTHONPATH={release_packages}:{VERITAS_RUNTIME_SITE_PACKAGES}",
                     f"--setenv=HOME={Path.home()}",
                     f"--setenv=XDG_STATE_HOME={Path.home() / '.local' / 'state'}",
                     "--setenv=OMP_NUM_THREADS=1",
@@ -4091,7 +4100,9 @@ def _run_command(args: argparse.Namespace) -> int:
             "UnsetEnvironment": "not used in transient unit; PYTHONPATH is explicitly pinned"
             if args.profile == "veritas"
             else None,
-            "PYTHONPATH": str(Path(args.release_root) / "packages")
+            "PYTHONPATH": (
+                f"{Path(args.release_root) / 'packages'}:{VERITAS_RUNTIME_SITE_PACKAGES}"
+            )
             if args.profile == "veritas"
             else None,
         }

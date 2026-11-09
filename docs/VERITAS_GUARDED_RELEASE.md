@@ -7,7 +7,7 @@ watchdog, the durable receipt, and the exit status returned to systemd.
 
 ## Release identity
 
-- Release: `veritas-guarded-streaming-683346e0-runtime-closure-v2`
+- Release: `veritas-guarded-streaming-683346e0-isolated-imports-v3`
 - Streaming module SHA-256: `683346e0f14a594528158676343dd1c63e5731fcb2c5beec9739abc96d1898ff`
 - Previous production module SHA-256: `e6304b6547dc5d285baab4aae3940b0fe7a6828712d995bb677aad582a44f016`
 - Research root: `/home/charlie/midas-veritas/data/veritas-observatory`
@@ -23,16 +23,20 @@ It also carries the complete 20-file source set that the frozen campaign
 provenance verifier hashes, including the risk engine. Every file is copied
 from the exact currently resolved production overlay and is independently
 pinned in the manifest. The manifest also pins the runtime Python ABI and
-locked numerical/model-validation distributions. The release does not include
-the unrelated Reality API, recorder, or capacity reader.
+locked numerical/model-validation distributions. The worker starts Python with
+`-S` and receives only the release package plus the pinned virtualenv
+`site-packages` directory. This prevents the virtualenv's editable-install
+`.pth` file from adding the main checkout as a fallback import root. The release
+does not include the unrelated Reality API, recorder, or capacity reader.
 
 There is exactly one packaged `ExecStart`, and it is the immutable guarded
 launcher. The launcher starts the only transient research worker, waits for its
 systemd result, checks the sealed v2 checkpoint and bounded summary, and returns
 that result to the permanent oneshot. `ExecStartPre`, `ExecStartPost`, and
 `ExecStop` alternatives are rejected. `PYTHONPATH` is cleared on the permanent
-trigger and set to the release package on the worker, so neither the old frozen
-overlay nor the main checkout can shadow a pinned dependency.
+trigger. The worker uses `-S` with the release package and validated virtualenv
+site packages explicitly, so editable-install `.pth` files cannot add the old
+frozen overlay or main checkout as fallback import roots.
 
 ## Controlled rollout
 

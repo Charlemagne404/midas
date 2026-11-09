@@ -62,7 +62,7 @@ def test_generated_units_pass_real_systemd_parser(tmp_path):
     python.symlink_to(sys.executable)
     release = (
         home
-        / ".local/share/midas-veritas/releases/veritas-guarded-streaming-683346e0-runtime-closure-v2"
+        / ".local/share/midas-veritas/releases/veritas-guarded-streaming-683346e0-isolated-imports-v3"
     )
     launcher = release / "bin/midas_resource_preflight.py"
     wrapper = release / "scripts/veritas_source_analysis.py"

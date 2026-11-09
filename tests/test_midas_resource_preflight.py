@@ -1117,6 +1117,10 @@ def test_veritas_run_uses_sandboxed_service_and_existing_resource_limits(
     assert "--wait" in command
     assert "--collect" in command
     assert "--scope" not in command
+    assert (
+        "--setenv=PYTHONPATH="
+        f"{release_root / 'packages'}:{midas_resource_preflight.VERITAS_RUNTIME_SITE_PACKAGES}"
+    ) in command
     assert command[-4:] == ["--max-segments", "128", "--max-source-mib", "32"]
     receipts = list((tmp_path / "receipts").glob("*.json"))
     assert len(receipts) == 1
