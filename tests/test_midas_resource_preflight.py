@@ -874,7 +874,9 @@ def test_veritas_runtime_context_requires_exact_service_owner_and_pinned_execsta
                 "MemorySwapMax=infinity",
                 "ProtectSystem=strict",
                 "ProtectHome=read-only",
-                f"ReadWritePaths={tmp_path} {tmp_path / 'receipts'}",
+                "ReadWritePaths="
+                f"{tmp_path} {tmp_path / 'receipts'} "
+                f"{midas_resource_preflight.VERITAS_USER_MANAGER_PRIVATE_SOCKET}",
                 f"WorkingDirectory={tmp_path}",
                 "PrivateTmp=yes",
                 "NoNewPrivileges=yes",
@@ -896,6 +898,14 @@ def test_veritas_runtime_context_requires_exact_service_owner_and_pinned_execsta
     monkeypatch.setattr(midas_resource_preflight, "_systemctl", show)
 
     assert midas_resource_preflight._validate_veritas_runtime_context() == owner_invocation_id
+
+    service_properties = properties["midas-veritas-source-analysis.service"]
+    properties["midas-veritas-source-analysis.service"] = service_properties.replace(
+        f" {midas_resource_preflight.VERITAS_USER_MANAGER_PRIVATE_SOCKET}", ""
+    )
+    with pytest.raises(midas_resource_preflight.AdmissionError, match="service write paths"):
+        midas_resource_preflight._validate_veritas_runtime_context()
+    properties["midas-veritas-source-analysis.service"] = service_properties
 
     properties["midas-reality-capacity.timer"] = "ActiveState=active\nUnitFileState=enabled\n"
     with pytest.raises(midas_resource_preflight.AdmissionError, match="Reality capacity timer"):

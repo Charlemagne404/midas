@@ -5,7 +5,7 @@ After=local-fs.target
 [Service]
 Type=oneshot
 WorkingDirectory=%h/midas-veritas
-ExecStart=%h/midas/.venv/bin/python %h/.local/share/midas-veritas/releases/veritas-guarded-streaming-683346e0-isolated-imports-v4/bin/midas_resource_preflight.py run --profile veritas --storage-path %h/midas-veritas/data/veritas-observatory --storage-required-mib 0 --storage-reserve-mib 5120 --memory-budget-mib 128 --sample-seconds 30 --memory-high-mib 192 --memory-max-mib 256 --cpu-quota-percent 100 --timeout-seconds 600 --label veritas-source-analysis --source-revision 5679d4d40715ed762b1efaee37fc541852e9d6f5 --release-identity veritas-guarded-streaming-683346e0-isolated-imports-v4 --release-root %h/.local/share/midas-veritas/releases/veritas-guarded-streaming-683346e0-isolated-imports-v4 --expected-module-sha256 683346e0f14a594528158676343dd1c63e5731fcb2c5beec9739abc96d1898ff -- %h/midas/.venv/bin/python -S %h/.local/share/midas-veritas/releases/veritas-guarded-streaming-683346e0-isolated-imports-v4/scripts/veritas_source_analysis.py --root %h/midas-veritas/data/veritas-observatory --max-segments 128 --max-source-mib 32
+ExecStart=%h/midas/.venv/bin/python %h/.local/share/midas-veritas/releases/veritas-guarded-streaming-683346e0-isolated-imports-v5/bin/midas_resource_preflight.py run --profile veritas --storage-path %h/midas-veritas/data/veritas-observatory --storage-required-mib 0 --storage-reserve-mib 5120 --memory-budget-mib 128 --sample-seconds 30 --memory-high-mib 192 --memory-max-mib 256 --cpu-quota-percent 100 --timeout-seconds 600 --label veritas-source-analysis --source-revision 5679d4d40715ed762b1efaee37fc541852e9d6f5 --release-identity veritas-guarded-streaming-683346e0-isolated-imports-v5 --release-root %h/.local/share/midas-veritas/releases/veritas-guarded-streaming-683346e0-isolated-imports-v5 --expected-module-sha256 683346e0f14a594528158676343dd1c63e5731fcb2c5beec9739abc96d1898ff -- %h/midas/.venv/bin/python -S %h/.local/share/midas-veritas/releases/veritas-guarded-streaming-683346e0-isolated-imports-v5/scripts/veritas_source_analysis.py --root %h/midas-veritas/data/veritas-observatory --max-segments 128 --max-source-mib 32
 Environment=XDG_STATE_HOME=%h/.local/state
 Environment=OMP_NUM_THREADS=1
 Environment=OPENBLAS_NUM_THREADS=1
@@ -19,7 +19,7 @@ UMask=0077
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=%h/midas-veritas/data/veritas-observatory %h/.local/state/midas/guarded-executions
+ReadWritePaths=%h/midas-veritas/data/veritas-observatory %h/.local/state/midas/guarded-executions %t/systemd/private
 PrivateTmp=true
 KillMode=control-group
 Restart=no

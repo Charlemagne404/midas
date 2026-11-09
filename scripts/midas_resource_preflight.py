@@ -249,10 +249,11 @@ VERITAS_SERVICE_UNIT = "midas-veritas-source-analysis.service"
 VERITAS_CI_SERVICE_UNIT = "midas-veritas-source-analysis-ci.service"
 VERITAS_CI_TEST_MARKER = "midas-veritas-systemd-ci-v1"
 VERITAS_CI_ROOT = Path.home() / "midas-veritas-ci"
-VERITAS_RELEASE_ID = "veritas-guarded-streaming-683346e0-isolated-imports-v4"
+VERITAS_RELEASE_ID = "veritas-guarded-streaming-683346e0-isolated-imports-v5"
 VERITAS_RELEASE_ROOT = (
     Path.home() / ".local" / "share" / "midas-veritas" / "releases" / VERITAS_RELEASE_ID
 )
+VERITAS_USER_MANAGER_PRIVATE_SOCKET = Path("/run/user") / str(os.getuid()) / "systemd" / "private"
 VERITAS_RUNTIME_PYTHON = Path.home() / "midas" / ".venv" / "bin" / "python"
 VERITAS_RUNTIME_SITE_PACKAGES = (
     VERITAS_RUNTIME_PYTHON.parent.parent
@@ -2661,7 +2662,11 @@ def _validate_veritas_runtime_context(
         raise AdmissionError("Veritas systemd CI parent does not deny network address families")
     rw_paths = set(service.get("ReadWritePaths", "").split())
     expected_output_root = Path(ci_context["output_root"]) if ci_context else VERITAS_OUTPUT_ROOT
-    expected_rw_paths = {str(expected_output_root), str(GUARDED_RECEIPT_DIR)}
+    expected_rw_paths = {
+        str(expected_output_root),
+        str(GUARDED_RECEIPT_DIR),
+        str(VERITAS_USER_MANAGER_PRIVATE_SOCKET),
+    }
     if rw_paths != expected_rw_paths:
         raise AdmissionError("Veritas service write paths differ from the approved minimal set")
     if _parse_execstart(service.get("ExecStart", "")) != _expected_veritas_service_execstart():
