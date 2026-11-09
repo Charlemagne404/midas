@@ -81,10 +81,64 @@ def latest_receipt(
                 receipt = json.loads(path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
                 continue
-            if not require_started or receipt.get("worker", {}).get("start_confirmed"):
+            if (
+                not require_started
+                or receipt.get("worker", {}).get("start_confirmed")
+                or receipt.get("final_classification")
+            ):
                 return path, receipt
         time.sleep(0.1)
-    raise TimeoutError("guarded execution receipt did not reach the expected worker phase")
+    diagnostics: dict[str, object] = {"receipts": []}
+    for path in sorted(
+        (item for item in RECEIPTS.glob("*.json") if item not in before),
+        key=lambda item: item.stat().st_mtime,
+    ):
+        try:
+            receipt = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        diagnostics["receipts"].append(
+            {
+                "path": str(path),
+                "phase": receipt.get("phase"),
+                "final_classification": receipt.get("final_classification"),
+                "outer_admission": receipt.get("outer_admission"),
+                "inner_admission": receipt.get("inner_admission"),
+                "worker": receipt.get("worker"),
+                "result": receipt.get("result"),
+                "systemd_run_client": receipt.get("systemd_run_client"),
+            }
+        )
+    diagnostics["parent_unit"] = preflight._properties(
+        command(
+            "show",
+            UNIT,
+            "-p",
+            "ActiveState",
+            "-p",
+            "Result",
+            "-p",
+            "ExecMainStatus",
+            "-p",
+            "ExecMainCode",
+            "-p",
+            "InvocationID",
+        ).stdout
+    )
+    journal = subprocess.run(
+        ["journalctl", "--user", "-u", UNIT, "--no-pager", "-n", "80"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+    diagnostics["journalctl_exit_code"] = journal.returncode
+    diagnostics["journal_tail"] = journal.stdout[-12000:]
+    diagnostics["journal_error"] = journal.stderr[-2000:]
+    raise TimeoutError(
+        "guarded execution receipt did not reach the expected worker phase: "
+        + json.dumps(diagnostics, sort_keys=True)
+    )
 
 
 def wait_unit(timeout: float = 180) -> dict[str, str]:
