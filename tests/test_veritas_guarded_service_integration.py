@@ -563,7 +563,15 @@ def test_transient_veritas_gate_requires_effective_limits_and_both_parent_identi
         "IOSchedulingClass": "3",
         "ProtectSystem": "strict",
         "ProtectHome": "read-only",
-        "ReadWritePaths": f"{preflight.VERITAS_OUTPUT_ROOT} {tmp_path}",
+        "ReadWritePaths": (
+            f"{preflight.VERITAS_OUTPUT_ROOT} {tmp_path} "
+            f"{preflight.VERITAS_USER_MANAGER_BUS_SOCKET}"
+        ),
+        "Environment": (
+            f"XDG_RUNTIME_DIR={preflight.VERITAS_USER_MANAGER_RUNTIME_DIR} "
+            "DBUS_SESSION_BUS_ADDRESS=unix:path="
+            f"{preflight.VERITAS_USER_MANAGER_BUS_SOCKET}"
+        ),
         "PrivateTmp": "yes",
         "NoNewPrivileges": "yes",
         "UMask": "0077",
@@ -606,6 +614,19 @@ def test_transient_veritas_gate_requires_effective_limits_and_both_parent_identi
     assert result["limits_verified"] is True
     assert result["parent_service_invocation_id"] == "e" * 32
 
+    properties["Environment"] = ""
+    with pytest.raises(preflight.AdmissionError, match="user-manager invocation"):
+        preflight._validate_veritas_transient_unit(
+            expected_status_dir=tmp_path,
+            parent_invocation_id="e" * 32,
+            parent_pid=123,
+        )
+
+    properties["Environment"] = (
+        f"XDG_RUNTIME_DIR={preflight.VERITAS_USER_MANAGER_RUNTIME_DIR} "
+        "DBUS_SESSION_BUS_ADDRESS=unix:path="
+        f"{preflight.VERITAS_USER_MANAGER_BUS_SOCKET}"
+    )
     properties["MemoryMax"] = str(512 * preflight.MIB)
     with pytest.raises(preflight.AdmissionError, match="limits differ"):
         preflight._validate_veritas_transient_unit(

@@ -249,7 +249,7 @@ VERITAS_SERVICE_UNIT = "midas-veritas-source-analysis.service"
 VERITAS_CI_SERVICE_UNIT = "midas-veritas-source-analysis-ci.service"
 VERITAS_CI_TEST_MARKER = "midas-veritas-systemd-ci-v1"
 VERITAS_CI_ROOT = Path.home() / "midas-veritas-ci"
-VERITAS_RELEASE_ID = "veritas-guarded-streaming-683346e0-isolated-imports-v7"
+VERITAS_RELEASE_ID = "veritas-guarded-streaming-683346e0-isolated-imports-v8"
 VERITAS_RELEASE_ROOT = (
     Path.home() / ".local" / "share" / "midas-veritas" / "releases" / VERITAS_RELEASE_ID
 )
@@ -2788,6 +2788,8 @@ def _validate_veritas_transient_unit(
             "Restart",
             "-p",
             "RestrictAddressFamilies",
+            "-p",
+            "Environment",
         ).stdout
     )
     if (
@@ -2823,7 +2825,17 @@ def _validate_veritas_transient_unit(
         )
     if network_restricted and props.get("RestrictAddressFamilies") != "AF_UNIX":
         raise AdmissionError("Veritas CI transient worker does not deny network address families")
-    expected_rw = {str(output_root), str(expected_status_dir)}
+    required_environment = {
+        f"XDG_RUNTIME_DIR={VERITAS_USER_MANAGER_RUNTIME_DIR}",
+        f"DBUS_SESSION_BUS_ADDRESS=unix:path={VERITAS_USER_MANAGER_BUS_SOCKET}",
+    }
+    if not required_environment.issubset(set(props.get("Environment", "").split())):
+        raise AdmissionError("Veritas transient unit cannot inspect its user-manager invocation")
+    expected_rw = {
+        str(output_root),
+        str(expected_status_dir),
+        str(VERITAS_USER_MANAGER_BUS_SOCKET),
+    }
     if set(props.get("ReadWritePaths", "").split()) != expected_rw:
         raise AdmissionError("Veritas transient write paths exceed the research root and receipt")
     metrics = _cgroup_execution_metrics()
@@ -4362,7 +4374,8 @@ def _run_command(args: argparse.Namespace) -> int:
                     "--property=IOSchedulingClass=idle",
                     "--property=ProtectSystem=strict",
                     "--property=ProtectHome=read-only",
-                    f"--property=ReadWritePaths={args.veritas_output_root} {status_path.parent}",
+                    f"--property=ReadWritePaths={args.veritas_output_root} {status_path.parent} "
+                    f"{VERITAS_USER_MANAGER_BUS_SOCKET}",
                     "--property=PrivateTmp=yes",
                     "--property=NoNewPrivileges=yes",
                     "--property=UMask=0077",
@@ -4376,6 +4389,8 @@ def _run_command(args: argparse.Namespace) -> int:
                     f"--setenv=PYTHONPATH={release_packages}:{VERITAS_RUNTIME_SITE_PACKAGES}",
                     f"--setenv=HOME={Path.home()}",
                     f"--setenv=XDG_STATE_HOME={Path.home() / '.local' / 'state'}",
+                    f"--setenv=XDG_RUNTIME_DIR={VERITAS_USER_MANAGER_RUNTIME_DIR}",
+                    f"--setenv=DBUS_SESSION_BUS_ADDRESS=unix:path={VERITAS_USER_MANAGER_BUS_SOCKET}",
                     "--setenv=OMP_NUM_THREADS=1",
                     "--setenv=OPENBLAS_NUM_THREADS=1",
                     "--setenv=MKL_NUM_THREADS=1",
@@ -4432,6 +4447,7 @@ def _run_command(args: argparse.Namespace) -> int:
             "StandardError": "journal" if args.profile == "veritas" else None,
             "ReadWritePaths": (
                 [str(args.veritas_output_root), str(status_path.parent)]
+                + [str(VERITAS_USER_MANAGER_BUS_SOCKET)]
                 if args.profile == "veritas"
                 else None
             ),
@@ -4447,6 +4463,14 @@ def _run_command(args: argparse.Namespace) -> int:
             )
             if args.profile == "veritas"
             else None,
+            "Environment": (
+                {
+                    "XDG_RUNTIME_DIR": str(VERITAS_USER_MANAGER_RUNTIME_DIR),
+                    "DBUS_SESSION_BUS_ADDRESS": (f"unix:path={VERITAS_USER_MANAGER_BUS_SOCKET}"),
+                }
+                if args.profile == "veritas"
+                else None
+            ),
         }
         if args.profile == "synthetic-validation":
             receipt["requested_systemd_properties"].update(

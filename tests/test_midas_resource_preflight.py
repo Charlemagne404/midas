@@ -1214,6 +1214,9 @@ def test_veritas_run_uses_sandboxed_service_and_existing_resource_limits(
 
     assert midas_resource_preflight._run_command(args) == expected_exit
     command = commands[0]
+    receipts = list((tmp_path / "receipts").glob("*.json"))
+    assert len(receipts) == 1
+    receipt = json.loads(receipts[0].read_text())
     assert "--property=MemoryHigh=192M" in command
     assert "--property=MemoryMax=256M" in command
     assert "--property=MemorySwapMax=0" in command
@@ -1224,7 +1227,10 @@ def test_veritas_run_uses_sandboxed_service_and_existing_resource_limits(
     assert "--property=IOSchedulingClass=idle" in command
     assert "--property=ProtectSystem=strict" in command
     assert "--property=ProtectHome=read-only" in command
-    assert any(item.startswith(f"--property=ReadWritePaths={tmp_path} ") for item in command)
+    read_write_paths = next(
+        item for item in command if item.startswith("--property=ReadWritePaths=")
+    )
+    assert read_write_paths.endswith(str(midas_resource_preflight.VERITAS_USER_MANAGER_BUS_SOCKET))
     assert "--property=PrivateTmp=yes" in command
     assert "--property=NoNewPrivileges=yes" in command
     assert "--property=RuntimeMaxSec=600s" in command
@@ -1233,6 +1239,13 @@ def test_veritas_run_uses_sandboxed_service_and_existing_resource_limits(
     assert "--property=StandardOutput=journal" in command
     assert "--property=StandardError=journal" in command
     assert f"--property=WorkingDirectory={tmp_path}" in command
+    assert receipt["requested_systemd_properties"]["Environment"]["XDG_RUNTIME_DIR"] == str(
+        midas_resource_preflight.VERITAS_USER_MANAGER_RUNTIME_DIR
+    )
+    assert (
+        receipt["requested_systemd_properties"]["Environment"]["DBUS_SESSION_BUS_ADDRESS"]
+        == f"unix:path={midas_resource_preflight.VERITAS_USER_MANAGER_BUS_SOCKET}"
+    )
     assert "--service-type=exec" in command
     assert "--wait" in command
     assert "--collect" in command
@@ -1241,10 +1254,14 @@ def test_veritas_run_uses_sandboxed_service_and_existing_resource_limits(
         "--setenv=PYTHONPATH="
         f"{release_root / 'packages'}:{midas_resource_preflight.VERITAS_RUNTIME_SITE_PACKAGES}"
     ) in command
+    assert (
+        f"--setenv=XDG_RUNTIME_DIR={midas_resource_preflight.VERITAS_USER_MANAGER_RUNTIME_DIR}"
+    ) in command
+    assert (
+        "--setenv=DBUS_SESSION_BUS_ADDRESS=unix:path="
+        f"{midas_resource_preflight.VERITAS_USER_MANAGER_BUS_SOCKET}"
+    ) in command
     assert command[-4:] == ["--max-segments", "128", "--max-source-mib", "32"]
-    receipts = list((tmp_path / "receipts").glob("*.json"))
-    assert len(receipts) == 1
-    receipt = json.loads(receipts[0].read_text())
     assert receipt["final_classification"] == expected_classification
     assert receipt["post_execution_verification"]["passed"] is not post_state_invalid
     assert receipt["source_revision"] == midas_resource_preflight.VERITAS_APPROVED_SOURCE_REVISION
