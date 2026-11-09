@@ -4,15 +4,19 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
+import errno
 import fcntl
 import hashlib
 import json
 import math
 import os
+import platform
 import re
 import selectors
 import shutil
 import signal
+import socket
 import stat
 import subprocess
 import sys
@@ -72,6 +76,32 @@ PROFILES: dict[str, dict[str, float | int]] = {
         "user_memory_full_avg60": 3.0,
         "cpu_some_avg10": 40.0,
         "cpu_some_avg60": 40.0,
+        "io_some_avg10": 20.0,
+        "io_some_avg60": 20.0,
+        "io_full_avg10": 5.0,
+        "io_full_avg60": 5.0,
+    },
+    # This profile admits only the fixed /usr/bin/true, /usr/bin/false, or
+    # /usr/bin/sleep 1 probes. It is deliberately short and still requires
+    # host headroom, low pressure, protected-service reserve, and no competing
+    # MIDAS worker. It permits at most 64 pages (256 KiB) of swap movement in
+    # its maximum five-second sample; PSI, free-RAM, and service-headroom gates
+    # still reject real pressure. It is never suitable for research or work.
+    "synthetic-validation": {
+        "min_available_mib": 2048,
+        "min_swap_free_mib": 0,
+        "max_swap_activity_pages": 64,
+        "protected_headroom_mib": 128,
+        "memory_some_avg10": 15.0,
+        "memory_some_avg60": 15.0,
+        "memory_full_avg10": 0.5,
+        "memory_full_avg60": 1.0,
+        "user_memory_some_avg10": 20.0,
+        "user_memory_some_avg60": 20.0,
+        "user_memory_full_avg10": 1.0,
+        "user_memory_full_avg60": 1.0,
+        "cpu_some_avg10": 50.0,
+        "cpu_some_avg60": 50.0,
         "io_some_avg10": 20.0,
         "io_some_avg60": 20.0,
         "io_full_avg10": 5.0,
@@ -152,6 +182,25 @@ VERITAS_IO_RUNTIME = {
     "consecutive_samples": 5,
 }
 VERITAS_RUNTIME_PRESSURE_CANCELLED = 76
+SYNTHETIC_RUN_LIMITS = {
+    "memory_high_mib": 32,
+    "memory_max_mib": 64,
+    # The allowlisted true/false/sleep processes need only a small worker
+    # reserve. Keeping it below the inner Python launcher's own headroom avoids
+    # making its cgroup preflight self-defeating.
+    "memory_budget_mib": 8,
+    "cpu_quota_percent": 10,
+    "timeout_seconds": 10,
+    "max_sample_seconds": 5,
+    "tasks_max": 8,
+}
+SYNTHETIC_TEST_COMMANDS = {
+    ("/usr/bin/true",): 0,
+    ("/usr/bin/false",): 1,
+    ("/usr/bin/sleep", "1"): 0,
+}
+SYNTHETIC_TEST_ROOT = Path("/var/tmp") / f"midas-guarded-synthetic-{os.getuid()}"
+SYNTHETIC_RECEIPT_DIR = SYNTHETIC_TEST_ROOT / "receipts"
 GUARDED_RECEIPT_VERSION = 1
 GUARDED_RECEIPT_DIR = (
     Path(os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local" / "state")))
@@ -271,6 +320,95 @@ def _command_identity(command: list[str]) -> dict[str, Any]:
     }
 
 
+def _synthetic_expected_exit(command: list[str]) -> int:
+    expected = SYNTHETIC_TEST_COMMANDS.get(tuple(command))
+    if expected is None:
+        raise AdmissionError(
+            "synthetic-validation accepts only /usr/bin/true, /usr/bin/false, or /usr/bin/sleep 1"
+        )
+    try:
+        resolved = Path(command[0]).resolve(strict=True)
+        metadata = resolved.stat()
+    except OSError as error:
+        raise AdmissionError(f"synthetic validation executable is unavailable: {error}") from error
+    if (
+        not resolved.is_file()
+        or metadata.st_uid != 0
+        or metadata.st_mode & 0o022
+        or not os.access(resolved, os.X_OK)
+    ):
+        raise AdmissionError("synthetic validation executable is not a trusted root-owned binary")
+    return expected
+
+
+def _require_host_ip_socket_support() -> None:
+    for family in (socket.AF_INET, socket.AF_INET6):
+        try:
+            candidate = socket.socket(family, socket.SOCK_STREAM)
+        except OSError as error:
+            raise AdmissionError(
+                f"cannot prove systemd blocks IP sockets because family {family} is unavailable"
+            ) from error
+        candidate.close()
+
+
+def _prepare_synthetic_test_root() -> Path:
+    root = SYNTHETIC_TEST_ROOT
+    if root.parent != Path("/var/tmp") or root.parent.is_symlink() or not root.parent.is_dir():
+        raise AdmissionError("synthetic validation root must be directly under a safe /var/tmp")
+    if root.is_symlink():
+        raise AdmissionError("synthetic validation root must not be a symlink")
+    try:
+        root.mkdir(mode=0o700, exist_ok=True)
+        metadata = root.stat(follow_symlinks=False)
+    except OSError as error:
+        raise AdmissionError(f"cannot prepare synthetic validation root: {error}") from error
+    if (
+        not stat.S_ISDIR(metadata.st_mode)
+        or metadata.st_uid != os.getuid()
+        or stat.S_IMODE(metadata.st_mode) != 0o700
+    ):
+        raise AdmissionError("synthetic validation root must be user-owned with mode 0700")
+    return root
+
+
+def _validate_synthetic_limits(args: argparse.Namespace, command: list[str]) -> int:
+    expected_exit = _synthetic_expected_exit(command)
+    _require_host_ip_socket_support()
+    if (
+        args.memory_high_mib != SYNTHETIC_RUN_LIMITS["memory_high_mib"]
+        or args.memory_max_mib != SYNTHETIC_RUN_LIMITS["memory_max_mib"]
+        or args.memory_budget_mib > SYNTHETIC_RUN_LIMITS["memory_budget_mib"]
+        or args.cpu_quota_percent != SYNTHETIC_RUN_LIMITS["cpu_quota_percent"]
+        or not 0 < args.timeout_seconds <= SYNTHETIC_RUN_LIMITS["timeout_seconds"]
+        or not 1 <= args.sample_seconds <= SYNTHETIC_RUN_LIMITS["max_sample_seconds"]
+        or args.termination_grace_seconds < 0
+        or args.termination_grace_seconds > 1
+        or args.storage_required_mib != 0
+        or args.storage_reserve_mib != 0
+    ):
+        raise AdmissionError("synthetic-validation limits exceed its fixed short-run profile")
+    root = _prepare_synthetic_test_root()
+    try:
+        launcher_path = Path(__file__).resolve(strict=True)
+        launcher_stat = launcher_path.stat()
+    except OSError as error:
+        raise AdmissionError(f"synthetic launcher identity is unavailable: {error}") from error
+    if (
+        not launcher_path.is_relative_to(root.resolve())
+        or launcher_stat.st_uid != os.getuid()
+        or launcher_stat.st_mode & 0o222
+        or not stat.S_ISREG(launcher_stat.st_mode)
+    ):
+        raise AdmissionError("synthetic-validation must use its private staged launcher copy")
+    paths = [Path(path).resolve() for path in args.storage_path]
+    if paths != [root.resolve()]:
+        raise AdmissionError("synthetic-validation storage may only reference its private test root")
+    if args.memory_budget_mib <= 0:
+        raise AdmissionError("synthetic-validation memory budget must be positive")
+    return expected_exit
+
+
 def _compact_evidence(evidence: dict[str, Any]) -> dict[str, Any]:
     keys = (
         "sampled_at_utc",
@@ -296,8 +434,13 @@ def _new_execution_receipt(
     invocation_id = uuid.uuid4().hex
     unit_label = "veritas" if args.profile == "veritas" else args.label
     safe_label = re.sub(r"[^a-zA-Z0-9_-]+", "-", unit_label).strip("-")[:24] or "task"
-    unit_type = "service" if args.profile == "veritas" else "scope"
-    unit = f"midas-heavy-{safe_label}-{invocation_id[:12]}.{unit_type}"
+    unit_type = "service" if args.profile in {"veritas", "synthetic-validation"} else "scope"
+    unit_prefix = (
+        "midas-synthetic-validation"
+        if args.profile == "synthetic-validation"
+        else "midas-heavy"
+    )
+    unit = f"{unit_prefix}-{safe_label}-{invocation_id[:12]}.{unit_type}"
     status_dir = receipt_dir / f"{invocation_id}.control"
     status_dir.mkdir(mode=0o700, exist_ok=False)
     os.chmod(status_dir, 0o700)
@@ -315,16 +458,29 @@ def _new_execution_receipt(
         "source_revision": args.source_revision or None,
         "release_identity": args.release_identity or None,
         "profile": args.profile,
+        "execution_scope": (
+            "disposable_synthetic_validation"
+            if args.profile == "synthetic-validation"
+            else "bounded_operational_work"
+        ),
+        "production_admission": args.profile != "synthetic-validation",
         "command_identity": _command_identity(command),
         "resource_limits": {
             "memory_high_mib": args.memory_high_mib,
             "memory_max_mib": args.memory_max_mib,
             "memory_budget_mib": args.memory_budget_mib,
-            "memory_swap_max_bytes": 0 if args.profile == "veritas" else None,
+            "memory_swap_max_bytes": 0
+            if args.profile in {"veritas", "synthetic-validation"}
+            else None,
             "cpu_quota_percent": args.cpu_quota_percent,
             "timeout_seconds": args.timeout_seconds,
             "runtime_max_seconds": args.timeout_seconds,
             "io_weight": 10,
+            "tasks_max": (
+                SYNTHETIC_RUN_LIMITS["tasks_max"]
+                if args.profile == "synthetic-validation"
+                else None
+            ),
         },
         "outer_admission": {"decision": "pending"},
         "inner_admission": {"decision": "pending"},
@@ -630,6 +786,12 @@ UNIT_RECEIPT_PROPERTIES = (
     "CPUQuotaPerSecUSec",
     "IOWeight",
     "RuntimeMaxUSec",
+    "TasksMax",
+    "NoNewPrivileges",
+    "RestrictAddressFamilies",
+    "SystemCallArchitectures",
+    "KillMode",
+    "Restart",
 )
 
 
@@ -645,6 +807,65 @@ def _unit_snapshot(unit: str) -> dict[str, str] | None:
         return None
     props = _properties(result.stdout)
     return props if props.get("LoadState") not in {None, "not-found"} else None
+
+
+def _unit_snapshot_after_wait(unit: str) -> dict[str, str] | None:
+    args = ["show", unit]
+    for prop in UNIT_RECEIPT_PROPERTIES:
+        args.extend(("-p", prop))
+    try:
+        result = _systemctl(*args, check=False)
+    except AdmissionError:
+        return None
+    if result.returncode != 0:
+        return None
+    return _properties(result.stdout)
+
+
+def _wait_for_transient_unit_cleanup(unit: str, timeout_seconds: float = 3.0) -> dict[str, Any]:
+    deadline = time.monotonic() + timeout_seconds
+    last: dict[str, str] = {}
+    while True:
+        try:
+            result = _systemctl(
+                "show",
+                unit,
+                "-p",
+                "LoadState",
+                "-p",
+                "ActiveState",
+                "-p",
+                "MainPID",
+                "-p",
+                "ControlPID",
+                "--no-pager",
+                check=False,
+            )
+        except AdmissionError as error:
+            return {"confirmed": False, "reason": _safe_diagnostic(str(error))}
+        last = _properties(result.stdout) if result.returncode == 0 else {}
+        if last.get("LoadState") == "not-found":
+            return {"confirmed": True, "unit_absent": True, "last_properties": last}
+        active = last.get("ActiveState") in {"active", "activating", "reloading"}
+        pids = (last.get("MainPID", "0"), last.get("ControlPID", "0"))
+        if not active and all(pid in {"", "0", "n/a"} for pid in pids):
+            if last.get("ActiveState") == "failed":
+                _systemctl("reset-failed", unit, check=False)
+            elif last.get("LoadState") not in {None, "loaded"}:
+                return {
+                    "confirmed": False,
+                    "unit_absent": False,
+                    "last_properties": last,
+                    "reason": "unexpected transient unit state",
+                }
+        if time.monotonic() >= deadline:
+            return {
+                "confirmed": False,
+                "unit_absent": False,
+                "last_properties": last,
+                "reason": "transient unit remained loaded or active after collection",
+            }
+        time.sleep(0.1)
 
 
 def _cgroup_execution_metrics(path: Path | None = None) -> dict[str, Any]:
@@ -663,6 +884,16 @@ def _cgroup_execution_metrics(path: Path | None = None) -> dict[str, Any]:
             if key in {"usage_usec", "user_usec", "system_usec", "nr_throttled", "throttled_usec"}
         }
         io_weight = (resolved / "io.weight").read_text(encoding="ascii").strip()
+        limits = {
+            name: (resolved / name).read_text(encoding="ascii").strip()
+            for name in (
+                "memory.high",
+                "memory.max",
+                "memory.swap.max",
+                "cpu.max",
+                "pids.max",
+            )
+        }
         return {
             "available": True,
             "cgroup": str(resolved),
@@ -670,6 +901,7 @@ def _cgroup_execution_metrics(path: Path | None = None) -> dict[str, Any]:
             "memory": memory,
             "cpu": cpu_values,
             "io_weight": io_weight[:256],
+            "limits": limits,
         }
     except (OSError, ValueError, AdmissionError) as error:
         return {"available": False, "error": str(error)[:512]}
@@ -728,6 +960,8 @@ class _RunnerOutput:
                 diagnostic_type = "none"
             elif "failed to connect to bus" in lowered or "no medium found" in lowered:
                 diagnostic_type = "systemd_bus_unavailable"
+            elif "failed to drop capabilities" in lowered:
+                diagnostic_type = "systemd_sandbox_setup_failed"
             elif "permission denied" in lowered or "access denied" in lowered:
                 diagnostic_type = "systemd_permission_denied"
             elif "failed to start" in lowered:
@@ -963,7 +1197,12 @@ def _finite_limit(value: str) -> int | None:
     return number if number >= 0 else None
 
 
-def _active_midas_workers(*, allow_current_veritas_service: bool = False) -> list[str]:
+def _active_midas_workers(
+    *,
+    allow_current_veritas_service: bool = False,
+    allow_current_synthetic_service: bool = False,
+    invocation_id: str | None = None,
+) -> list[str]:
     result = _systemctl(
         "list-units",
         "--type=service",
@@ -974,6 +1213,16 @@ def _active_midas_workers(*, allow_current_veritas_service: bool = False) -> lis
     )
     active: list[str] = []
     current_unit = _current_veritas_service_unit() if allow_current_veritas_service else None
+    if allow_current_synthetic_service and invocation_id:
+        cgroup = _current_cgroup()
+        expected_suffix = f"-{invocation_id[:12]}.service"
+        candidates = [
+            part
+            for part in cgroup.parts
+            if part.startswith("midas-synthetic-validation-") and part.endswith(expected_suffix)
+        ]
+        if len(candidates) == 1:
+            current_unit = candidates[0]
     for line in result.stdout.splitlines():
         fields = line.split()
         if (
@@ -984,6 +1233,286 @@ def _active_midas_workers(*, allow_current_veritas_service: bool = False) -> lis
         ):
             active.append(fields[0])
     return active
+
+
+def _validate_synthetic_unit_context(
+    invocation_id: str, status_dir: Path
+) -> tuple[str, dict[str, str], dict[str, Any]]:
+    if not re.fullmatch(r"[0-9a-f]{32}", invocation_id):
+        raise AdmissionError("synthetic invocation id is invalid")
+    if status_dir.resolve() != (SYNTHETIC_RECEIPT_DIR / f"{invocation_id}.control").resolve():
+        raise AdmissionError("synthetic status must remain inside its dedicated receipt directory")
+    cgroup = _current_cgroup().resolve(strict=True)
+    matches = [
+        part
+        for part in cgroup.parts
+        if re.fullmatch(
+            rf"midas-synthetic-validation-[a-zA-Z0-9_-]+-{invocation_id[:12]}\.service",
+            part,
+        )
+    ]
+    if len(matches) != 1:
+        raise AdmissionError("synthetic execution must run in its matching transient service")
+    unit = matches[0]
+    properties = _properties(
+        _systemctl(
+            "show",
+            unit,
+            "-p",
+            "LoadState",
+            "-p",
+            "Transient",
+            "-p",
+            "ActiveState",
+            "-p",
+            "InvocationID",
+            "-p",
+            "ControlGroup",
+            "-p",
+            "MemoryHigh",
+            "-p",
+            "MemoryMax",
+            "-p",
+            "MemorySwapMax",
+            "-p",
+            "CPUQuotaPerSecUSec",
+            "-p",
+            "IOWeight",
+            "-p",
+            "TasksMax",
+            "-p",
+            "RuntimeMaxUSec",
+            "-p",
+            "TimeoutStartUSec",
+            "-p",
+            "NoNewPrivileges",
+            "-p",
+            "RestrictAddressFamilies",
+            "-p",
+            "KillMode",
+            "-p",
+            "Restart",
+            "-p",
+            "SystemCallArchitectures",
+        ).stdout
+    )
+    expected = {
+        "LoadState": "loaded",
+        "Transient": "yes",
+        "ActiveState": "active",
+        "ControlGroup": "/" + str(cgroup.relative_to(CGROUP_ROOT.resolve())),
+        "MemoryHigh": str(SYNTHETIC_RUN_LIMITS["memory_high_mib"] * MIB),
+        "MemoryMax": str(SYNTHETIC_RUN_LIMITS["memory_max_mib"] * MIB),
+        "MemorySwapMax": "0",
+        "CPUQuotaPerSecUSec": "100ms",
+        "IOWeight": "10",
+        "TasksMax": str(SYNTHETIC_RUN_LIMITS["tasks_max"]),
+        "RuntimeMaxUSec": "10s",
+        "TimeoutStartUSec": "10s",
+        "NoNewPrivileges": "yes",
+        "RestrictAddressFamilies": "AF_UNIX",
+        "KillMode": "control-group",
+        "Restart": "no",
+        "SystemCallArchitectures": "native",
+    }
+    mismatches = [
+        f"{name}={properties.get(name)!r} (expected {value!r})"
+        for name, value in expected.items()
+        if properties.get(name) != value
+    ]
+    if not re.fullmatch(r"[0-9a-f]{32}", properties.get("InvocationID", "")):
+        mismatches.append("InvocationID is missing or malformed")
+    if properties.get("InvocationID") == invocation_id:
+        mismatches.append("systemd unit invocation id unexpectedly equals launcher id")
+
+    metrics = _cgroup_execution_metrics(cgroup)
+    limits = metrics.get("limits", {}) if metrics.get("available") else {}
+    expected_cgroup_limits = {
+        "memory.high": str(SYNTHETIC_RUN_LIMITS["memory_high_mib"] * MIB),
+        "memory.max": str(SYNTHETIC_RUN_LIMITS["memory_max_mib"] * MIB),
+        "memory.swap.max": "0",
+        "cpu.max": "10000 100000",
+        "pids.max": str(SYNTHETIC_RUN_LIMITS["tasks_max"]),
+    }
+    for name, value in expected_cgroup_limits.items():
+        if limits.get(name) != value:
+            mismatches.append(f"cgroup {name}={limits.get(name)!r} (expected {value!r})")
+    io_weight = metrics.get("io_weight", "").splitlines()
+    if not io_weight or io_weight[0].split() != ["default", "10"]:
+        mismatches.append("cgroup io.weight does not show default weight 10")
+    if not metrics.get("available"):
+        mismatches.append("cgroup metrics are unavailable")
+    network_probe = _probe_network_restriction()
+    if not network_probe["restricted"]:
+        mismatches.append("systemd did not deny creation of an IP socket")
+    if mismatches:
+        raise AdmissionError("synthetic unit isolation or limits were not verified: " + "; ".join(mismatches))
+    metrics["network_isolation"] = network_probe
+    return unit, properties, metrics
+
+
+def _probe_network_restriction() -> dict[str, Any]:
+    """Prove systemd's address-family filter blocks IP socket creation."""
+    probe = {"restricted": True, "families": {}}
+    families = {"AF_INET": socket.AF_INET, "AF_INET6": socket.AF_INET6}
+    for name, family in families.items():
+        try:
+            candidate = socket.socket(family, socket.SOCK_STREAM)
+        except OSError as error:
+            denied = error.errno in {errno.EPERM, errno.EACCES}
+            probe["families"][name] = "denied" if denied else f"unverified_errno_{error.errno}"
+            probe["restricted"] = probe["restricted"] and denied
+        else:
+            candidate.close()
+            probe["families"][name] = "created"
+            probe["restricted"] = False
+    return probe
+
+
+def _landlock_syscall_numbers() -> tuple[int, int, int]:
+    if platform.machine().lower() in {"x86_64", "amd64", "aarch64", "arm64", "riscv64"}:
+        return 444, 445, 446
+    raise AdmissionError("Landlock syscall numbers are not defined for this architecture")
+
+
+def _apply_synthetic_filesystem_isolation(status_dir: Path) -> dict[str, Any]:
+    """Confine the synthetic worker to immutable system binaries and its receipt dir."""
+    if platform.machine().lower() not in {"x86_64", "amd64", "aarch64", "arm64", "riscv64"}:
+        raise AdmissionError("Landlock is not configured for this architecture")
+    if status_dir.is_symlink() or not status_dir.is_dir():
+        raise AdmissionError("synthetic status directory is missing or unsafe")
+    if Path("/proc/self/status").read_text(encoding="ascii").split("NoNewPrivs:", 1)[1].splitlines()[0].strip() != "1":
+        raise AdmissionError("systemd NoNewPrivileges is not active in the worker")
+
+    writable_path = str(status_dir.resolve(strict=True))
+    libc = ctypes.CDLL(None, use_errno=True)
+    create_ruleset, add_rule, restrict_self = _landlock_syscall_numbers()
+
+    class RulesetAttr(ctypes.Structure):
+        _fields_ = [("handled_access_fs", ctypes.c_uint64)]
+
+    class PathBeneathAttr(ctypes.Structure):
+        _fields_ = [
+            ("allowed_access", ctypes.c_uint64),
+            ("parent_fd", ctypes.c_int),
+            ("reserved", ctypes.c_uint32),
+        ]
+
+    abi = libc.syscall(create_ruleset, None, 0, 1)
+    if abi < 1:
+        error = ctypes.get_errno()
+        raise AdmissionError(f"Landlock ABI query failed: {os.strerror(error)}")
+    rights = {
+        "execute": 1 << 0,
+        "write_file": 1 << 1,
+        "read_file": 1 << 2,
+        "read_dir": 1 << 3,
+        "remove_dir": 1 << 4,
+        "remove_file": 1 << 5,
+        "make_char": 1 << 6,
+        "make_dir": 1 << 7,
+        "make_reg": 1 << 8,
+        "make_sock": 1 << 9,
+        "make_fifo": 1 << 10,
+        "make_block": 1 << 11,
+        "make_sym": 1 << 12,
+    }
+    if abi >= 2:
+        rights["refer"] = 1 << 13
+    if abi >= 3:
+        rights["truncate"] = 1 << 14
+    if abi >= 5:
+        rights["ioctl_dev"] = 1 << 15
+    handled = sum(rights.values())
+    ruleset_fd = -1
+    path_fds: list[int] = []
+    try:
+        attr = RulesetAttr(handled)
+        ruleset_fd = libc.syscall(create_ruleset, ctypes.byref(attr), ctypes.sizeof(attr), 0)
+        if ruleset_fd < 0:
+            error = ctypes.get_errno()
+            raise AdmissionError(f"Landlock ruleset creation failed: {os.strerror(error)}")
+        readonly = rights["execute"] | rights["read_file"] | rights["read_dir"]
+        access_rules = [(Path("/usr"), readonly)]
+        access_rules.extend(
+            (path, readonly)
+            for path in (Path("/lib"), Path("/lib64"))
+            if path.exists()
+        )
+        status_access = (
+            rights["read_file"]
+            | rights["read_dir"]
+            | rights["write_file"]
+            | rights["make_reg"]
+            | rights["remove_file"]
+            | rights.get("refer", 0)
+            | rights.get("truncate", 0)
+        )
+        access_rules.append(
+            (status_dir.resolve(strict=True), status_access)
+        )
+        for loader_file in (Path("/etc/ld.so.cache"), Path("/etc/ld.so.preload")):
+            if loader_file.is_file():
+                info = loader_file.stat()
+                if info.st_uid != 0 or info.st_mode & 0o022:
+                    raise AdmissionError(f"dynamic loader metadata is not trusted: {loader_file}")
+                access_rules.append((loader_file.resolve(strict=True), rights["read_file"]))
+        added: set[tuple[str, int]] = set()
+        for path, allowed in access_rules:
+            resolved = path.resolve(strict=True)
+            metadata = resolved.stat()
+            if (
+                str(resolved) != writable_path
+                and (metadata.st_uid != 0 or metadata.st_mode & 0o022)
+            ):
+                raise AdmissionError(f"synthetic system path is not root-owned and immutable: {resolved}")
+            key = (str(resolved), allowed)
+            if key in added:
+                continue
+            added.add(key)
+            fd = os.open(resolved, getattr(os, "O_PATH", os.O_RDONLY) | os.O_CLOEXEC)
+            path_fds.append(fd)
+            path_attr = PathBeneathAttr(allowed, fd, 0)
+            if libc.syscall(add_rule, ruleset_fd, 1, ctypes.byref(path_attr), 0) < 0:
+                error = ctypes.get_errno()
+                raise AdmissionError(f"Landlock path rule failed: {os.strerror(error)}")
+        if libc.prctl(38, 1, 0, 0, 0) != 0:
+            error = ctypes.get_errno()
+            raise AdmissionError(f"setting no_new_privs for Landlock failed: {os.strerror(error)}")
+        if libc.syscall(restrict_self, ruleset_fd, 0) < 0:
+            error = ctypes.get_errno()
+            raise AdmissionError(f"Landlock restriction failed: {os.strerror(error)}")
+    finally:
+        for fd in path_fds:
+            os.close(fd)
+        if ruleset_fd >= 0:
+            os.close(ruleset_fd)
+
+    denied_paths = []
+    for path in (Path.home(), Path("/mnt"), Path("/var/tmp")):
+        try:
+            fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+        except OSError as error:
+            if error.errno not in {errno.EACCES, errno.EPERM}:
+                raise AdmissionError(f"Landlock could not verify protected path {path}: {error}") from error
+            denied_paths.append(str(path))
+        else:
+            os.close(fd)
+            raise AdmissionError(f"Landlock left protected path accessible: {path}")
+    probe_path = status_dir / f".landlock-probe-{os.getpid()}-{uuid.uuid4().hex}"
+    descriptor = os.open(
+        probe_path,
+        os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC | getattr(os, "O_NOFOLLOW", 0),
+        0o600,
+    )
+    os.close(descriptor)
+    probe_path.unlink()
+    return {
+        "enforced": True,
+        "abi": int(abi),
+        "writable_path": writable_path,
+        "denied_paths": denied_paths,
+    }
 
 
 def _current_cgroup() -> Path:
@@ -1147,6 +1676,8 @@ def collect_evidence(
     include_task_cgroup: bool,
     repeat_pressure_samples: bool = False,
     allow_current_veritas_service: bool = False,
+    allow_current_synthetic_service: bool = False,
+    invocation_id: str | None = None,
 ) -> dict[str, Any]:
     meminfo = parse_meminfo(Path("/proc/meminfo").read_text(encoding="utf-8"))
     vmstat_before = parse_vmstat(Path("/proc/vmstat").read_text(encoding="utf-8"))
@@ -1181,7 +1712,11 @@ def collect_evidence(
     )
     user_memory = _cgroup_memory(user_cgroup)
     user_memory_pressure = parse_psi((user_cgroup / "memory.pressure").read_text(encoding="utf-8"))
-    workers = _active_midas_workers(allow_current_veritas_service=allow_current_veritas_service)
+    workers = _active_midas_workers(
+        allow_current_veritas_service=allow_current_veritas_service,
+        allow_current_synthetic_service=allow_current_synthetic_service,
+        invocation_id=invocation_id,
+    )
     evidence: dict[str, Any] = {
         "sampled_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "host_memory": {
@@ -1444,6 +1979,8 @@ def _gate(
         include_task_cgroup=include_task_cgroup,
         repeat_pressure_samples=args.profile == "veritas",
         allow_current_veritas_service=args.profile == "veritas" and include_task_cgroup,
+        allow_current_synthetic_service=args.profile == "synthetic-validation" and include_task_cgroup,
+        invocation_id=getattr(args, "invocation_id", None),
     )
     reasons = evaluate_evidence(
         evidence,
@@ -1637,10 +2174,13 @@ def _wait_for_runner_process(
     output: _RunnerOutput,
     on_timeout: Any = None,
     on_cancel: Any = None,
+    on_poll: Any = None,
 ) -> int:
     deadline = time.monotonic() + timeout_seconds
     while True:
         output.drain()
+        if on_poll is not None:
+            on_poll()
         return_code = process.poll()
         if return_code is not None:
             output.drain()
@@ -1666,6 +2206,11 @@ def _classify_guarded_result(
     parent_signal: int | None,
     runner_error: str | None,
     unit_was_active_after_client_exit: bool,
+    systemd_wait_completed: bool = False,
+    synthetic_expected_exit: int | None = None,
+    applied_limits_verified: bool = False,
+    unit_cleanup_confirmed: bool = False,
+    unit_after_wait: dict[str, str] | None = None,
 ) -> str:
     if unit_was_active_after_client_exit:
         return "result_missing_indeterminate"
@@ -1694,6 +2239,43 @@ def _classify_guarded_result(
         if inner["watchdog_intervention"].get("kind") == "timeout":
             return "timed_out"
         return "psi_watchdog_cancelled"
+    if profile == "synthetic-validation":
+        if inner and inner.get("phase") == "worker_start_failed":
+            return "worker_startup_failed"
+        if not inner or inner.get("phase") != "worker_exec_requested":
+            if runner_error and unit is None:
+                return "unit_creation_failed"
+            if unit and unit.get("ExecMainStartTimestamp") in {None, "", "n/a"}:
+                return "unit_created_not_started"
+            return "result_missing_indeterminate"
+        if (
+            not unit
+            or not re.fullmatch(r"[0-9a-f]{32}", unit.get("InvocationID", ""))
+            or unit.get("ExecMainStartTimestamp") in {None, "", "n/a"}
+            or not systemd_wait_completed
+            or not applied_limits_verified
+            or not unit_cleanup_confirmed
+            or unit_was_active_after_client_exit
+            or synthetic_expected_exit not in {0, 1}
+            or return_code != synthetic_expected_exit
+        ):
+            return "result_missing_indeterminate"
+        final_unit = unit_after_wait
+        if final_unit is not None and final_unit.get("LoadState") != "not-found":
+            result = final_unit.get("Result")
+            status = final_unit.get("ExecMainStatus")
+            code = final_unit.get("ExecMainCode")
+            if result not in {None, "success", "exit-code"}:
+                return "result_missing_indeterminate"
+            if status not in {None, ""}:
+                try:
+                    if int(status) != synthetic_expected_exit:
+                        return "result_missing_indeterminate"
+                except ValueError:
+                    return "result_missing_indeterminate"
+            if code not in {None, "", "exited"}:
+                return "result_missing_indeterminate"
+        return "worker_succeeded" if synthetic_expected_exit == 0 else "worker_failed"
     if inner and inner.get("phase") == "worker_start_failed":
         return "worker_startup_failed"
     if profile != "veritas" and inner and inner.get("phase") == "worker_exec_requested":
@@ -1761,6 +2343,24 @@ def _safe_diagnostic(value: str | None) -> str | None:
     return clean[:512]
 
 
+def _validate_synthetic_inner_args(
+    args: argparse.Namespace, command: list[str], status_dir: Path
+) -> tuple[int, str, dict[str, str], dict[str, Any]]:
+    expected_exit = _synthetic_expected_exit(command)
+    if (
+        args.memory_budget_mib <= 0
+        or args.memory_budget_mib > SYNTHETIC_RUN_LIMITS["memory_budget_mib"]
+        or not 1 <= args.sample_seconds <= SYNTHETIC_RUN_LIMITS["max_sample_seconds"]
+        or not 0 < args.execution_timeout_seconds <= SYNTHETIC_RUN_LIMITS["timeout_seconds"]
+        or args.storage_required_mib != 0
+        or args.storage_reserve_mib != 0
+        or [Path(path).resolve() for path in args.storage_path] != [SYNTHETIC_TEST_ROOT.resolve()]
+    ):
+        raise AdmissionError("synthetic inner admission arguments exceed the fixed test profile")
+    unit, properties, metrics = _validate_synthetic_unit_context(args.invocation_id, status_dir)
+    return expected_exit, unit, properties, metrics
+
+
 def _run_inside(args: argparse.Namespace, command: list[str]) -> int:
     if not command:
         raise AdmissionError("internal bounded command is missing")
@@ -1775,12 +2375,31 @@ def _run_inside(args: argparse.Namespace, command: list[str]) -> int:
         or status_path.name != "inner-status.json"
     ):
         raise AdmissionError("internal guarded status path is missing or unsafe")
+    if args.profile == "synthetic-validation":
+        try:
+            expected_status_dir = (SYNTHETIC_RECEIPT_DIR / f"{args.invocation_id}.control").resolve()
+        except OSError as error:
+            raise AdmissionError(f"synthetic status path could not be resolved: {error}") from error
+        if status_dir.resolve() != expected_status_dir:
+            raise AdmissionError("synthetic status directory is outside its private receipt root")
     _write_inner_status(
         status_path,
         args.invocation_id,
         phase="inner_gate_starting",
     )
+    synthetic_context: dict[str, Any] | None = None
     try:
+        if args.profile == "synthetic-validation":
+            expected_exit, unit, properties, metrics = _validate_synthetic_inner_args(
+                args, command, status_dir
+            )
+            synthetic_context = {
+                "expected_worker_exit_code": expected_exit,
+                "unit": unit,
+                "unit_properties": properties,
+                "cgroup_metrics": metrics,
+                "network_isolation": metrics.get("network_isolation"),
+            }
         evidence, reasons = _gate(args, include_task_cgroup=True, lock_held=True)
     except Exception as error:
         try:
@@ -1790,6 +2409,7 @@ def _run_inside(args: argparse.Namespace, command: list[str]) -> int:
                 phase="inner_gate_failed",
                 decision="DENY",
                 detail=_safe_diagnostic(f"{type(error).__name__}: {error}"),
+                synthetic_context=synthetic_context,
             )
         except (OSError, AdmissionError):
             pass
@@ -1804,6 +2424,7 @@ def _run_inside(args: argparse.Namespace, command: list[str]) -> int:
             phase="inner_admission_denied" if reasons else "inner_admitted",
             decision=decision,
             evidence=evidence,
+            synthetic_context=synthetic_context,
         )
     except (OSError, AdmissionError) as error:
         print(
@@ -1834,6 +2455,22 @@ def _run_inside(args: argparse.Namespace, command: list[str]) -> int:
             ),
             termination_grace_seconds=float(args.termination_grace_seconds),
         )
+    synthetic_filesystem_isolation = None
+    if args.profile == "synthetic-validation":
+        try:
+            synthetic_filesystem_isolation = _apply_synthetic_filesystem_isolation(
+                status_dir
+            )
+        except (AdmissionError, OSError) as error:
+            _write_inner_status(
+                status_path,
+                args.invocation_id,
+                phase="worker_start_failed",
+                decision="ADMIT",
+                startup_error=_safe_diagnostic(f"{type(error).__name__}: {error}"),
+                synthetic_context=synthetic_context,
+            )
+            return 126
     try:
         _write_inner_status(
             status_path,
@@ -1843,6 +2480,7 @@ def _run_inside(args: argparse.Namespace, command: list[str]) -> int:
             exec_target=Path(command[0]).name,
             worker_start_requested_at_utc=_utc_now(),
             worker_start_requested_monotonic=time.monotonic(),
+            filesystem_isolation=synthetic_filesystem_isolation,
         )
     except (OSError, AdmissionError) as error:
         print(
@@ -1857,7 +2495,12 @@ def _run_inside(args: argparse.Namespace, command: list[str]) -> int:
         )
         return RUNNER_RESULT_MISSING
     try:
-        os.execvpe(command[0], command, os.environ)
+        worker_environment = (
+            {"PATH": "/usr/bin:/bin", "HOME": "/nonexistent", "LANG": "C", "LC_ALL": "C"}
+            if args.profile == "synthetic-validation"
+            else os.environ
+        )
+        os.execve(command[0], command, worker_environment)
     except OSError as error:
         _write_inner_status(
             status_path,
@@ -1873,6 +2516,7 @@ def _run_inside(args: argparse.Namespace, command: list[str]) -> int:
 def _run_command(args: argparse.Namespace) -> int:
     raw_command = list(args.command)
     command = raw_command[1:] if raw_command and raw_command[0] == "--" else raw_command
+    synthetic_expected_exit: int | None = None
     try:
         if not command:
             raise AdmissionError("run requires a command after --")
@@ -1887,10 +2531,25 @@ def _run_command(args: argparse.Namespace) -> int:
             r"[A-Za-z0-9._-]{1,128}", args.release_identity
         ):
             raise AdmissionError("--release-identity must be a short immutable identifier")
+        if args.profile == "synthetic-validation":
+            synthetic_expected_exit = _validate_synthetic_limits(args, command)
+            requested_receipts = getattr(args, "receipt_dir", None)
+            if requested_receipts and Path(requested_receipts).resolve() != SYNTHETIC_RECEIPT_DIR.resolve():
+                raise AdmissionError("synthetic receipts must remain in the dedicated validation directory")
         receipt_dir = _prepare_receipt_directory(
-            Path(getattr(args, "receipt_dir", None) or GUARDED_RECEIPT_DIR)
+            Path(
+                getattr(args, "receipt_dir", None)
+                or (
+                    SYNTHETIC_RECEIPT_DIR
+                    if args.profile == "synthetic-validation"
+                    else GUARDED_RECEIPT_DIR
+                )
+            )
         )
         receipt, receipt_path, status_path = _new_execution_receipt(args, command, receipt_dir)
+        if args.profile == "synthetic-validation":
+            receipt["expected_worker_exit_code"] = synthetic_expected_exit
+            _update_execution_receipt(receipt, receipt_path, phase="created")
     except (AdmissionError, OSError) as error:
         print(
             json.dumps({"decision": "DENY", "blocking_reasons": [str(error)[:512]]}),
@@ -1910,6 +2569,10 @@ def _run_command(args: argparse.Namespace) -> int:
     parent_signal: int | None = None
     final_classification = "result_missing_indeterminate"
     final_code = RUNNER_RESULT_MISSING
+    systemd_wait_completed = False
+    applied_limits_verified = False
+    unit_cleanup_confirmed = False
+    unit_after_wait: dict[str, str] | None = None
     latest_unit: dict[str, str] | None = None
     latest_inner: dict[str, Any] | None = None
     unit_active_after_client_exit = False
@@ -1924,7 +2587,9 @@ def _run_command(args: argparse.Namespace) -> int:
     def observe_unit_and_inner(*, force: bool = False) -> None:
         nonlocal latest_unit, latest_inner, last_persisted_unit
         nonlocal last_persisted_inner_phase, last_metrics_write
-        latest_unit = _unit_snapshot(unit)
+        observed_unit_snapshot = _unit_snapshot(unit)
+        if observed_unit_snapshot is not None:
+            latest_unit = observed_unit_snapshot
         if latest_unit:
             receipt["transient_unit"]["invocation_id"] = latest_unit.get("InvocationID") or None
             receipt["transient_unit"]["last_observed_state"] = "/".join(
@@ -1945,10 +2610,11 @@ def _run_command(args: argparse.Namespace) -> int:
                     )
         latest_inner = _read_inner_status(status_path, receipt["invocation_id"])
         observed_inner = latest_inner
-        observed_unit = latest_unit
+        observed_unit = observed_unit_snapshot or latest_unit
         inner_phase = observed_inner.get("phase") if observed_inner else None
         now_mono = time.monotonic()
-        metrics_due = now_mono - last_metrics_write >= 10.0
+        metrics_interval = 0.25 if args.profile == "synthetic-validation" else 10.0
+        metrics_due = now_mono - last_metrics_write >= metrics_interval
         if force or (inner_phase and inner_phase != last_persisted_inner_phase) or metrics_due:
             if inner_phase and observed_inner:
                 receipt["inner_status_record"] = observed_inner
@@ -2044,6 +2710,13 @@ def _run_command(args: argparse.Namespace) -> int:
             "runtime_max_seconds": args.timeout_seconds,
             "timeout_seconds": args.timeout_seconds,
         }
+        if args.profile == "synthetic-validation":
+            evidence["planned_cgroup"].update(
+                tasks_max=SYNTHETIC_RUN_LIMITS["tasks_max"],
+                filesystem_sandbox="Landlock denies by default; system binaries read-only; invocation status writable",
+                network_sandbox="RestrictAddressFamilies=AF_UNIX, verified by inner socket probes",
+                synthetic_only=True,
+            )
         if args.profile == "backup":
             evidence["planned_cgroup"]["task_io_scheduling"] = "idle"
             evidence["planned_cgroup"]["task_cpu_nice"] = 19
@@ -2110,7 +2783,7 @@ def _run_command(args: argparse.Namespace) -> int:
             *task_command,
         ]
         systemd_command = ["systemd-run", "--user"]
-        if args.profile == "veritas":
+        if args.profile in {"veritas", "synthetic-validation"}:
             systemd_command.extend(
                 [
                     f"--unit={unit}",
@@ -2119,10 +2792,17 @@ def _run_command(args: argparse.Namespace) -> int:
                     "--expand-environment=no",
                 ]
             )
+            if args.profile == "synthetic-validation":
+                systemd_command.append("--collect")
         else:
             systemd_command.extend(
                 ["--scope", "--collect", "--expand-environment=no", f"--unit={unit}"]
             )
+        tasks_max = (
+            SYNTHETIC_RUN_LIMITS["tasks_max"]
+            if args.profile == "synthetic-validation"
+            else 256
+        )
         systemd_command.extend(
             [
                 f"--property=MemoryHigh={args.memory_high_mib}M",
@@ -2130,7 +2810,7 @@ def _run_command(args: argparse.Namespace) -> int:
                 "--property=MemorySwapMax=0",
                 f"--property=CPUQuota={args.cpu_quota_percent}%",
                 "--property=IOWeight=10",
-                "--property=TasksMax=256",
+                f"--property=TasksMax={tasks_max}",
             ]
         )
         if args.profile == "veritas":
@@ -2154,6 +2834,24 @@ def _run_command(args: argparse.Namespace) -> int:
                     "--property=StandardError=journal",
                 ]
             )
+        elif args.profile == "synthetic-validation":
+            systemd_command.extend(
+                [
+                    "--property=Nice=19",
+                    "--property=IOSchedulingClass=idle",
+                    "--property=NoNewPrivileges=yes",
+                    "--property=RestrictAddressFamilies=AF_UNIX",
+                    "--property=SystemCallArchitectures=native",
+                    "--property=UMask=0077",
+                    "--property=WorkingDirectory=/",
+                    f"--property=TimeoutStartSec={SYNTHETIC_RUN_LIMITS['timeout_seconds']}s",
+                    f"--property=RuntimeMaxSec={SYNTHETIC_RUN_LIMITS['timeout_seconds']}s",
+                    "--property=KillMode=control-group",
+                    "--property=Restart=no",
+                    "--property=StandardOutput=journal",
+                    "--property=StandardError=journal",
+                ]
+            )
         systemd_command.extend(["--", *inner_command])
         receipt["requested_systemd_properties"] = {
             "MemoryHigh": f"{args.memory_high_mib}M",
@@ -2161,7 +2859,15 @@ def _run_command(args: argparse.Namespace) -> int:
             "MemorySwapMax": "0",
             "CPUQuota": f"{args.cpu_quota_percent}%",
             "IOWeight": "10",
-            "RuntimeMaxSec": f"{args.timeout_seconds}s" if args.profile == "veritas" else None,
+            "RuntimeMaxSec": (
+                f"{args.timeout_seconds}s"
+                if args.profile == "veritas"
+                else (
+                    f"{SYNTHETIC_RUN_LIMITS['timeout_seconds']}s"
+                    if args.profile == "synthetic-validation"
+                    else None
+                )
+            ),
             "Collect": args.profile != "veritas",
             "KillMode": "control-group" if args.profile == "veritas" else None,
             "PrivateTmp": "yes" if args.profile == "veritas" else None,
@@ -2171,6 +2877,21 @@ def _run_command(args: argparse.Namespace) -> int:
             "StandardOutput": "journal" if args.profile == "veritas" else None,
             "StandardError": "journal" if args.profile == "veritas" else None,
         }
+        if args.profile == "synthetic-validation":
+            receipt["requested_systemd_properties"].update(
+                {
+                    "TasksMax": str(tasks_max),
+                    "NoNewPrivileges": "yes",
+                    "RestrictAddressFamilies": ["AF_UNIX"],
+                    "SystemCallArchitectures": "native",
+                    "KillMode": "control-group",
+                    "Restart": "no",
+                    "TimeoutStartSec": f"{SYNTHETIC_RUN_LIMITS['timeout_seconds']}s",
+                    "StandardOutput": "journal",
+                    "StandardError": "journal",
+                    "FilesystemIsolation": "Landlock deny-by-default; /usr and loader metadata read-only; only invocation status directory writable",
+                }
+            )
         _update_execution_receipt(receipt, receipt_path, phase="unit_launch_requested")
         try:
             process = subprocess.Popen(
@@ -2228,14 +2949,22 @@ def _run_command(args: argparse.Namespace) -> int:
                 output=output,
                 on_timeout=on_watchdog,
                 on_cancel=on_cancellation,
+                on_poll=observe_unit_and_inner,
             )
+        systemd_wait_completed = process.poll() is not None and watchdog_event is None
         runner_output = output.summary()
         receipt["systemd_run_client"] = {
             "exit_code": runner_code,
+            "wait_completed": systemd_wait_completed,
             "output": runner_output,
         }
         observe_unit_and_inner(force=True)
-        unit_active_after_client_exit = _unit_is_active(latest_unit)
+        unit_after_wait = _unit_snapshot_after_wait(unit) if args.profile == "synthetic-validation" else latest_unit
+        if unit_after_wait and unit_after_wait.get("LoadState") not in {None, "not-found"}:
+            latest_unit = unit_after_wait
+        unit_active_after_client_exit = _unit_is_active(
+            unit_after_wait if args.profile == "synthetic-validation" else latest_unit
+        )
         if unit_active_after_client_exit:
             _update_execution_receipt(
                 receipt,
@@ -2255,6 +2984,9 @@ def _run_command(args: argparse.Namespace) -> int:
             latest_unit = _unit_snapshot(unit)
             observe_unit_and_inner(force=True)
             unit_active_after_client_exit = _unit_is_active(latest_unit)
+            if args.profile == "synthetic-validation":
+                unit_after_wait = _unit_snapshot_after_wait(unit)
+                unit_active_after_client_exit = _unit_is_active(unit_after_wait)
         inner_status = _read_inner_status(status_path, receipt["invocation_id"])
         if inner_status:
             receipt["artifacts"]["inner_status_collected"] = True
@@ -2274,7 +3006,15 @@ def _run_command(args: argparse.Namespace) -> int:
             if inner_status.get("watchdog_intervention") and not watchdog_event:
                 receipt["watchdog_interventions"].append(inner_status["watchdog_intervention"])
             if args.profile != "veritas" and inner_status.get("phase") == "worker_exec_requested":
-                receipt["worker"]["start_confirmed"] = runner_code not in {None, 127}
+                if args.profile == "synthetic-validation":
+                    receipt["worker"]["start_confirmed"] = (
+                        systemd_wait_completed
+                        and runner_code == synthetic_expected_exit
+                        and bool(latest_unit and latest_unit.get("InvocationID"))
+                        and bool(latest_unit and latest_unit.get("ExecMainStartTimestamp") not in {None, "", "n/a"})
+                    )
+                else:
+                    receipt["worker"]["start_confirmed"] = runner_code not in {None, 127}
                 receipt["worker"]["start_observed_at_utc"] = inner_status.get(
                     "worker_start_requested_at_utc"
                 )
@@ -2293,6 +3033,36 @@ def _run_command(args: argparse.Namespace) -> int:
         if latest_unit:
             receipt["transient_unit"]["properties"] = latest_unit
             receipt["transient_unit"]["invocation_id"] = latest_unit.get("InvocationID") or None
+        if args.profile == "synthetic-validation":
+            receipt["transient_unit"]["properties_after_wait"] = unit_after_wait or {}
+            cleanup = _wait_for_transient_unit_cleanup(unit)
+            receipt["transient_unit"]["cleanup"] = cleanup
+            unit_cleanup_confirmed = cleanup.get("confirmed") is True and cleanup.get("unit_absent") is True
+            if unit_cleanup_confirmed:
+                receipt["transient_unit"]["last_observed_state"] = "collected"
+            context = inner_status.get("synthetic_context") if inner_status else None
+            if isinstance(context, dict):
+                context_metrics = context.get("cgroup_metrics")
+                if isinstance(context_metrics, dict) and context_metrics.get("available"):
+                    receipt["cgroup_metrics"] = context_metrics
+                context_properties = context.get("unit_properties")
+                inner_filesystem = (
+                    inner_status.get("filesystem_isolation") if inner_status else None
+                )
+                applied_limits_verified = (
+                    isinstance(context_properties, dict)
+                    and isinstance(context_metrics, dict)
+                    and context_metrics.get("available") is True
+                    and context.get("unit") == unit
+                    and isinstance(context.get("network_isolation"), dict)
+                    and context["network_isolation"].get("restricted") is True
+                    and isinstance(inner_filesystem, dict)
+                    and inner_filesystem.get("enforced") is True
+                )
+            receipt["applied_limits_verification"] = {
+                "passed": applied_limits_verified,
+                "source": "systemd properties, cgroup controls, IP socket denial, and Landlock",
+            }
         final_classification = _classify_guarded_result(
             profile=args.profile,
             return_code=runner_code,
@@ -2302,6 +3072,11 @@ def _run_command(args: argparse.Namespace) -> int:
             parent_signal=None,
             runner_error=runner_error,
             unit_was_active_after_client_exit=unit_active_after_client_exit,
+            systemd_wait_completed=systemd_wait_completed,
+            synthetic_expected_exit=synthetic_expected_exit,
+            applied_limits_verified=applied_limits_verified,
+            unit_cleanup_confirmed=unit_cleanup_confirmed,
+            unit_after_wait=unit_after_wait,
         )
         if final_classification == "worker_succeeded":
             final_code = 0
@@ -2570,7 +3345,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--cpu-quota-percent", type=_positive_int, default=50)
     run.add_argument("--timeout-seconds", type=float, required=True)
     run.add_argument("--termination-grace-seconds", type=float, default=2.0)
-    run.add_argument("--receipt-dir", default=str(GUARDED_RECEIPT_DIR))
+    run.add_argument("--receipt-dir")
     run.add_argument("--source-revision", default="")
     run.add_argument("--release-identity", default="")
     run.add_argument("command", nargs=argparse.REMAINDER)
@@ -2596,6 +3371,10 @@ def main(argv: list[str] | None = None) -> int:
             args.label = label
             return _run_command(args)
         if args.action == "check":
+            if args.profile == "synthetic-validation":
+                raise AdmissionError(
+                    "synthetic-validation is available only through the guarded run command"
+                )
             evidence, reasons = _gate(args, include_task_cgroup=True, lock_held=False)
             _print_evidence(evidence, sys.stdout)
             return 0 if not reasons else 75

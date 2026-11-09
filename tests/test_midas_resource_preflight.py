@@ -90,6 +90,226 @@ def test_admits_bounded_sample_only_with_finite_cgroup_and_clear_pressure() -> N
     )
 
 
+def test_synthetic_validation_profile_is_separate_and_keeps_production_veritas_policy() -> None:
+    veritas_before = copy.deepcopy(midas_resource_preflight.PROFILES["veritas"])
+    observed = evidence()
+    assert (
+        midas_resource_preflight.evaluate_evidence(
+            observed,
+            profile="synthetic-validation",
+            memory_budget_bytes=8 * midas_resource_preflight.MIB,
+            require_task_cgroup=False,
+        )
+        == []
+    )
+    assert midas_resource_preflight.PROFILES["veritas"] == veritas_before
+    assert midas_resource_preflight.PROFILES["synthetic-validation"]["min_swap_free_mib"] == 0
+    assert midas_resource_preflight.PROFILES["synthetic-validation"]["max_swap_activity_pages"] == 64
+    assert (
+        midas_resource_preflight.PROFILES["synthetic-validation"]["max_swap_activity_pages"]
+        > 0
+    )
+    assert midas_resource_preflight.SYNTHETIC_RUN_LIMITS["memory_budget_mib"] == 8
+
+
+def test_synthetic_validation_allows_only_bounded_incidental_swap_movement() -> None:
+    observed = evidence()
+    observed["host_memory"]["swap_activity_pages_during_sample"].update(pswpin=64)
+    assert midas_resource_preflight.evaluate_evidence(
+        observed,
+        profile="synthetic-validation",
+        memory_budget_bytes=8 * midas_resource_preflight.MIB,
+        require_task_cgroup=False,
+    ) == []
+    observed["host_memory"]["swap_activity_pages_during_sample"]["pswpin"] = 65
+    assert "swap_activity_above_profile_limit" in midas_resource_preflight.evaluate_evidence(
+        observed,
+        profile="synthetic-validation",
+        memory_budget_bytes=8 * midas_resource_preflight.MIB,
+        require_task_cgroup=False,
+    )
+
+
+def test_synthetic_inner_reserve_fits_its_fixed_cgroup_headroom() -> None:
+    observed = evidence()
+    observed["task_cgroup"] = {"memory_headroom_bytes": 8 * midas_resource_preflight.MIB}
+    assert midas_resource_preflight.evaluate_evidence(
+        observed,
+        profile="synthetic-validation",
+        memory_budget_bytes=8 * midas_resource_preflight.MIB,
+        require_task_cgroup=True,
+    ) == []
+    observed["task_cgroup"]["memory_headroom_bytes"] -= 1
+    assert "task_cgroup_headroom_below_task_budget" in midas_resource_preflight.evaluate_evidence(
+        observed,
+        profile="synthetic-validation",
+        memory_budget_bytes=8 * midas_resource_preflight.MIB,
+        require_task_cgroup=True,
+    )
+
+
+def test_synthetic_validation_rejects_budget_larger_than_tiny_worker_cap(
+    monkeypatch, tmp_path: Path
+) -> None:
+    from argparse import Namespace
+
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_require_host_ip_socket_support",
+        lambda: None,
+    )
+    args = Namespace(
+        memory_high_mib=32,
+        memory_max_mib=64,
+        memory_budget_mib=9,
+        cpu_quota_percent=10,
+        timeout_seconds=10,
+        sample_seconds=5,
+        termination_grace_seconds=1,
+        storage_required_mib=0,
+        storage_reserve_mib=0,
+        storage_path=[str(tmp_path)],
+    )
+    with pytest.raises(midas_resource_preflight.AdmissionError, match="fixed short-run profile"):
+        midas_resource_preflight._validate_synthetic_limits(args, ["/usr/bin/true"])
+
+
+@pytest.mark.parametrize("ip_sockets_denied", [True, False])
+def test_synthetic_network_probe_requires_effective_ip_socket_denial(
+    monkeypatch, ip_sockets_denied: bool
+) -> None:
+    class ProbeSocket:
+        def close(self) -> None:
+            pass
+
+    def fake_socket(_family: int, _kind: int):
+        if ip_sockets_denied:
+            raise PermissionError(midas_resource_preflight.errno.EPERM, "blocked by seccomp")
+        return ProbeSocket()
+
+    monkeypatch.setattr(midas_resource_preflight.socket, "socket", fake_socket)
+    result = midas_resource_preflight._probe_network_restriction()
+    assert result["restricted"] is ip_sockets_denied
+
+
+def test_synthetic_landlock_isolation_denies_host_data_and_execs_fixed_binary(
+    tmp_path: Path,
+) -> None:
+    import platform
+
+    if sys.platform != "linux" or platform.machine().lower() not in {
+        "x86_64",
+        "amd64",
+        "aarch64",
+        "arm64",
+        "riscv64",
+    }:
+        pytest.skip("Landlock syscall verification is supported only on configured Linux architectures")
+    status_dir = tmp_path / "receipt.control"
+    status_dir.mkdir(mode=0o700)
+    code = """
+import ctypes, importlib.util, os, pathlib, sys
+spec = importlib.util.spec_from_file_location('midas_guard', sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+libc = ctypes.CDLL(None, use_errno=True)
+if libc.prctl(38, 1, 0, 0, 0) != 0:
+    raise SystemExit(71)
+result = module._apply_synthetic_filesystem_isolation(pathlib.Path(sys.argv[2]))
+if not result['enforced'] or not {sys.argv[3], '/mnt', '/var/tmp'}.issubset(result['denied_paths']):
+    raise SystemExit(72)
+os.execve('/usr/bin/true', ['/usr/bin/true'], {'PATH': '/usr/bin:/bin', 'HOME': '/nonexistent', 'LANG': 'C', 'LC_ALL': 'C'})
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code, str(SCRIPT), str(status_dir), str(Path.home())],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize(
+    ("command", "expected"),
+    [
+        (["/usr/bin/true"], 0),
+        (["/usr/bin/false"], 1),
+        (["/usr/bin/sleep", "1"], 0),
+    ],
+)
+def test_synthetic_validation_accepts_only_fixed_harmless_binaries(command, expected: int) -> None:
+    assert midas_resource_preflight._synthetic_expected_exit(command) == expected
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        ["/usr/bin/python3", "-c", "print('not a probe')"],
+        ["/home/charlie/midas-veritas/scripts/veritas_source_analysis.py"],
+        ["/usr/bin/true", "unexpected-argument"],
+        ["/bin/true"],
+    ],
+)
+def test_synthetic_validation_rejects_research_or_unexpected_commands(command) -> None:
+    with pytest.raises(midas_resource_preflight.AdmissionError, match="synthetic-validation"):
+        midas_resource_preflight._synthetic_expected_exit(command)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected"),
+    [
+        (
+            lambda e: e["host_memory"].update(available_bytes=1024 * midas_resource_preflight.MIB),
+            "host_memavailable_below_floor_plus_task_budget",
+        ),
+        (
+            lambda e: e["host_memory"]["swap_activity_pages_during_sample"].update(pswpin=65),
+            "swap_activity_above_profile_limit",
+        ),
+        (
+            lambda e: e["pressure"]["io"]["full"].update(avg10=5.1),
+            "io_full_avg10_pressure_above_profile_limit",
+        ),
+        (
+            lambda e: e["protected_service_cgroups"]["midas-reality.service"].update(
+                memory_headroom_bytes=127 * midas_resource_preflight.MIB
+            ),
+            "midas-reality_service_memory_headroom_below_profile_floor",
+        ),
+        (
+            lambda e: e.update(active_midas_worker_services=["midas-veritas-source-analysis.service"]),
+            "another_midas_worker_service_is_active",
+        ),
+    ],
+)
+def test_synthetic_validation_rejects_dangerous_host_conditions(mutation, expected: str) -> None:
+    observed = evidence()
+    mutation(observed)
+    reasons = midas_resource_preflight.evaluate_evidence(
+        observed,
+        profile="synthetic-validation",
+        memory_budget_bytes=8 * midas_resource_preflight.MIB,
+        require_task_cgroup=False,
+    )
+    assert expected in reasons
+
+
+def test_synthetic_validation_profile_cannot_be_used_by_check_action(
+    tmp_path: Path, capsys
+) -> None:
+    code = midas_resource_preflight.main(
+        [
+            "check",
+            "--profile",
+            "synthetic-validation",
+            "--storage-path",
+            str(tmp_path),
+        ]
+    )
+    assert code == 75
+    assert "only through the guarded run command" in capsys.readouterr().err
+
+
 @pytest.mark.parametrize(
     ("mutation", "expected"),
     [
@@ -572,6 +792,72 @@ def test_veritas_inner_gate_ignores_only_its_own_transient_service(monkeypatch) 
     assert midas_resource_preflight._active_midas_workers(allow_current_veritas_service=True) == [
         "midas-other-worker.service"
     ]
+
+
+def test_synthetic_inner_gate_ignores_only_its_invocation_unit(monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    invocation_id = "123456789abc" + "0" * 20
+    current = f"midas-synthetic-validation-smoke-{invocation_id[:12]}.service"
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_systemctl",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            stdout=f"{current} loaded running validation\nmidas-other-worker.service loaded running other\n"
+        ),
+    )
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_current_cgroup",
+        lambda: Path(f"/sys/fs/cgroup/user.slice/app.slice/{current}"),
+    )
+
+    assert midas_resource_preflight._active_midas_workers(
+        allow_current_synthetic_service=True,
+        invocation_id=invocation_id,
+    ) == ["midas-other-worker.service"]
+    assert midas_resource_preflight._active_midas_workers(
+        allow_current_synthetic_service=True,
+        invocation_id="f" * 32,
+    ) == [current, "midas-other-worker.service"]
+
+
+def test_synthetic_inner_refuses_execution_outside_matching_transient_service(
+    monkeypatch, tmp_path: Path
+) -> None:
+    from argparse import Namespace
+
+    invocation_id = "a" * 32
+    root = tmp_path / "synthetic"
+    receipt_dir = root / "receipts"
+    status_dir = receipt_dir / f"{invocation_id}.control"
+    status_dir.mkdir(parents=True, mode=0o700)
+    status_path = status_dir / "inner-status.json"
+    monkeypatch.setattr(midas_resource_preflight, "SYNTHETIC_TEST_ROOT", root)
+    monkeypatch.setattr(midas_resource_preflight, "SYNTHETIC_RECEIPT_DIR", receipt_dir)
+    monkeypatch.setattr(
+        midas_resource_preflight.subprocess,
+        "Popen",
+        lambda *_args, **_kwargs: pytest.fail("worker must not start outside its transient unit"),
+    )
+    args = Namespace(
+        invocation_id=invocation_id,
+        status_path=str(status_path),
+        profile="synthetic-validation",
+        memory_budget_mib=8,
+        storage_path=[str(root)],
+        storage_required_mib=0,
+        storage_reserve_mib=0,
+        sample_seconds=1,
+        execution_timeout_seconds=10,
+        termination_grace_seconds=1,
+    )
+
+    with pytest.raises(midas_resource_preflight.AdmissionError, match="matching transient service"):
+        midas_resource_preflight._run_inside(args, ["/usr/bin/true"])
+    status = json.loads(status_path.read_text())
+    assert status["phase"] == "inner_gate_failed"
+    assert status["decision"] == "DENY"
 
 
 @pytest.mark.parametrize(
@@ -1244,6 +1530,238 @@ def test_cancellation_classification_requires_confirmed_worker_or_unit_terminati
     )
 
 
+def test_synthetic_classification_requires_worker_wait_limits_and_cleanup_evidence() -> None:
+    unit = _unit_properties()
+    inner = {"phase": "worker_exec_requested", "decision": "ADMIT"}
+    common = {
+        "profile": "synthetic-validation",
+        "return_code": 0,
+        "unit": unit,
+        "inner": inner,
+        "watchdog": None,
+        "parent_signal": None,
+        "runner_error": None,
+        "unit_was_active_after_client_exit": False,
+        "systemd_wait_completed": True,
+        "synthetic_expected_exit": 0,
+        "applied_limits_verified": True,
+        "unit_cleanup_confirmed": True,
+    }
+    assert midas_resource_preflight._classify_guarded_result(**common) == "worker_succeeded"
+    assert (
+        midas_resource_preflight._classify_guarded_result(
+            **{**common, "applied_limits_verified": False}
+        )
+        == "result_missing_indeterminate"
+    )
+    assert (
+        midas_resource_preflight._classify_guarded_result(
+            **{**common, "unit_cleanup_confirmed": False}
+        )
+        == "result_missing_indeterminate"
+    )
+    assert (
+        midas_resource_preflight._classify_guarded_result(
+            **{**common, "systemd_wait_completed": False}
+        )
+        == "result_missing_indeterminate"
+    )
+    assert (
+        midas_resource_preflight._classify_guarded_result(
+            **{**common, "unit": None}
+        )
+        == "result_missing_indeterminate"
+    )
+    negative = {**common, "return_code": 1, "synthetic_expected_exit": 1}
+    assert midas_resource_preflight._classify_guarded_result(**negative) == "worker_failed"
+    assert (
+        midas_resource_preflight._classify_guarded_result(
+            **{
+                **negative,
+                "unit_after_wait": {
+                    "LoadState": "loaded",
+                    "Result": "success",
+                    "ExecMainStatus": "0",
+                    "ExecMainCode": "exited",
+                },
+            }
+        )
+        == "result_missing_indeterminate"
+    )
+
+
+@pytest.mark.parametrize(
+    ("command", "runner_code", "expected_classification"),
+    [
+        (["/usr/bin/true"], 0, "worker_succeeded"),
+        (["/usr/bin/false"], 1, "worker_failed"),
+    ],
+)
+def test_synthetic_guarded_run_builds_isolated_service_and_keeps_receipt(
+    monkeypatch,
+    tmp_path: Path,
+    command: list[str],
+    runner_code: int,
+    expected_classification: str,
+) -> None:
+    from argparse import Namespace
+
+    root = tmp_path / "synthetic-root"
+    root.mkdir(mode=0o700)
+    launcher = root / "midas_resource_preflight.py"
+    launcher.write_text("# immutable test fixture\n", encoding="utf-8")
+    launcher.chmod(0o444)
+    receipts = root / "receipts"
+    monkeypatch.setattr(midas_resource_preflight, "SYNTHETIC_TEST_ROOT", root)
+    monkeypatch.setattr(midas_resource_preflight, "SYNTHETIC_RECEIPT_DIR", receipts)
+    monkeypatch.setattr(midas_resource_preflight, "__file__", str(launcher))
+    monkeypatch.setattr(midas_resource_preflight, "_prepare_synthetic_test_root", lambda: root)
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_acquire_lock",
+        lambda: type("Lock", (), {"close": lambda self: None})(),
+    )
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_gate",
+        lambda *_args, **_kwargs: ({"decision": "ADMIT"}, []),
+    )
+    monkeypatch.setattr(midas_resource_preflight, "_print_evidence", lambda *_args: None)
+    cgroup_metrics = {
+        "available": True,
+        "cgroup": "/sys/fs/cgroup/user.slice/test.service",
+        "memory_peak_bytes": 20 * midas_resource_preflight.MIB,
+        "memory": {"memory_high_bytes": 32 * midas_resource_preflight.MIB},
+        "cpu": {"usage_usec": 1000},
+        "io_weight": "default 10",
+        "limits": {
+            "memory.high": str(32 * midas_resource_preflight.MIB),
+            "memory.max": str(64 * midas_resource_preflight.MIB),
+            "memory.swap.max": "0",
+            "cpu.max": "10000 100000",
+            "pids.max": "8",
+        },
+    }
+    monkeypatch.setattr(
+        midas_resource_preflight, "_cgroup_execution_metrics", lambda *_args: cgroup_metrics
+    )
+    unit_properties = _unit_properties(result="success" if runner_code == 0 else "exit-code", status=runner_code)
+    unit_properties.update(
+        {
+            "Transient": "yes",
+            "MemoryHigh": str(32 * midas_resource_preflight.MIB),
+            "MemoryMax": str(64 * midas_resource_preflight.MIB),
+            "MemorySwapMax": "0",
+            "CPUQuotaPerSecUSec": "100ms",
+            "IOWeight": "10",
+            "TasksMax": "8",
+            "RuntimeMaxUSec": "10s",
+            "NoNewPrivileges": "yes",
+            "RestrictAddressFamilies": "AF_UNIX",
+            "SystemCallArchitectures": "native",
+        }
+    )
+    systemd_commands: list[list[str]] = []
+    real_popen = subprocess.Popen
+
+    def fake_popen(systemd_command, **kwargs):
+        systemd_commands.append(list(systemd_command))
+        unit_name = next(arg.partition("=")[2] for arg in systemd_command if arg.startswith("--unit="))
+        invocation_id = systemd_command[systemd_command.index("--invocation-id") + 1]
+        status_path = Path(systemd_command[systemd_command.index("--status-path") + 1])
+        unit_properties["InvocationID"] = "b" * 32
+        unit_properties["ControlGroup"] = "/user.slice/test.service"
+        midas_resource_preflight._write_inner_status(
+            status_path,
+            invocation_id,
+            phase="worker_exec_requested",
+            decision="ADMIT",
+            worker_start_requested_at_utc="2026-11-09T00:00:00Z",
+            worker_start_requested_monotonic=midas_resource_preflight.time.monotonic(),
+            synthetic_context={
+                "expected_worker_exit_code": runner_code,
+                "unit": unit_name,
+                "unit_properties": dict(unit_properties),
+                "cgroup_metrics": cgroup_metrics,
+                "network_isolation": {
+                    "restricted": True,
+                    "families": {"AF_INET": "denied", "AF_INET6": "denied"},
+                },
+            },
+            filesystem_isolation={"enforced": True, "abi": 8, "denied_paths": ["/home/charlie"]},
+        )
+        return real_popen(
+            [
+                sys.executable,
+                "-c",
+                "import sys,time; time.sleep(0.02); sys.exit(int(sys.argv[1]))",
+                str(runner_code),
+            ],
+            **kwargs,
+        )
+
+    monkeypatch.setattr(midas_resource_preflight.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(
+        midas_resource_preflight, "_unit_snapshot", lambda _unit: dict(unit_properties)
+    )
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_unit_snapshot_after_wait",
+        lambda _unit: {"LoadState": "not-found"},
+    )
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_wait_for_transient_unit_cleanup",
+        lambda _unit: {"confirmed": True, "unit_absent": True, "last_properties": {"LoadState": "not-found"}},
+    )
+    args = Namespace(
+        profile="synthetic-validation",
+        command=["--", *command],
+        memory_high_mib=32,
+        memory_max_mib=64,
+        memory_budget_mib=8,
+        cpu_quota_percent=10,
+        timeout_seconds=10,
+        sample_seconds=1,
+        label="smoke",
+        storage_path=[str(root)],
+        storage_required_mib=0,
+        storage_reserve_mib=0,
+        termination_grace_seconds=0.5,
+        receipt_dir=None,
+        source_revision="dce9bfa33deee844530f0fa1e165a4e3fd554124",
+        release_identity="synthetic-systemd-smoke",
+    )
+
+    exit_code = midas_resource_preflight._run_command(args)
+    receipt_path = next(receipts.glob("*.json"))
+    receipt = json.loads(receipt_path.read_text())
+    assert receipt["final_classification"] == expected_classification
+    assert receipt["execution_scope"] == "disposable_synthetic_validation"
+    assert receipt["production_admission"] is False
+    assert receipt["transient_unit"]["type"] == "service"
+    assert receipt["transient_unit"]["name"].startswith("midas-synthetic-validation-")
+    assert receipt["worker"]["start_confirmed"] is True
+    assert receipt["applied_limits_verification"]["passed"] is True
+    assert receipt["transient_unit"]["cleanup"]["unit_absent"] is True
+    assert receipt["cgroup_metrics"]["limits"]["memory.max"] == str(64 * midas_resource_preflight.MIB)
+    assert receipt_path.is_file()
+    assert exit_code == runner_code
+    assert "--service-type=exec" in systemd_commands[0]
+    assert "--wait" in systemd_commands[0]
+    assert "--collect" in systemd_commands[0]
+    assert "--scope" not in systemd_commands[0]
+    assert "--property=MemoryHigh=32M" in systemd_commands[0]
+    assert "--property=MemoryMax=64M" in systemd_commands[0]
+    assert "--property=MemorySwapMax=0" in systemd_commands[0]
+    assert "--property=CPUQuota=10%" in systemd_commands[0]
+    assert "--property=TasksMax=8" in systemd_commands[0]
+    assert "--property=NoNewPrivileges=yes" in systemd_commands[0]
+    assert "--property=RestrictAddressFamilies=AF_UNIX" in systemd_commands[0]
+    assert "--property=SystemCallArchitectures=native" in systemd_commands[0]
+    assert not any("PrivateNetwork" in item for item in systemd_commands[0])
+
+
 @pytest.mark.parametrize(
     ("runner_code", "expected", "start_confirmed"),
     [
@@ -1542,6 +2060,47 @@ def test_systemd_transient_veritas_properties_parse_without_launching_a_unit(
                 "Nice=19",
                 "IOSchedulingClass=idle",
                 "Restart=no",
+                "StandardOutput=journal",
+                "StandardError=journal",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    result = subprocess.run(
+        [parser, "verify", str(unit)], capture_output=True, text=True, check=False
+    )
+    assert result.returncode == 0, result.stderr
+
+
+def test_systemd_transient_synthetic_validation_sandbox_passes_parser(tmp_path: Path) -> None:
+    parser = shutil.which("systemd-analyze")
+    if parser is None:
+        pytest.skip("systemd-analyze is unavailable in this environment")
+    unit = tmp_path / "midas-synthetic-validation-smoke.service"
+    unit.write_text(
+        "\n".join(
+            [
+                "[Unit]",
+                "Description=Disposable MIDAS guarded synthetic test",
+                "[Service]",
+                "Type=exec",
+                "ExecStart=/usr/bin/true",
+                "MemoryHigh=32M",
+                "MemoryMax=64M",
+                "MemorySwapMax=0",
+                "CPUQuota=10%",
+                "IOWeight=10",
+                "TasksMax=8",
+                "RuntimeMaxSec=10s",
+                "TimeoutStartSec=10s",
+                "KillMode=control-group",
+                "Restart=no",
+                "NoNewPrivileges=yes",
+                "RestrictAddressFamilies=AF_UNIX",
+                "SystemCallArchitectures=native",
+                "UMask=0077",
+                "WorkingDirectory=/",
                 "StandardOutput=journal",
                 "StandardError=journal",
                 "",
