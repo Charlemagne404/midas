@@ -179,24 +179,6 @@ def test_synthetic_validation_rejects_budget_larger_than_tiny_worker_cap(
         midas_resource_preflight._validate_synthetic_limits(args, ["/usr/bin/true"])
 
 
-@pytest.mark.parametrize("ip_sockets_denied", [True, False])
-def test_synthetic_network_probe_requires_effective_ip_socket_denial(
-    monkeypatch, ip_sockets_denied: bool
-) -> None:
-    class ProbeSocket:
-        def close(self) -> None:
-            pass
-
-    def fake_socket(_family: int, _kind: int):
-        if ip_sockets_denied:
-            raise PermissionError(midas_resource_preflight.errno.EPERM, "blocked by seccomp")
-        return ProbeSocket()
-
-    monkeypatch.setattr(midas_resource_preflight.socket, "socket", fake_socket)
-    result = midas_resource_preflight._probe_network_restriction()
-    assert result["restricted"] is ip_sockets_denied
-
-
 def test_synthetic_landlock_isolation_denies_host_data_and_execs_fixed_binary(
     tmp_path: Path,
 ) -> None:
@@ -207,10 +189,9 @@ def test_synthetic_landlock_isolation_denies_host_data_and_execs_fixed_binary(
         "amd64",
         "aarch64",
         "arm64",
-        "riscv64",
     }:
         pytest.skip(
-            "Landlock syscall verification is supported only on configured Linux architectures"
+            "synthetic Landlock and seccomp verification requires configured Linux architectures"
         )
     status_dir = tmp_path / "receipt.control"
     status_dir.mkdir(mode=0o700)
@@ -225,6 +206,11 @@ if libc.prctl(38, 1, 0, 0, 0) != 0:
 result = module._apply_synthetic_filesystem_isolation(pathlib.Path(sys.argv[2]))
 if not result['enforced'] or not {sys.argv[3], '/mnt', '/var/tmp'}.issubset(result['denied_paths']):
     raise SystemExit(72)
+network = module._install_synthetic_network_filter()
+if not network['restricted'] or network['mechanism'] != 'seccomp-bpf':
+    raise SystemExit(73)
+if set(network['probes'].values()) != {'denied'}:
+    raise SystemExit(74)
 os.execve('/usr/bin/true', ['/usr/bin/true'], {'PATH': '/usr/bin:/bin', 'HOME': '/nonexistent', 'LANG': 'C', 'LC_ALL': 'C'})
 """
     result = subprocess.run(
@@ -234,6 +220,37 @@ os.execve('/usr/bin/true', ['/usr/bin/true'], {'PATH': '/usr/bin:/bin', 'HOME': 
         check=False,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_synthetic_cgroup_metrics_allow_only_undelegated_io_controller(
+    monkeypatch, tmp_path: Path
+) -> None:
+    root = tmp_path / "cgroup"
+    group = root / "midas-synthetic-validation-test.service"
+    group.mkdir(parents=True)
+    monkeypatch.setattr(midas_resource_preflight, "CGROUP_ROOT", root)
+    for name, value in {
+        "memory.current": "1048576",
+        "memory.high": str(32 * midas_resource_preflight.MIB),
+        "memory.max": str(64 * midas_resource_preflight.MIB),
+        "memory.swap.max": "0",
+        "memory.peak": "2097152",
+        "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\n",
+        "cpu.stat": "usage_usec 1000\nuser_usec 800\nsystem_usec 200\n",
+        "cpu.max": "10000 100000",
+        "pids.max": "8",
+    }.items():
+        (group / name).write_text(value, encoding="ascii")
+
+    metrics = midas_resource_preflight._cgroup_execution_metrics(
+        group, allow_missing_io_weight=True
+    )
+    assert metrics["available"] is True
+    assert metrics["io_weight_enforced"] is False
+    assert metrics["limits"]["memory.max"] == str(64 * midas_resource_preflight.MIB)
+    assert metrics["limits"]["cpu.max"] == "10000 100000"
+    assert metrics["limits"]["pids.max"] == "8"
+    assert midas_resource_preflight._cgroup_execution_metrics(group)["available"] is False
 
 
 @pytest.mark.parametrize(
@@ -1650,7 +1667,9 @@ def test_synthetic_guarded_run_builds_isolated_service_and_keeps_receipt(
         },
     }
     monkeypatch.setattr(
-        midas_resource_preflight, "_cgroup_execution_metrics", lambda *_args: cgroup_metrics
+        midas_resource_preflight,
+        "_cgroup_execution_metrics",
+        lambda *_args, **_kwargs: cgroup_metrics,
     )
     unit_properties = _unit_properties(
         result="success" if runner_code == 0 else "exit-code", status=runner_code
@@ -1696,7 +1715,13 @@ def test_synthetic_guarded_run_builds_isolated_service_and_keeps_receipt(
                 "cgroup_metrics": cgroup_metrics,
                 "network_isolation": {
                     "restricted": True,
-                    "families": {"AF_INET": "denied", "AF_INET6": "denied"},
+                    "mechanism": "seccomp-bpf",
+                    "mode": 2,
+                    "probes": {
+                        "AF_INET": "denied",
+                        "AF_INET6": "denied",
+                        "AF_UNIX": "denied",
+                    },
                 },
             },
             filesystem_isolation={"enforced": True, "abi": 8, "denied_paths": ["/home/charlie"]},

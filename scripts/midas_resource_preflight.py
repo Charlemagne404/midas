@@ -199,6 +199,33 @@ SYNTHETIC_TEST_COMMANDS = {
     ("/usr/bin/false",): 1,
     ("/usr/bin/sleep", "1"): 0,
 }
+SYNTHETIC_SECCOMP_ARCHES = {
+    "x86_64": 0xC000003E,
+    "aarch64": 0xC00000B7,
+}
+SYNTHETIC_NETWORK_SYSCALLS = {
+    "x86_64": (41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 53, 54, 55, 288, 299, 307),
+    "aarch64": (
+        198,
+        199,
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209,
+        210,
+        211,
+        212,
+        242,
+        243,
+        269,
+    ),
+}
 SYNTHETIC_TEST_ROOT = Path("/var/tmp") / f"midas-guarded-synthetic-{os.getuid()}"
 SYNTHETIC_RECEIPT_DIR = SYNTHETIC_TEST_ROOT / "receipts"
 GUARDED_RECEIPT_VERSION = 1
@@ -784,6 +811,8 @@ UNIT_RECEIPT_PROPERTIES = (
     "MemoryMax",
     "MemorySwapMax",
     "CPUQuotaPerSecUSec",
+    "Nice",
+    "IOSchedulingClass",
     "IOWeight",
     "RuntimeMaxUSec",
     "TasksMax",
@@ -868,7 +897,9 @@ def _wait_for_transient_unit_cleanup(unit: str, timeout_seconds: float = 3.0) ->
         time.sleep(0.1)
 
 
-def _cgroup_execution_metrics(path: Path | None = None) -> dict[str, Any]:
+def _cgroup_execution_metrics(
+    path: Path | None = None, *, allow_missing_io_weight: bool = False
+) -> dict[str, Any]:
     try:
         cgroup = path or _current_cgroup()
         resolved = cgroup.resolve(strict=True)
@@ -883,7 +914,12 @@ def _cgroup_execution_metrics(path: Path | None = None) -> dict[str, Any]:
             )
             if key in {"usage_usec", "user_usec", "system_usec", "nr_throttled", "throttled_usec"}
         }
-        io_weight = (resolved / "io.weight").read_text(encoding="ascii").strip()
+        try:
+            io_weight = (resolved / "io.weight").read_text(encoding="ascii").strip()
+        except FileNotFoundError:
+            if not allow_missing_io_weight:
+                raise
+            io_weight = None
         limits = {
             name: (resolved / name).read_text(encoding="ascii").strip()
             for name in (
@@ -900,7 +936,8 @@ def _cgroup_execution_metrics(path: Path | None = None) -> dict[str, Any]:
             "memory_peak_bytes": int(peak),
             "memory": memory,
             "cpu": cpu_values,
-            "io_weight": io_weight[:256],
+            "io_weight": io_weight[:256] if io_weight is not None else None,
+            "io_weight_enforced": io_weight is not None,
             "limits": limits,
         }
     except (OSError, ValueError, AdmissionError) as error:
@@ -1277,6 +1314,10 @@ def _validate_synthetic_unit_context(
             "-p",
             "CPUQuotaPerSecUSec",
             "-p",
+            "Nice",
+            "-p",
+            "IOSchedulingClass",
+            "-p",
             "IOWeight",
             "-p",
             "TasksMax",
@@ -1305,6 +1346,8 @@ def _validate_synthetic_unit_context(
         "MemoryMax": str(SYNTHETIC_RUN_LIMITS["memory_max_mib"] * MIB),
         "MemorySwapMax": "0",
         "CPUQuotaPerSecUSec": "100ms",
+        "Nice": "19",
+        "IOSchedulingClass": "3",
         "IOWeight": "10",
         "TasksMax": str(SYNTHETIC_RUN_LIMITS["tasks_max"]),
         "RuntimeMaxUSec": "10s",
@@ -1325,7 +1368,7 @@ def _validate_synthetic_unit_context(
     if properties.get("InvocationID") == invocation_id:
         mismatches.append("systemd unit invocation id unexpectedly equals launcher id")
 
-    metrics = _cgroup_execution_metrics(cgroup)
+    metrics = _cgroup_execution_metrics(cgroup, allow_missing_io_weight=True)
     limits = metrics.get("limits", {}) if metrics.get("available") else {}
     expected_cgroup_limits = {
         "memory.high": str(SYNTHETIC_RUN_LIMITS["memory_high_mib"] * MIB),
@@ -1337,36 +1380,117 @@ def _validate_synthetic_unit_context(
     for name, value in expected_cgroup_limits.items():
         if limits.get(name) != value:
             mismatches.append(f"cgroup {name}={limits.get(name)!r} (expected {value!r})")
-    io_weight = metrics.get("io_weight", "").splitlines()
-    if not io_weight or io_weight[0].split() != ["default", "10"]:
-        mismatches.append("cgroup io.weight does not show default weight 10")
     if not metrics.get("available"):
         mismatches.append("cgroup metrics are unavailable")
-    network_probe = _probe_network_restriction()
-    if not network_probe["restricted"]:
-        mismatches.append("systemd did not deny creation of an IP socket")
+    metrics["io_weight_note"] = (
+        "cgroup io controller is not delegated; worker remains fixed and tiny, "
+        "systemd IOSchedulingClass=idle and host I/O admission remain required"
+        if not metrics.get("io_weight_enforced")
+        else "cgroup io.weight was available"
+    )
+    metrics["network_isolation"] = {
+        "restricted": False,
+        "mechanism": "worker seccomp filter pending before exec",
+    }
     if mismatches:
         raise AdmissionError(
             "synthetic unit isolation or limits were not verified: " + "; ".join(mismatches)
         )
-    metrics["network_isolation"] = network_probe
     return unit, properties, metrics
 
 
-def _probe_network_restriction() -> dict[str, Any]:
-    """Prove systemd's address-family filter blocks IP socket creation."""
-    probe = {"restricted": True, "families": {}}
-    families = {"AF_INET": socket.AF_INET, "AF_INET6": socket.AF_INET6}
-    for name, family in families.items():
+def _close_unexpected_worker_fds() -> int:
+    """Keep only standard streams so a worker cannot inherit a network socket."""
+    try:
+        descriptors = [int(name) for name in os.listdir("/proc/self/fd")]
+    except (OSError, ValueError) as error:
+        raise AdmissionError(f"cannot enumerate inherited worker descriptors: {error}") from error
+    closed = 0
+    for descriptor in descriptors:
+        if descriptor <= 2:
+            continue
+        try:
+            os.close(descriptor)
+        except OSError as error:
+            if error.errno != errno.EBADF:
+                raise AdmissionError(f"cannot close inherited descriptor {descriptor}") from error
+        else:
+            closed += 1
+    return closed
+
+
+def _install_synthetic_network_filter() -> dict[str, Any]:
+    """Deny socket and network syscalls before execing an allowlisted test worker."""
+    machine = platform.machine().lower()
+    arch = {"amd64": "x86_64", "arm64": "aarch64"}.get(machine, machine)
+    audit_arch = SYNTHETIC_SECCOMP_ARCHES.get(arch)
+    syscalls = SYNTHETIC_NETWORK_SYSCALLS.get(arch)
+    if audit_arch is None or syscalls is None:
+        raise AdmissionError(f"synthetic network seccomp is not configured for {machine}")
+
+    class SockFilter(ctypes.Structure):
+        _fields_ = [
+            ("code", ctypes.c_ushort),
+            ("jt", ctypes.c_ubyte),
+            ("jf", ctypes.c_ubyte),
+            ("k", ctypes.c_uint32),
+        ]
+
+    class SockFprog(ctypes.Structure):
+        _fields_ = [("len", ctypes.c_ushort), ("filter", ctypes.POINTER(SockFilter))]
+
+    # Check the native audit architecture, then return EPERM for every syscall
+    # that can create, connect, or exchange data through a socket.
+    instructions = [
+        SockFilter(0x20, 0, 0, 4),
+        SockFilter(0x15, 1, 0, audit_arch),
+        SockFilter(0x06, 0, 0, 0x80000000),
+        SockFilter(0x20, 0, 0, 0),
+    ]
+    instructions.extend(
+        instruction
+        for number in syscalls
+        for instruction in (
+            SockFilter(0x15, 0, 1, number),
+            SockFilter(0x06, 0, 0, 0x00050000 | errno.EPERM),
+        )
+    )
+    instructions.append(SockFilter(0x06, 0, 0, 0x7FFF0000))
+    program_array = (SockFilter * len(instructions))(*instructions)
+    program = SockFprog(len(instructions), program_array)
+    libc = ctypes.CDLL(None, use_errno=True)
+    libc.prctl.argtypes = [
+        ctypes.c_int,
+        ctypes.c_ulong,
+        ctypes.c_void_p,
+        ctypes.c_ulong,
+        ctypes.c_ulong,
+    ]
+    libc.prctl.restype = ctypes.c_int
+    # PR_SET_SECCOMP=22, SECCOMP_MODE_FILTER=2. NoNewPrivileges is verified
+    # before Landlock is enabled, and both restrictions survive execve.
+    if libc.prctl(22, 2, ctypes.byref(program), 0, 0) != 0:
+        error = ctypes.get_errno()
+        raise AdmissionError(f"cannot install worker network seccomp filter: {os.strerror(error)}")
+    mode = libc.prctl(21, 0, None, 0, 0)  # PR_GET_SECCOMP
+    if mode != 2:
+        raise AdmissionError("worker seccomp filter mode could not be verified")
+
+    probe = {"restricted": True, "mechanism": "seccomp-bpf", "mode": mode, "probes": {}}
+    for name, family in (
+        ("AF_INET", socket.AF_INET),
+        ("AF_INET6", socket.AF_INET6),
+        ("AF_UNIX", socket.AF_UNIX),
+    ):
         try:
             candidate = socket.socket(family, socket.SOCK_STREAM)
         except OSError as error:
-            denied = error.errno in {errno.EPERM, errno.EACCES}
-            probe["families"][name] = "denied" if denied else f"unverified_errno_{error.errno}"
+            denied = error.errno == errno.EPERM
+            probe["probes"][name] = "denied" if denied else f"unverified_errno_{error.errno}"
             probe["restricted"] = probe["restricted"] and denied
         else:
             candidate.close()
-            probe["families"][name] = "created"
+            probe["probes"][name] = "created"
             probe["restricted"] = False
     return probe
 
@@ -2467,9 +2591,15 @@ def _run_inside(args: argparse.Namespace, command: list[str]) -> int:
             termination_grace_seconds=float(args.termination_grace_seconds),
         )
     synthetic_filesystem_isolation = None
+    synthetic_network_isolation = None
+    worker_fd_close_count = 0
     if args.profile == "synthetic-validation":
         try:
+            worker_fd_close_count = _close_unexpected_worker_fds()
             synthetic_filesystem_isolation = _apply_synthetic_filesystem_isolation(status_dir)
+            synthetic_network_isolation = _install_synthetic_network_filter()
+            if not synthetic_network_isolation.get("restricted"):
+                raise AdmissionError("worker network seccomp probes were not all denied")
         except (AdmissionError, OSError) as error:
             _write_inner_status(
                 status_path,
@@ -2490,6 +2620,15 @@ def _run_inside(args: argparse.Namespace, command: list[str]) -> int:
             worker_start_requested_at_utc=_utc_now(),
             worker_start_requested_monotonic=time.monotonic(),
             filesystem_isolation=synthetic_filesystem_isolation,
+            network_isolation=synthetic_network_isolation,
+            inherited_descriptor_isolation={
+                "standard_streams_only": True,
+                "unexpected_descriptors_closed": worker_fd_close_count,
+            },
+            synthetic_context={
+                **(synthetic_context or {}),
+                "network_isolation": synthetic_network_isolation,
+            },
         )
     except (OSError, AdmissionError) as error:
         print(
@@ -2666,7 +2805,10 @@ def _run_command(args: argparse.Namespace) -> int:
             if metrics_due and observed_unit is not None and _unit_is_active(observed_unit):
                 cgroup = observed_unit.get("ControlGroup", "").strip("/")
                 if cgroup:
-                    receipt["cgroup_metrics"] = _cgroup_execution_metrics(CGROUP_ROOT / cgroup)
+                    receipt["cgroup_metrics"] = _cgroup_execution_metrics(
+                        CGROUP_ROOT / cgroup,
+                        allow_missing_io_weight=args.profile == "synthetic-validation",
+                    )
                 last_metrics_write = now_mono
             _update_execution_receipt(receipt, receipt_path, phase="unit_running")
 
@@ -2728,7 +2870,8 @@ def _run_command(args: argparse.Namespace) -> int:
             evidence["planned_cgroup"].update(
                 tasks_max=SYNTHETIC_RUN_LIMITS["tasks_max"],
                 filesystem_sandbox="Landlock denies by default; system binaries read-only; invocation status writable",
-                network_sandbox="RestrictAddressFamilies=AF_UNIX, verified by inner socket probes",
+                network_sandbox="RestrictAddressFamilies plus worker-only seccomp-bpf, verified before exec",
+                io_weight_enforcement="requested 10; actual cgroup availability is recorded by the inner gate",
                 synthetic_only=True,
             )
         if args.profile == "backup":
@@ -2896,6 +3039,11 @@ def _run_command(args: argparse.Namespace) -> int:
                     "NoNewPrivileges": "yes",
                     "RestrictAddressFamilies": ["AF_UNIX"],
                     "SystemCallArchitectures": "native",
+                    "WorkerNetworkFilter": "seccomp-bpf denies socket and network syscalls before exec",
+                    "CgroupIOWeight": (
+                        "requested 10; enforcement is reported separately because the user manager "
+                        "may not delegate the io controller"
+                    ),
                     "KillMode": "control-group",
                     "Restart": "no",
                     "TimeoutStartSec": f"{SYNTHETIC_RUN_LIMITS['timeout_seconds']}s",
@@ -3077,12 +3225,16 @@ def _run_command(args: argparse.Namespace) -> int:
                     and context.get("unit") == unit
                     and isinstance(context.get("network_isolation"), dict)
                     and context["network_isolation"].get("restricted") is True
+                    and context["network_isolation"].get("mechanism") == "seccomp-bpf"
                     and isinstance(inner_filesystem, dict)
                     and inner_filesystem.get("enforced") is True
                 )
             receipt["applied_limits_verification"] = {
                 "passed": applied_limits_verified,
-                "source": "systemd properties, cgroup controls, IP socket denial, and Landlock",
+                "source": (
+                    "systemd properties, cgroup memory/CPU/PID controls, worker seccomp-bpf, "
+                    "and Landlock; cgroup I/O controller availability is reported separately"
+                ),
             }
         final_classification = _classify_guarded_result(
             profile=args.profile,
