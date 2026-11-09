@@ -190,9 +190,21 @@ def run_scenario(
     status = wait_unit()
     receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
     if receipt.get("final_classification") != expected_classification:
+        evidence = {
+            key: receipt.get(key)
+            for key in (
+                "phase",
+                "outer_admission",
+                "inner_admission",
+                "transient_unit",
+                "result",
+                "service_owner",
+            )
+        }
         raise AssertionError(
             f"{scenario} classified as {receipt.get('final_classification')!r}, expected "
-            f"{expected_classification!r}; receipt={receipt_path}"
+            f"{expected_classification!r}; receipt={receipt_path}; "
+            f"evidence={json.dumps(evidence, sort_keys=True)}"
         )
     if status.get("InvocationID") != receipt.get("service_owner", {}).get("invocation_id"):
         raise AssertionError("permanent service invocation and durable receipt identity differ")
