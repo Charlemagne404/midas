@@ -94,7 +94,10 @@ jobs:
           release="/home/midas-ci/.local/share/midas-veritas/releases/veritas-guarded-streaming-683346e0-isolated-imports-v4"
           release_source="$RUNNER_TEMP/veritas-guarded-release"
           test ! -e "$release_source" && test ! -e "$release"
-          "$PYTHON_BIN" scripts/ci/build_veritas_systemd_release.py \
+          runtime_site_packages="$(sudo -u midas-ci /home/midas-ci/midas/.venv/bin/python \
+            -c 'import site; print(site.getsitepackages()[0])')"
+          PYTHONPATH="$runtime_site_packages" "$PYTHON_BIN" \
+            scripts/ci/build_veritas_systemd_release.py \
             --revision "$GITHUB_SHA" --destination "$release_source"
           sudo install -d -o midas-ci -g midas-ci "$(dirname "$release")"
           sudo cp -a "$release_source" "$release"
