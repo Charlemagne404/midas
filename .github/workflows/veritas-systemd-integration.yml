@@ -70,10 +70,10 @@ jobs:
           sudo -u midas-ci env XDG_RUNTIME_DIR="$runtime" systemctl --user daemon-reload
           sudo -u midas-ci env XDG_RUNTIME_DIR="$runtime" systemctl --user start dbus.socket
           for attempt in $(seq 1 30); do
-            test -S "$runtime/bus" && break
+            sudo -u midas-ci test -S "$runtime/bus" && break
             sleep 1
           done
-          if ! test -S "$runtime/bus"; then
+          if ! sudo -u midas-ci test -S "$runtime/bus"; then
             echo "Expected user D-Bus socket missing: $runtime/bus"
             sudo -u midas-ci env XDG_RUNTIME_DIR="$runtime" \
               systemctl --user show dbus.socket -p ActiveState -p SubState -p Result \
@@ -82,7 +82,7 @@ jobs:
               systemctl --user status dbus.socket --no-pager || true
             sudo -u midas-ci env XDG_RUNTIME_DIR="$runtime" \
               journalctl --user -u dbus.socket --no-pager -n 40 || true
-            ls -la "$runtime" || true
+            sudo -u midas-ci ls -la "$runtime" || true
             exit 1
           fi
           sudo -u midas-ci env XDG_RUNTIME_DIR="$runtime" \
