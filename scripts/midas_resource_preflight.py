@@ -1618,6 +1618,14 @@ class _RunnerOutput:
             for argument in sorted(self.command, key=len, reverse=True):
                 if len(argument) >= 4:
                     tail = tail.replace(argument, "<redacted-argument>")
+            diagnostic_message = _safe_diagnostic(tail)
+            if diagnostic_message:
+                # systemd-run emits manager diagnostics, not worker output. Keep
+                # a short redacted excerpt so failed transient-unit requests
+                # remain diagnosable after --collect removes the unit.
+                diagnostic_message = re.sub(
+                    r"/(?:home|tmp|run|var/tmp)/[^\s,:;]+", "<redacted-path>", diagnostic_message
+                )[:256]
             lowered = tail.lower()
             if not tail:
                 diagnostic_type = "none"
@@ -1638,6 +1646,7 @@ class _RunnerOutput:
             result[name] = {
                 "bytes": state["size"],
                 "diagnostic_type": diagnostic_type,
+                **({"message": diagnostic_message} if diagnostic_message else {}),
             }
         return result
 

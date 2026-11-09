@@ -1678,12 +1678,18 @@ def test_guarded_run_distinguishes_unit_start_failure_missing_bus_and_popen_fail
         monkeypatch,
         tmp_path / "bus-fail",
         runner_code=1,
-        stderr="Failed to connect to bus: No medium found",
+        stderr=(
+            "Failed to connect to bus: No medium found token=synthetic-secret "
+            "/home/private/manager/path"
+        ),
     )
     assert code != 0
     assert receipt["final_classification"] == "unit_creation_failed"
     assert receipt["systemd_run_client"]["output"]["stderr"]["diagnostic_type"] == (
         "systemd_bus_unavailable"
+    )
+    assert receipt["systemd_run_client"]["output"]["stderr"]["message"] == (
+        "Failed to connect to bus: No medium found token=<redacted> <redacted-path>"
     )
 
     monkeypatch.undo()
