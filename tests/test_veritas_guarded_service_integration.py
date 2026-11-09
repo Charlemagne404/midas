@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import shlex
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -138,6 +139,13 @@ def _release_fixture(
     )
     runtime_sha = _sha(preflight._canonical_json(runtime))
     monkeypatch.setattr(preflight, "VERITAS_RUNTIME_ANALYSIS_CODE_SHA256", runtime_sha)
+    test_python_runtime = {
+        **preflight.VERITAS_APPROVED_PYTHON_RUNTIME,
+        "validated_patch_version": (
+            f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        ),
+    }
+    monkeypatch.setattr(preflight, "VERITAS_APPROVED_PYTHON_RUNTIME", test_python_runtime)
 
     for relative, data in values.items():
         path = root / relative
@@ -165,7 +173,7 @@ def _release_fixture(
         "runtime_analysis_code_sha256": runtime_sha,
         "package_init_files_sha256": package_init_files,
         "release_dependency_files_sha256": release_dependency_files,
-        "python_runtime": preflight.VERITAS_APPROVED_PYTHON_RUNTIME,
+        "python_runtime": test_python_runtime,
         "python_distribution_versions": preflight.VERITAS_APPROVED_DISTRIBUTION_VERSIONS,
         "launcher_sha256": files["bin/midas_resource_preflight.py"],
         "service_sha256": files["service/midas-veritas-source-analysis.service"],
