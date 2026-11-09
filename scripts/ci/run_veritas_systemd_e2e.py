@@ -306,9 +306,7 @@ def wait_for_admitted_host_window(*, timeout_seconds: float = 600) -> None:
     )
     deadline = time.monotonic() + timeout_seconds
     while True:
-        evidence, reasons = preflight._gate(
-            args, include_task_cgroup=False, lock_held=False
-        )
+        evidence, reasons = preflight._gate(args, include_task_cgroup=False, lock_held=False)
         print(
             json.dumps(
                 {
