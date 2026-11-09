@@ -7,8 +7,10 @@ watchdog, the durable receipt, and the exit status returned to systemd.
 
 ## Release identity
 
-- Release: `veritas-guarded-streaming-683346e0-isolated-imports-v3`
+- Release: `veritas-guarded-streaming-683346e0-isolated-imports-v4`
 - Streaming module SHA-256: `683346e0f14a594528158676343dd1c63e5731fcb2c5beec9739abc96d1898ff`
+- Veritas worker wrapper SHA-256: `5c912ed80fba851dc75fc6de19df34de3c8d5d3179b4865ffb79a78998291e59`
+- Guarded launcher SHA-256: `1d216b5e40f7a23bf6bd266b4a8f0a1290d27fcd45c9126e0700fa9da8a24eda`
 - Previous production module SHA-256: `e6304b6547dc5d285baab4aae3940b0fe7a6828712d995bb677aad582a44f016`
 - Research root: `/home/charlie/midas-veritas/data/veritas-observatory`
 - Receipt directory: `/home/charlie/.local/state/midas/guarded-executions`
@@ -37,6 +39,19 @@ that result to the permanent oneshot. `ExecStartPre`, `ExecStartPost`, and
 trigger. The worker uses `-S` with the release package and validated virtualenv
 site packages explicitly, so editable-install `.pth` files cannot add the old
 frozen overlay or main checkout as fallback import roots.
+
+The isolated systemd integration workflow uses a dedicated CI-only service
+alias and a fixed `~/midas-veritas-ci` fixture. Its guarded path redirects the
+worker to that fixture only after verifying the actual packaged production
+`ExecStart`, and its parent and transient worker units allow only `AF_UNIX`
+address families. The test output and write permissions are confined to the
+fixture; the live production service, prior immutable release v3, and live
+Veritas files are not changed by the workflow.
+
+The workflow validates a synthetic schema-v1 checkpoint through the real
+systemd parent-to-transient-worker path. A fresh restore and migration test
+against the exact production Restic snapshot remain blocked until the existing
+backup admission policy passes the Reality protected-service headroom gate.
 
 ## Controlled rollout
 
@@ -73,10 +88,11 @@ frozen overlay or main checkout as fallback import roots.
 
 The guarded run performs the versioned v1-to-v2 checkpoint migration only
 inside the bounded worker. The existing v1 file remains as a preserved rollback
-artifact. Migration and restart tests use disposable restored fixtures and
-verify the sealed state, event chain, cursor, and provenance before and after
-migration. The installed launcher additionally verifies post-execution state
-before returning success.
+artifact. Existing migration and restart tests use synthetic disposable
+fixtures and verify the sealed state, event chain, cursor, and provenance
+before and after migration. The exact production snapshot has not yet been
+freshly restored for migration testing. The installed launcher additionally
+verifies post-execution state before returning success.
 
 ## Stop and rollback rules
 

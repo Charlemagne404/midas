@@ -1,0 +1,102 @@
+name: Veritas isolated systemd integration
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  veritas-systemd-e2e:
+    name: Veritas service through real systemd and cgroup v2
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        id: setup-python
+        with:
+          python-version: 3.12.3
+
+      - name: Verify hosted VM systemd and cgroup v2
+        run: |
+          set -euo pipefail
+          test "$(cat /proc/1/comm)" = systemd
+          grep -q ' - cgroup2 ' /proc/mounts
+          test ! -e /home/charlie
+          test ! -e /mnt/continental-cloud
+          systemctl is-system-running --wait || test "$(systemctl is-system-running)" = degraded
+          systemd --version
+
+      - name: Create a dedicated user manager with delegated controllers
+        run: |
+          set -euo pipefail
+          sudo useradd --create-home --shell /bin/bash midas-ci
+          uid="$(id -u midas-ci)"
+          sudo mkdir -p /etc/systemd/system/user@.service.d
+          sudo tee /etc/systemd/system/user@.service.d/50-midas-ci-delegate.conf >/dev/null <<'EOF'
+          [Service]
+          Delegate=cpu memory io pids
+          EOF
+          sudo systemctl daemon-reload
+          sudo loginctl enable-linger midas-ci
+          sudo systemctl start "user-runtime-dir@${uid}.service" "user@${uid}.service"
+          runtime="/run/user/${uid}"
+          for attempt in $(seq 1 30); do
+            if sudo -u midas-ci env XDG_RUNTIME_DIR="$runtime" systemctl --user show-environment >/dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+          sudo -u midas-ci env XDG_RUNTIME_DIR="$runtime" systemctl --user show-environment >/dev/null
+          cgroup="/sys/fs/cgroup/user.slice/user-${uid}.slice/user@${uid}.service"
+          cat "$cgroup/cgroup.controllers"
+          cat "$cgroup/cgroup.subtree_control"
+          for controller in cpu memory io pids; do
+            grep -qw "$controller" "$cgroup/cgroup.controllers"
+            grep -qw "$controller" "$cgroup/cgroup.subtree_control"
+          done
+          sudo -u midas-ci test -w "$cgroup/cgroup.subtree_control"
+          echo "MIDAS_CI_UID=$uid" >> "$GITHUB_ENV"
+          echo "MIDAS_CI_RUNTIME_DIR=$runtime" >> "$GITHUB_ENV"
+
+      - name: Install pinned Veritas runtime
+        env:
+          PYTHON_BIN: ${{ steps.setup-python.outputs.python-path }}
+        run: |
+          set -euo pipefail
+          sudo -u midas-ci env HOME=/home/midas-ci "$PYTHON_BIN" -m venv /home/midas-ci/midas/.venv
+          sudo -u midas-ci /home/midas-ci/midas/.venv/bin/python -m pip install --disable-pip-version-check \
+            annotated-types==0.8.0 joblib==1.6.0 numpy==2.2.6 pydantic==2.14.0 \
+            pydantic-core==2.50.0 scikit-learn==1.7.2 scipy==1.18.1 \
+            threadpoolctl==3.7.0 typing-extensions==4.16.0 typing-inspection==0.4.4 \
+            pytest==8.4.2
+          sudo -u midas-ci env HOME=/home/midas-ci XDG_RUNTIME_DIR="$MIDAS_CI_RUNTIME_DIR" \
+            GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" \
+            /home/midas-ci/midas/.venv/bin/python scripts/ci/build_veritas_systemd_release.py \
+            --revision "$GITHUB_SHA"
+          release="/home/midas-ci/.local/share/midas-veritas/releases/veritas-guarded-streaming-683346e0-isolated-imports-v4"
+          mkdir -p /home/midas-ci/midas-veritas/packages/midas/veritas \
+            /home/midas-ci/midas-veritas/data/veritas-observatory \
+            /home/midas-ci/.local/state/midas/guarded-executions
+          cp "$release/rollback/previous-finalized_source_analysis.py" \
+            /home/midas-ci/midas-veritas/packages/midas/veritas/finalized_source_analysis.py
+          chmod 0444 /home/midas-ci/midas-veritas/packages/midas/veritas/finalized_source_analysis.py
+          chown -R midas-ci:midas-ci /home/midas-ci/midas /home/midas-ci/midas-veritas \
+            /home/midas-ci/.local
+          sudo -u midas-ci env HOME=/home/midas-ci PYTHONPATH="$release/packages" \
+            /home/midas-ci/midas/.venv/bin/python scripts/ci/prepare_veritas_systemd_fixture.py
+
+      - name: Run the exact guarded service through the isolated user manager
+        run: |
+          set -euo pipefail
+          sudo -u midas-ci env HOME=/home/midas-ci XDG_RUNTIME_DIR="$MIDAS_CI_RUNTIME_DIR" \
+            PYTHONPATH="$GITHUB_WORKSPACE/scripts" \
+            /home/midas-ci/midas/.venv/bin/python scripts/ci/run_veritas_systemd_e2e.py \
+            | tee "$RUNNER_TEMP/veritas-systemd-e2e.json"
+          cat "$RUNNER_TEMP/veritas-systemd-e2e.json" >> "$GITHUB_STEP_SUMMARY"

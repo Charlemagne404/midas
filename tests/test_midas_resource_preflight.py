@@ -109,7 +109,87 @@ def test_synthetic_validation_profile_is_separate_and_keeps_production_veritas_p
         midas_resource_preflight.PROFILES["synthetic-validation"]["max_swap_activity_pages"] == 64
     )
     assert midas_resource_preflight.PROFILES["synthetic-validation"]["max_swap_activity_pages"] > 0
+
+
+def test_veritas_ci_fixture_overrides_are_bound_to_the_disposable_service(monkeypatch, tmp_path):
+    root = tmp_path / "midas-veritas-ci"
+    campaign_dir = root / "campaign"
+    source_root = root / "raw"
+    pressure_dir = root / "pressure"
+    campaign_dir.mkdir(parents=True)
+    source_root.mkdir()
+    pressure_dir.mkdir()
+    (root / "output").mkdir()
+    pressure_file = pressure_dir / "io"
+    pressure_file.write_text(
+        "some avg10=0.00 avg60=0.00 avg300=0.00 total=0\n"
+        "full avg10=0.00 avg60=0.00 avg300=0.00 total=0\n"
+    )
+    campaign = {"campaign_id": "a" * 64, "identity": {"raw_root": str(source_root)}}
+    campaign_path = campaign_dir / "campaign.json"
+    campaign_path.write_text(json.dumps(campaign))
+    campaign_sha = midas_resource_preflight._sha256_bytes(campaign_path.read_bytes())
+    values = {
+        "MIDAS_VERITAS_CI_TEST": midas_resource_preflight.VERITAS_CI_TEST_MARKER,
+        "MIDAS_VERITAS_CI_CAMPAIGN_PATH": str(campaign_path),
+        "MIDAS_VERITAS_CI_CAMPAIGN_SHA256": campaign_sha,
+        "MIDAS_VERITAS_CI_CAMPAIGN_ID": campaign["campaign_id"],
+        "MIDAS_VERITAS_CI_SOURCE_ROOT": str(source_root),
+        "MIDAS_VERITAS_CI_PSI_FILE": str(pressure_file),
+        "MIDAS_VERITAS_CI_SCENARIO": "success",
+    }
+    monkeypatch.setattr(midas_resource_preflight, "VERITAS_CI_ROOT", root)
+    for key, value in values.items():
+        monkeypatch.setenv(key, value)
+    properties = (
+        "ActiveState=active\n"
+        f"InvocationID={'b' * 32}\n"
+        "Environment=" + " ".join(f"{key}={value}" for key, value in values.items()) + "\n"
+    )
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_systemctl",
+        lambda *_args, **_kwargs: subprocess.CompletedProcess([], 0, properties, ""),
+    )
+    context = midas_resource_preflight._veritas_ci_test_context(
+        unit_name=midas_resource_preflight.VERITAS_CI_SERVICE_UNIT,
+        invocation_id="b" * 32,
+    )
+    assert context is not None
+    assert context["campaign_sha256"] == campaign_sha
+    assert context["scenario"] == "success"
+    assert Path(context["output_root"]) == root / "output"
+    assert Path(context["output_root"]) != midas_resource_preflight.VERITAS_OUTPUT_ROOT
+    assert Path(context["output_root"]).is_relative_to(root)
+    (root / "output").rmdir()
+    outside_output = tmp_path / "outside-output"
+    outside_output.mkdir()
+    (root / "output").symlink_to(outside_output, target_is_directory=True)
+    with pytest.raises(midas_resource_preflight.AdmissionError, match="missing or unsafe"):
+        midas_resource_preflight._veritas_ci_test_context(
+            unit_name=midas_resource_preflight.VERITAS_CI_SERVICE_UNIT,
+            invocation_id="b" * 32,
+        )
+    assert midas_resource_preflight.PROFILES["veritas"]["protected_headroom_mib"] == 128
+
+
+def test_veritas_ci_test_environment_cannot_be_selected_by_production_service(monkeypatch):
+    monkeypatch.setenv("MIDAS_VERITAS_CI_TEST", midas_resource_preflight.VERITAS_CI_TEST_MARKER)
+    with pytest.raises(midas_resource_preflight.AdmissionError, match="restricted"):
+        midas_resource_preflight._veritas_ci_test_context(
+            unit_name=midas_resource_preflight.VERITAS_SERVICE_UNIT,
+            invocation_id="c" * 32,
+        )
     assert midas_resource_preflight.SYNTHETIC_RUN_LIMITS["memory_budget_mib"] == 8
+
+
+def test_veritas_ci_worker_command_is_confined_to_the_test_output_root(tmp_path):
+    output_root = tmp_path / "midas-veritas-ci" / "output"
+    command = midas_resource_preflight._veritas_worker_command(
+        midas_resource_preflight.VERITAS_RELEASE_ROOT, output_root=output_root
+    )
+    assert command[command.index("--root") + 1] == str(output_root)
+    assert str(midas_resource_preflight.VERITAS_OUTPUT_ROOT) not in command
 
 
 def test_synthetic_validation_allows_only_bounded_incidental_swap_movement() -> None:
@@ -992,7 +1072,7 @@ def test_veritas_run_uses_sandboxed_service_and_existing_resource_limits(
     monkeypatch.setattr(
         midas_resource_preflight,
         "verify_veritas_checkpoint",
-        lambda *_args: {
+        lambda *_args, **_kwargs: {
             "passed": True,
             "state_sha256": "b" * 64,
             "schema_version": 1,
@@ -1002,7 +1082,7 @@ def test_veritas_run_uses_sandboxed_service_and_existing_resource_limits(
         },
     )
 
-    def verify_post_state(*_args):
+    def verify_post_state(*_args, **_kwargs):
         if post_state_invalid:
             raise midas_resource_preflight.AdmissionError("synthetic post-state corruption")
         return {
@@ -1161,12 +1241,12 @@ def test_inner_admission_denial_is_durable_and_never_starts_worker(
     monkeypatch.setattr(
         midas_resource_preflight,
         "_validate_veritas_worker_command",
-        lambda *_args: {"passed": True, "manifest_sha256": "a" * 64},
+        lambda *_args, **_kwargs: {"passed": True, "manifest_sha256": "a" * 64},
     )
     monkeypatch.setattr(
         midas_resource_preflight,
         "verify_veritas_checkpoint",
-        lambda *_args: {"passed": True, "state_sha256": "b" * 64, "schema_version": 1},
+        lambda *_args, **_kwargs: {"passed": True, "state_sha256": "b" * 64, "schema_version": 1},
     )
     monkeypatch.setattr(
         midas_resource_preflight,
