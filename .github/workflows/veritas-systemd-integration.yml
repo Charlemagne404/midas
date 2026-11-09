@@ -115,9 +115,10 @@ jobs:
           sudo install -D -o midas-ci -g midas-ci -m 0444 \
             deploy/systemd/user/midas-reality-capacity.timer \
             "$tools/deploy/systemd/user/midas-reality-capacity.timer"
-          sudo -u midas-ci mkdir -p /home/midas-ci/midas-veritas/packages/midas/veritas \
-            /home/midas-ci/midas-veritas/data/veritas-observatory \
+          sudo install -d -o midas-ci -g midas-ci \
             /home/midas-ci/.local/state/midas/guarded-executions
+          sudo -u midas-ci mkdir -p /home/midas-ci/midas-veritas/packages/midas/veritas \
+            /home/midas-ci/midas-veritas/data/veritas-observatory
           sudo -u midas-ci cp "$release/rollback/previous-finalized_source_analysis.py" \
             /home/midas-ci/midas-veritas/packages/midas/veritas/finalized_source_analysis.py
           sudo -u midas-ci chmod 0444 /home/midas-ci/midas-veritas/packages/midas/veritas/finalized_source_analysis.py
