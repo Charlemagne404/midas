@@ -100,11 +100,7 @@ def latest_receipt(
             execution_finished = receipt.get("phase") == "completed" and receipt.get(
                 "final_classification"
             ) not in {None, "indeterminate", "result_missing_indeterminate"}
-            if (
-                not require_started
-                or worker_ready
-                or execution_finished
-            ):
+            if not require_started or worker_ready or execution_finished:
                 return path, receipt
         time.sleep(0.1)
     diagnostics: dict[str, object] = {"receipts": []}
