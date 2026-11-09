@@ -321,8 +321,16 @@ def run_scenario(
     if not isinstance(expected_status, int) or status.get("ExecMainStatus") != str(expected_status):
         raise AssertionError("permanent service did not propagate the guarded worker exit status")
     expected_result = "success" if expected_status == 0 else "exit-code"
-    if status.get("Result") != expected_result or status.get("ExecMainCode") != "exited":
-        raise AssertionError("systemd parent result contradicts the durable guarded receipt")
+    # systemd's ExecMainCode property is the numeric waitid(2) si_code:
+    # CLD_EXITED is 1. The human-readable `systemctl status` rendering calls
+    # this `code=exited`, but `systemctl show` does not return that string.
+    if status.get("Result") != expected_result or status.get("ExecMainCode") != "1":
+        raise AssertionError(
+            "systemd parent result contradicts the durable guarded receipt: "
+            f"expected Result={expected_result!r}, ExecMainCode='1', "
+            f"ExecMainStatus={expected_status!r}; observed status={status!r}, "
+            f"receipt_result={result!r}"
+        )
     return receipt_path, receipt
 
 
