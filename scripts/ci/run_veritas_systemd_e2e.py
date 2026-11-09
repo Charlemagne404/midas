@@ -150,7 +150,7 @@ def latest_receipt(
     )
 
 
-def wait_unit(timeout: float = 180) -> dict[str, str]:
+def wait_unit(timeout: float = 13 * 60, *, receipt_path: Path) -> dict[str, str]:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         props = preflight._properties(
@@ -174,7 +174,67 @@ def wait_unit(timeout: float = 180) -> dict[str, str]:
         if props.get("InvocationID") and props.get("ActiveState") in {"inactive", "failed"}:
             return props
         time.sleep(0.2)
-    raise TimeoutError("Veritas test oneshot did not terminate within the bound")
+    parent = preflight._properties(
+        command(
+            "show",
+            UNIT,
+            "-p",
+            "ActiveState",
+            "-p",
+            "SubState",
+            "-p",
+            "Result",
+            "-p",
+            "ExecMainStatus",
+            "-p",
+            "InvocationID",
+            "-p",
+            "MainPID",
+        ).stdout
+    )
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        receipt_evidence = {
+            key: receipt.get(key)
+            for key in (
+                "phase",
+                "final_classification",
+                "inner_admission",
+                "worker",
+                "transient_unit",
+                "result",
+            )
+        }
+    except (OSError, json.JSONDecodeError):
+        receipt_evidence = {"missing_or_invalid": True}
+    journal = subprocess.run(
+        ["journalctl", "--user", "--unit", UNIT, "--no-pager", "-n", "60"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+    active_workers = command(
+        "list-units",
+        "--type=service",
+        "--state=running",
+        "--no-legend",
+        "--no-pager",
+        "midas-heavy-veritas-*.service",
+        check=False,
+    )
+    diagnostics = {
+        "parent_unit": parent,
+        "receipt": receipt_evidence,
+        "journalctl_exit_code": journal.returncode,
+        "journal_tail": journal.stdout[-8000:],
+        "journal_error": journal.stderr[-1000:],
+        "active_transient_workers": active_workers.stdout.strip(),
+    }
+    raise TimeoutError(
+        "Veritas test oneshot did not terminate within the service bound: "
+        + json.dumps(diagnostics, sort_keys=True)
+    )
 
 
 def run_scenario(
@@ -193,7 +253,7 @@ def run_scenario(
             "full avg10=4.00 avg60=4.00 avg300=4.00 total=0\n",
             encoding="ascii",
         )
-    status = wait_unit()
+    status = wait_unit(receipt_path=receipt_path)
     receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
     if receipt.get("final_classification") != expected_classification:
         evidence = {
