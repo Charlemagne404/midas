@@ -198,10 +198,21 @@ def run_scenario(
                 "outer_admission",
                 "inner_admission",
                 "transient_unit",
+                "systemd_run_client",
                 "result",
+                "log_references",
                 "service_owner",
             )
         }
+        journal = subprocess.run(
+            ["journalctl", "--user", "--no-pager", "-n", "80"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        evidence["user_manager_journal_exit_code"] = journal.returncode
+        evidence["user_manager_journal_tail"] = journal.stdout[-8000:]
         raise AssertionError(
             f"{scenario} classified as {receipt.get('final_classification')!r}, expected "
             f"{expected_classification!r}; receipt={receipt_path}; "
