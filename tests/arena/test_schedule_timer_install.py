@@ -55,6 +55,30 @@ def test_generated_units_pass_real_systemd_parser(tmp_path):
         path = tmp_path / name
         path.write_text(payload)
         files.append(str(path))
+
+    home = tmp_path / "veritas-home"
+    python = home / "midas/.venv/bin/python"
+    python.parent.mkdir(parents=True)
+    python.symlink_to(sys.executable)
+    release = (
+        home
+        / ".local/share/midas-veritas/releases/veritas-guarded-streaming-683346e0-runtime-closure-v2"
+    )
+    launcher = release / "bin/midas_resource_preflight.py"
+    wrapper = release / "scripts/veritas_source_analysis.py"
+    launcher.parent.mkdir(parents=True)
+    wrapper.parent.mkdir(parents=True)
+    launcher.write_text("#!/usr/bin/python3\nraise SystemExit(0)\n")
+    launcher.chmod(0o755)
+    wrapper.write_text("raise SystemExit(0)\n")
+    (home / "midas-veritas/data/veritas-observatory").mkdir(parents=True)
+    (home / ".local/state/midas/guarded-executions").mkdir(parents=True)
+    veritas_unit = Path("deploy/systemd/user/midas-veritas-source-analysis.service")
+    payload = veritas_unit.read_text().replace("%h", str(home))
+    veritas_path = tmp_path / "midas-veritas-source-analysis.service"
+    veritas_path.write_text(payload)
+    files.append(str(veritas_path))
+
     result = subprocess.run(
         ["systemd-analyze", "--user", "verify", *files], capture_output=True, text=True, timeout=15
     )

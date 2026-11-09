@@ -8,18 +8,21 @@ import ctypes
 import errno
 import fcntl
 import hashlib
+import importlib.metadata
 import json
 import math
 import os
 import platform
 import re
 import selectors
+import shlex
 import shutil
 import signal
 import socket
 import stat
 import subprocess
 import sys
+import sysconfig
 import time
 import uuid
 from pathlib import Path
@@ -243,6 +246,81 @@ RUNNER_RESULT_MISSING = 77
 VERITAS_SERVICE_ROOT = Path.home() / "midas-veritas"
 VERITAS_OUTPUT_ROOT = VERITAS_SERVICE_ROOT / "data" / "veritas-observatory"
 VERITAS_SERVICE_UNIT = "midas-veritas-source-analysis.service"
+VERITAS_RELEASE_ID = "veritas-guarded-streaming-683346e0-runtime-closure-v2"
+VERITAS_RELEASE_ROOT = (
+    Path.home() / ".local" / "share" / "midas-veritas" / "releases" / VERITAS_RELEASE_ID
+)
+VERITAS_RUNTIME_PYTHON = Path.home() / "midas" / ".venv" / "bin" / "python"
+VERITAS_APPROVED_SOURCE_REVISION = "5679d4d40715ed762b1efaee37fc541852e9d6f5"
+VERITAS_APPROVED_MODULE_SHA256 = "683346e0f14a594528158676343dd1c63e5731fcb2c5beec9739abc96d1898ff"
+VERITAS_APPROVED_WRAPPER_SHA256 = "783b4c15b2f360c134319502d2037b0bfb110a3a2b7154dbce8e2a77e2454f9d"
+VERITAS_PRODUCTION_MODULE_SHA256 = (
+    "e6304b6547dc5d285baab4aae3940b0fe7a6828712d995bb677aad582a44f016"
+)
+VERITAS_PRODUCTION_SERVICE_SHA256 = (
+    "2da69ab1f132fb1f4ff85ce0f5526ddb7d302b1d8ea67dbba07edcc809d85406"
+)
+VERITAS_PRODUCTION_IMPORT_DROPIN_SHA256 = (
+    "79298fb856ec80ae35124b52c349b6f97cc2f8bd4714b71bda1388c3fc37f896"
+)
+VERITAS_CAMPAIGN_SHA256 = "aa8acb2b46823c1a1e3ac5d01a57dde917746c2c7471098ae2a4598875e322f5"
+VERITAS_LEGACY_CODE_SHA256 = "9f9e2249b49dd1cb10c11713aa2683567aa9cf0914c3ed2b08cf8e3fea25ebf8"
+VERITAS_APPROVED_RUNTIME_CODE_FILES = {
+    "finalized_source_analysis.py": VERITAS_APPROVED_MODULE_SHA256,
+    "scripts/veritas_source_analysis.py": VERITAS_APPROVED_WRAPPER_SHA256,
+    "economics.py": "0fc69b88d160acd3123bbff38ed6480d9ae9853b48429b3f739200d6cba5eda8",
+    "reality/execution_research.py": "99aaf3d1f1d00a3440392f373db8b661c8420ab1bb4713fc9e4fe2340831e5c1",
+    "reality/reconstruction.py": "ed7ca007f8fdb62c00aa25ebf4692e0c54eb0a9c0b06c9712e092a87c28c30cb",
+    "reality/research_measurements.py": "35200c42beef6c169b7244d56d93b30229c1394217faf4dd072853814f05b084",
+    "reality/research_schema.py": "fa31024164ae1e20b579403e79417c1eaa8fc2670d154153aae247546d8f9f33",
+    "reality/shadow_campaign.py": "fbca040df77c90182fa7b94375590f89e95289b21e31a8990da390d1241c9aed",
+    "reality/shadow_source.py": "6e0cb3811a8e32a81e9003a79de0ab778eccc28ff9e725f2163d58decf31b327",
+    "reality/shadow_worker.py": "0b745947399dc33898bdba41df4f0b183ba87477f5dcddecb7ae2d26f29e3c6d",
+    "reality/storage.py": "551966d10c2494dd6fcb50988bf32c26558ff6a02d6bd68617f8593b1f5ec3cc",
+}
+VERITAS_APPROVED_PACKAGE_INIT_FILES = {
+    "packages/midas/__init__.py": "4032724b98ed267185b12b8ec78dd9bcb0423ab1c89a6f0dad99397fd51159d9",
+    "packages/midas/reality/__init__.py": "4032724b98ed267185b12b8ec78dd9bcb0423ab1c89a6f0dad99397fd51159d9",
+    "packages/midas/veritas/__init__.py": "3cf2b6c6f1a1a4c51c55d67b401b3b8bd5d521eaececb0111d3452f3a6d7e4a2",
+}
+VERITAS_APPROVED_RELEASE_DEPENDENCY_FILES = {
+    "packages/midas/arbitrage/__init__.py": "4032724b98ed267185b12b8ec78dd9bcb0423ab1c89a6f0dad99397fd51159d9",
+    "packages/midas/arbitrage/engine.py": "5b16c78fc4664b780d7bf899573f2bb15cce83f055fe573eea3e3ea353a29526",
+    "packages/midas/core/__init__.py": "4032724b98ed267185b12b8ec78dd9bcb0423ab1c89a6f0dad99397fd51159d9",
+    "packages/midas/core/models.py": "9fe2eb524ee305d20fb31df70a4239f2b6504efc67d6c16afc22090410b1c528",
+    "packages/midas/economics/__init__.py": "4032724b98ed267185b12b8ec78dd9bcb0423ab1c89a6f0dad99397fd51159d9",
+    "packages/midas/economics/attestation.py": "5f614a422158aab5052faecf8064b57c5e04cff0c289b78cc7feb453e1f29899",
+    "packages/midas/economics/fees.py": "2735401e5988468582222a262a1e4f9fa28db2f1e549cf7492fb26fc85bdeb7a",
+    "packages/midas/reality/foundry.py": "b0559c041e870196ef95fb17f9c0e6e39d541214e3a9b4f5c4e0c70c4e22ee62",
+    "packages/midas/reality/model_features.py": "976a0b529ef28250ba6fba3be3b0c8d1c48039975a183b36a359cd1ff88b6634",
+    "packages/midas/reality/model_fitting.py": "8f1aa262cc96430180e8d2357ec75ed5449cd940c5e956419a762f2f72302580",
+    "packages/midas/reality/model_metrics.py": "a7221014903176b4b1b7927a001081c3d88403b1ca991c565ea40253c0b8a9ba",
+    "packages/midas/reality/model_registry.py": "a1807cc5183a4612172ea8664b5df646de5c7f2940192757d018f7b0207ab3e5",
+    "packages/midas/reality/shadow_policy.py": "f0a3b1920c7bb5c22ce9153dabe967be24d2210b6a8801808269734d13c3e0dc",
+    "packages/midas/reality/shadow_store.py": "75e6c208013ee859a39d0463a12660b521d1c631af6517e1cfd5008a6c42ff00",
+    "packages/midas/risk/engine.py": "6e91317dd0e1fb3ad1e1b601af5c753202947c6ae7953fb0a0af53b34e5ba8e6",
+}
+VERITAS_APPROVED_PYTHON_RUNTIME = {
+    "implementation": "cpython",
+    "version_major_minor": "3.12",
+    "validated_patch_version": "3.12.3",
+    "soabi": "cpython-312-x86_64-linux-gnu",
+}
+VERITAS_APPROVED_DISTRIBUTION_VERSIONS = {
+    "annotated-types": "0.8.0",
+    "joblib": "1.6.0",
+    "numpy": "2.2.6",
+    "pydantic": "2.14.0",
+    "pydantic-core": "2.50.0",
+    "scikit-learn": "1.7.2",
+    "scipy": "1.18.1",
+    "threadpoolctl": "3.7.0",
+    "typing-extensions": "4.16.0",
+    "typing-inspection": "0.4.4",
+}
+VERITAS_RUNTIME_ANALYSIS_CODE_SHA256 = (
+    "ba4e5d64f2a899e770d91bf78518c90f30a5907aea1e67425a5d4338e9e1a4b8"
+)
 VERITAS_TIMER_UNITS = (
     "midas-veritas-source-analysis.timer",
     "midas-reality-capacity.timer",
@@ -251,6 +329,516 @@ VERITAS_TIMER_UNITS = (
 
 class AdmissionError(RuntimeError):
     pass
+
+
+def _canonical_json(value: Any) -> bytes:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
+        "utf-8"
+    )
+
+
+def _sha256_bytes(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()
+
+
+def verify_veritas_release(
+    release_root: Path,
+    *,
+    expected_release_identity: str,
+    expected_source_revision: str,
+    expected_module_sha256: str,
+) -> dict[str, Any]:
+    """Verify the immutable, minimal release selected for a Veritas invocation."""
+    root = Path(release_root)
+    if root.is_symlink() or not root.is_dir():
+        raise AdmissionError("Veritas release root is missing, non-directory, or a symlink")
+    root = root.resolve(strict=True)
+    if stat.S_IMODE(root.stat().st_mode) & 0o222:
+        raise AdmissionError("Veritas release root is writable")
+
+    manifest_path = root / "RELEASE-MANIFEST.json"
+    digest_path = root / "RELEASE-MANIFEST.sha256"
+    for path in (manifest_path, digest_path):
+        if path.is_symlink() or not path.is_file():
+            raise AdmissionError(f"Veritas release metadata is missing or unsafe: {path.name}")
+        info = path.stat()
+        if info.st_uid != os.getuid() or info.st_nlink != 1:
+            raise AdmissionError(f"Veritas release metadata ownership is unsafe: {path.name}")
+        if stat.S_IMODE(info.st_mode) & 0o222:
+            raise AdmissionError(f"Veritas release metadata is writable: {path.name}")
+        if info.st_size > 256 * 1024:
+            raise AdmissionError(f"Veritas release metadata is oversized: {path.name}")
+
+    manifest_bytes = manifest_path.read_bytes()
+    manifest_sha256 = _sha256_bytes(manifest_bytes)
+    expected_sidecar = f"{manifest_sha256}  RELEASE-MANIFEST.json\n"
+    if digest_path.read_text(encoding="ascii") != expected_sidecar:
+        raise AdmissionError("Veritas release manifest checksum does not match its sidecar")
+    try:
+        manifest = json.loads(manifest_bytes)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise AdmissionError("Veritas release manifest is invalid JSON") from error
+    if not isinstance(manifest, dict) or manifest.get("format") != "midas-veritas-guarded-release":
+        raise AdmissionError("Veritas release manifest has an unsupported format")
+    if manifest.get("format_version") != 1:
+        raise AdmissionError("Veritas release manifest version is unsupported")
+    if manifest.get("release_identity") != expected_release_identity:
+        raise AdmissionError("Veritas release identity differs from the service pin")
+    if manifest.get("source_revision") != expected_source_revision:
+        raise AdmissionError("Veritas source revision differs from the service pin")
+    if manifest.get("candidate_module_sha256") != expected_module_sha256:
+        raise AdmissionError("Veritas module identity differs from the service pin")
+    if manifest.get("wrapper_sha256") != VERITAS_APPROVED_WRAPPER_SHA256:
+        raise AdmissionError("Veritas wrapper identity differs from the validated package")
+    if expected_module_sha256 != VERITAS_APPROVED_MODULE_SHA256:
+        raise AdmissionError("the requested Veritas module is not the approved streaming release")
+    if expected_source_revision != VERITAS_APPROVED_SOURCE_REVISION:
+        raise AdmissionError("the requested Veritas source revision is not approved")
+    if expected_release_identity != VERITAS_RELEASE_ID:
+        raise AdmissionError("the requested Veritas release identity is not approved")
+
+    files = manifest.get("files_sha256")
+    if not isinstance(files, dict) or not files:
+        raise AdmissionError("Veritas release manifest has no file hash inventory")
+    expected_runtime_code = manifest.get("runtime_analysis_code_files")
+    if expected_runtime_code != VERITAS_APPROVED_RUNTIME_CODE_FILES:
+        raise AdmissionError("Veritas runtime dependency identities differ from the tested set")
+    runtime_digest = _sha256_bytes(_canonical_json(expected_runtime_code))
+    if (
+        runtime_digest != VERITAS_RUNTIME_ANALYSIS_CODE_SHA256
+        or manifest.get("runtime_analysis_code_sha256") != runtime_digest
+    ):
+        raise AdmissionError("Veritas runtime analysis identity is inconsistent")
+    if manifest.get("package_init_files_sha256") != VERITAS_APPROVED_PACKAGE_INIT_FILES:
+        raise AdmissionError(
+            "Veritas package initializers differ from the tested production overlay"
+        )
+    release_dependencies = manifest.get("release_dependency_files_sha256")
+    if release_dependencies != VERITAS_APPROVED_RELEASE_DEPENDENCY_FILES:
+        raise AdmissionError("Veritas transitive runtime dependency identities are unapproved")
+    if any(files.get(path) != digest for path, digest in release_dependencies.items()):
+        raise AdmissionError("Veritas transitive runtime dependency hash mismatch")
+    python_runtime = manifest.get("python_runtime")
+    if python_runtime != VERITAS_APPROVED_PYTHON_RUNTIME:
+        raise AdmissionError(
+            "Veritas Python runtime identity differs from the validated environment"
+        )
+    if (
+        sys.implementation.name != python_runtime["implementation"]
+        or f"{sys.version_info.major}.{sys.version_info.minor}"
+        != python_runtime["version_major_minor"]
+        or f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        != python_runtime["validated_patch_version"]
+        or sysconfig.get_config_var("SOABI") != python_runtime["soabi"]
+    ):
+        raise AdmissionError("Veritas Python interpreter or ABI differs from the validated runtime")
+    distribution_versions = manifest.get("python_distribution_versions")
+    if distribution_versions != VERITAS_APPROVED_DISTRIBUTION_VERSIONS:
+        raise AdmissionError("Veritas Python distribution identities are unapproved")
+    try:
+        installed_distributions = {
+            name: importlib.metadata.version(name) for name in distribution_versions
+        }
+    except importlib.metadata.PackageNotFoundError as error:
+        raise AdmissionError("A required Veritas runtime distribution is missing") from error
+    if installed_distributions != distribution_versions:
+        raise AdmissionError(
+            "Installed Veritas runtime distribution versions differ from the release"
+        )
+
+    runtime_paths = {
+        "finalized_source_analysis.py": "packages/midas/veritas/finalized_source_analysis.py",
+        "scripts/veritas_source_analysis.py": "scripts/veritas_source_analysis.py",
+        "economics.py": "packages/midas/veritas/economics.py",
+        **{
+            f"reality/{name}": f"packages/midas/reality/{name}"
+            for name in (
+                "execution_research.py",
+                "reconstruction.py",
+                "research_measurements.py",
+                "research_schema.py",
+                "shadow_campaign.py",
+                "shadow_source.py",
+                "shadow_worker.py",
+                "storage.py",
+            )
+        },
+    }
+    for identity, relative in runtime_paths.items():
+        if files.get(relative) != expected_runtime_code[identity]:
+            raise AdmissionError(f"Veritas release dependency hash mismatch: {identity}")
+    if any(
+        files.get(path) != digest for path, digest in VERITAS_APPROVED_PACKAGE_INIT_FILES.items()
+    ):
+        raise AdmissionError("Veritas package initializer file hash mismatch")
+    if files.get("bin/midas_resource_preflight.py") != manifest.get("launcher_sha256"):
+        raise AdmissionError("Veritas guarded launcher identity is missing from the manifest")
+    if files.get("service/midas-veritas-source-analysis.service") != manifest.get("service_sha256"):
+        raise AdmissionError("Veritas service integration identity is missing from the manifest")
+    if manifest.get("rollback_module_sha256") != VERITAS_PRODUCTION_MODULE_SHA256:
+        raise AdmissionError("Veritas rollback identity differs from the current production module")
+    rollback_files = {
+        "rollback/previous-finalized_source_analysis.py": VERITAS_PRODUCTION_MODULE_SHA256,
+        "rollback/midas-veritas-source-analysis.service": VERITAS_PRODUCTION_SERVICE_SHA256,
+        "rollback/20-frozen-campaign-import.conf": VERITAS_PRODUCTION_IMPORT_DROPIN_SHA256,
+    }
+    if manifest.get("rollback_artifacts_sha256") != rollback_files:
+        raise AdmissionError(
+            "Veritas release rollback artifacts differ from the verified production set"
+        )
+    if any(files.get(path) != digest for path, digest in rollback_files.items()):
+        raise AdmissionError("Veritas release is missing an exact rollback artifact")
+    if manifest.get("campaign_sha256") != VERITAS_CAMPAIGN_SHA256:
+        raise AdmissionError("Veritas campaign identity differs from the approved campaign")
+    launcher_revision = manifest.get("launcher_source_revision")
+    if not isinstance(launcher_revision, str) or not re.fullmatch(
+        r"[0-9a-f]{40}", launcher_revision
+    ):
+        raise AdmissionError(
+            "Veritas release does not contain the validated guarded launcher revision"
+        )
+    release_revision = manifest.get("release_source_revision")
+    if not isinstance(release_revision, str) or not re.fullmatch(r"[0-9a-f]{40}", release_revision):
+        raise AdmissionError("Veritas release source revision is missing or malformed")
+    if release_revision != launcher_revision:
+        raise AdmissionError("Veritas release and guarded launcher revisions differ")
+
+    actual_files: set[str] = set()
+    for directory, child_dirs, child_files in os.walk(root, topdown=True, followlinks=False):
+        directory_path = Path(directory)
+        if stat.S_IMODE(directory_path.stat().st_mode) & 0o222:
+            raise AdmissionError(f"Veritas release directory is writable: {directory_path}")
+        for name in child_dirs:
+            child = directory_path / name
+            if child.is_symlink() or not child.is_dir():
+                raise AdmissionError(f"Veritas release contains an unsafe directory: {child}")
+        for name in child_files:
+            path = directory_path / name
+            relative = path.relative_to(root).as_posix()
+            if relative in {"RELEASE-MANIFEST.json", "RELEASE-MANIFEST.sha256"}:
+                continue
+            if path.is_symlink() or not path.is_file():
+                raise AdmissionError(f"Veritas release contains an unsafe file: {relative}")
+            info = path.stat()
+            if info.st_uid != os.getuid() or info.st_nlink != 1:
+                raise AdmissionError(f"Veritas release file ownership is unsafe: {relative}")
+            if stat.S_IMODE(info.st_mode) & 0o222:
+                raise AdmissionError(f"Veritas release file is writable: {relative}")
+            actual_files.add(relative)
+            expected = files.get(relative)
+            if not isinstance(expected, str) or _sha256_bytes(path.read_bytes()) != expected:
+                raise AdmissionError(f"Veritas release file hash mismatch: {relative}")
+    if actual_files != set(files):
+        raise AdmissionError("Veritas release file set differs from the immutable manifest")
+    if len(actual_files) != len(files):
+        raise AdmissionError("Veritas release manifest contains duplicate file paths")
+    service_path = root / "service" / "midas-veritas-source-analysis.service"
+    service_text = service_path.read_text(encoding="utf-8")
+    service_lines = [line.strip() for line in service_text.splitlines() if line.strip()]
+    exec_starts = [
+        line.partition("=")[2] for line in service_lines if line.startswith("ExecStart=")
+    ]
+    if len(exec_starts) != 1:
+        raise AdmissionError("Veritas service must have exactly one execution owner")
+    if any(
+        line.startswith(("ExecStartPre=", "ExecStartPost=", "ExecStop=", "ExecStopPost="))
+        for line in service_lines
+    ):
+        raise AdmissionError("Veritas service contains an alternate execution path")
+    expected_execstart = [
+        part.replace(str(Path.home()), "%h") for part in _expected_veritas_service_execstart()
+    ]
+    try:
+        packaged_execstart = shlex.split(exec_starts[0])
+    except ValueError as error:
+        raise AdmissionError("Packaged Veritas service ExecStart is malformed") from error
+    if packaged_execstart != expected_execstart:
+        raise AdmissionError("Packaged Veritas service does not invoke the pinned guarded launcher")
+    for required in (
+        "Type=oneshot",
+        f"--release-identity {VERITAS_RELEASE_ID}",
+        f"--source-revision {VERITAS_APPROVED_SOURCE_REVISION}",
+        f"--expected-module-sha256 {VERITAS_APPROVED_MODULE_SHA256}",
+        "--profile veritas",
+        f"--release-root %h/.local/share/midas-veritas/releases/{VERITAS_RELEASE_ID}",
+        f"--expected-module-sha256 {VERITAS_APPROVED_MODULE_SHA256}",
+        "Restart=no",
+        "KillMode=control-group",
+        "UnsetEnvironment=PYTHONPATH",
+        "ProtectSystem=strict",
+        "ProtectHome=read-only",
+        "NoNewPrivileges=true",
+    ):
+        if required not in service_text:
+            raise AdmissionError(f"Veritas service unit does not pin {required}")
+    return {
+        "passed": True,
+        "release_identity": expected_release_identity,
+        "source_revision": expected_source_revision,
+        "manifest_sha256": manifest_sha256,
+        "module_sha256": expected_module_sha256,
+        "wrapper_sha256": VERITAS_APPROVED_WRAPPER_SHA256,
+        "launcher_sha256": manifest["launcher_sha256"],
+        "service_sha256": manifest["service_sha256"],
+        "runtime_analysis_code_sha256": runtime_digest,
+        "runtime_analysis_code_files": expected_runtime_code,
+        "release_dependency_files_sha256": release_dependencies,
+        "python_runtime": python_runtime,
+        "python_distribution_versions": distribution_versions,
+        "file_count": len(actual_files),
+    }
+
+
+def _veritas_worker_command(release_root: Path) -> list[str]:
+    return [
+        str(VERITAS_RUNTIME_PYTHON),
+        str(release_root / "scripts" / "veritas_source_analysis.py"),
+        "--root",
+        str(VERITAS_OUTPUT_ROOT),
+        "--max-segments",
+        "128",
+        "--max-source-mib",
+        "32",
+    ]
+
+
+def _validate_veritas_worker_command(
+    command: list[str], release_root: Path, expected_module_sha256: str
+) -> dict[str, Any]:
+    if expected_module_sha256 != VERITAS_APPROVED_MODULE_SHA256:
+        raise AdmissionError("Veritas invocation module hash is not the approved streaming build")
+    if Path(release_root) != VERITAS_RELEASE_ROOT:
+        raise AdmissionError("Veritas invocation selected an unapproved release path")
+    expected = _veritas_worker_command(release_root)
+    if command != expected:
+        raise AdmissionError(
+            "Veritas worker command differs from the fixed bounded release command"
+        )
+    return verify_veritas_release(
+        release_root,
+        expected_release_identity=VERITAS_RELEASE_ID,
+        expected_source_revision=VERITAS_APPROVED_SOURCE_REVISION,
+        expected_module_sha256=expected_module_sha256,
+    )
+
+
+def _validate_veritas_run_limits(args: argparse.Namespace) -> None:
+    if (
+        args.memory_high_mib > VERITAS_RUN_LIMITS["memory_high_mib"]
+        or args.memory_max_mib != VERITAS_RUN_LIMITS["memory_max_mib"]
+        or args.memory_budget_mib > VERITAS_RUN_LIMITS["memory_budget_mib"]
+        or args.cpu_quota_percent > VERITAS_RUN_LIMITS["cpu_quota_percent"]
+        or args.timeout_seconds > VERITAS_RUN_LIMITS["timeout_seconds"]
+        or args.sample_seconds < 30
+    ):
+        raise AdmissionError(
+            "Veritas service must stay within MemoryHigh=192 MiB, MemoryMax=256 MiB, "
+            "a 128 MiB task budget, CPUQuota=100%, a 600-second timeout, and a "
+            "30-second admission sample"
+        )
+
+
+def verify_veritas_checkpoint(root: Path, release: dict[str, Any]) -> dict[str, Any]:
+    """Validate the sealed checkpoint identity before a worker can migrate or resume it."""
+
+    def read_state(name: str) -> dict[str, Any] | None:
+        path = root / name
+        if not path.exists() and not path.is_symlink():
+            return None
+        if path.is_symlink() or not path.is_file() or path.stat().st_size > 24 * MIB:
+            raise AdmissionError(f"Veritas checkpoint is missing or unsafe: {name}")
+        try:
+            state = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise AdmissionError(f"Veritas checkpoint is unreadable: {name}") from error
+        if not isinstance(state, dict):
+            raise AdmissionError(f"Veritas checkpoint is not an object: {name}")
+        stored_digest = state.get("state_sha256")
+        body = {key: value for key, value in state.items() if key != "state_sha256"}
+        if (
+            not isinstance(stored_digest, str)
+            or _sha256_bytes(_canonical_json(body)) != stored_digest
+        ):
+            raise AdmissionError(f"Veritas checkpoint seal is invalid: {name}")
+        return state
+
+    legacy = read_state("source-analysis-state-v1.json")
+    current = read_state("source-analysis-state-v2.json")
+    if legacy is None and current is None:
+        raise AdmissionError("Veritas checkpoint is absent; refusing to initialize research state")
+
+    def common(state: dict[str, Any], *, schema: int, code_sha256: str) -> None:
+        if (
+            state.get("schema_version") != schema
+            or state.get("analysis_version") != "veritas-finalized-reality-source-analysis-v1"
+            or state.get("campaign_sha256") != VERITAS_CAMPAIGN_SHA256
+            or state.get("analysis_code_sha256") != code_sha256
+        ):
+            raise AdmissionError(f"Veritas schema-{schema} checkpoint is incompatible")
+        for field in ("processed_segment_count", "last_ordinal", "processed_source_bytes"):
+            value = state.get(field)
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                raise AdmissionError(f"Veritas checkpoint cursor field is invalid: {field}")
+        for field in ("last_event_sha256", "prefix_catalog_sha256"):
+            value = state.get(field)
+            if value is not None and (
+                not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value)
+            ):
+                raise AdmissionError(f"Veritas checkpoint digest is invalid: {field}")
+
+    chosen: dict[str, Any] | None
+    if legacy is not None:
+        common(legacy, schema=1, code_sha256=VERITAS_LEGACY_CODE_SHA256)
+        legacy_files = legacy.get("analysis_code_files")
+        if (
+            not isinstance(legacy_files, dict)
+            or _sha256_bytes(_canonical_json(legacy_files)) != VERITAS_LEGACY_CODE_SHA256
+        ):
+            raise AdmissionError("Veritas legacy runtime provenance is invalid")
+    if current is not None:
+        common(current, schema=2, code_sha256=release["runtime_analysis_code_sha256"])
+        if current.get("analysis_code_files") != release["runtime_analysis_code_files"]:
+            raise AdmissionError(
+                "Veritas v2 checkpoint dependency provenance differs from the release"
+            )
+        migration = current.get("migration")
+        if not isinstance(migration, dict) or migration.get("from_state_schema_version") != 1:
+            raise AdmissionError("Veritas v2 checkpoint has no supported v1 migration lineage")
+        if migration.get("to_analysis_code_sha256") != release["runtime_analysis_code_sha256"]:
+            raise AdmissionError("Veritas migration provenance targets different runtime code")
+        if legacy is not None and (
+            migration.get("from_state_sha256") != legacy.get("state_sha256")
+            or migration.get("from_processed_segment_count")
+            != legacy.get("processed_segment_count")
+        ):
+            raise AdmissionError("Veritas v2 migration lineage differs from the preserved v1 state")
+        chosen = current
+    else:
+        chosen = legacy
+    assert chosen is not None
+    return {
+        "passed": True,
+        "schema_version": chosen["schema_version"],
+        "state_sha256": chosen["state_sha256"],
+        "campaign_sha256": chosen["campaign_sha256"],
+        "analysis_code_sha256": chosen["analysis_code_sha256"],
+        "processed_segment_count": chosen["processed_segment_count"],
+        "last_ordinal": chosen["last_ordinal"],
+        "processed_source_bytes": chosen["processed_source_bytes"],
+        "last_event_sha256": chosen.get("last_event_sha256"),
+        "prefix_catalog_sha256": chosen.get("prefix_catalog_sha256"),
+        "legacy_state_sha256": legacy.get("state_sha256") if legacy else None,
+    }
+
+
+def verify_veritas_post_execution_state(
+    root: Path,
+    release: dict[str, Any],
+    checkpoint_before: dict[str, Any],
+) -> dict[str, Any]:
+    """Validate the committed v2 checkpoint and bounded summary before reporting success."""
+    checkpoint = verify_veritas_checkpoint(root, release)
+    if checkpoint["schema_version"] != 2:
+        raise AdmissionError("successful Veritas execution did not produce a v2 checkpoint")
+    if checkpoint["campaign_sha256"] != checkpoint_before["campaign_sha256"]:
+        raise AdmissionError("Veritas campaign identity changed during execution")
+    if checkpoint["analysis_code_sha256"] != release["runtime_analysis_code_sha256"]:
+        raise AdmissionError("Veritas checkpoint provenance does not match the selected release")
+
+    monotonic_fields = (
+        "processed_segment_count",
+        "last_ordinal",
+        "processed_source_bytes",
+    )
+    for field in monotonic_fields:
+        if checkpoint[field] < checkpoint_before[field]:
+            raise AdmissionError(f"Veritas checkpoint cursor regressed: {field}")
+
+    summary_path = root / "source-research-summary.json"
+    if (
+        summary_path.is_symlink()
+        or not summary_path.is_file()
+        or summary_path.stat().st_size > 4 * MIB
+    ):
+        raise AdmissionError("Veritas post-execution summary is missing or unsafe")
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise AdmissionError("Veritas post-execution summary is unreadable") from error
+    if not isinstance(summary, dict):
+        raise AdmissionError("Veritas post-execution summary is not an object")
+    if (
+        summary.get("schema_version") != 1
+        or summary.get("analysis_version") != "veritas-finalized-reality-source-analysis-v1"
+        or summary.get("active_segment_read") is not False
+        or summary.get("status") not in {"current", "catching_up"}
+    ):
+        raise AdmissionError("Veritas post-execution summary has incompatible semantics")
+    summary_digest = summary.get("summary_sha256")
+    summary_body = {key: value for key, value in summary.items() if key != "summary_sha256"}
+    if (
+        not isinstance(summary_digest, str)
+        or _sha256_bytes(_canonical_json(summary_body)) != summary_digest
+    ):
+        raise AdmissionError("Veritas post-execution summary seal is invalid")
+    for field in (
+        "processed_segment_count",
+        "processed_source_bytes",
+        "last_processed_ordinal",
+    ):
+        value = summary.get(field)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            raise AdmissionError(f"Veritas summary cursor field is invalid: {field}")
+    for field in (
+        "campaign_sha256",
+        "analysis_code_sha256",
+        "processed_segment_count",
+        "processed_source_bytes",
+        "prefix_catalog_sha256",
+    ):
+        if summary.get(field) != checkpoint[field]:
+            raise AdmissionError(f"Veritas summary and checkpoint disagree: {field}")
+    if summary["last_processed_ordinal"] != checkpoint["last_ordinal"]:
+        raise AdmissionError("Veritas summary and checkpoint disagree: last ordinal")
+
+    batch_count = summary.get("batch_processed_segment_count")
+    batch_bytes = summary.get("batch_processed_source_bytes")
+    if (
+        not isinstance(batch_count, int)
+        or isinstance(batch_count, bool)
+        or not 0 <= batch_count <= 128
+        or not isinstance(batch_bytes, int)
+        or isinstance(batch_bytes, bool)
+        or not 0 <= batch_bytes <= 32 * MIB
+        or checkpoint["processed_segment_count"] - checkpoint_before["processed_segment_count"]
+        != batch_count
+        or checkpoint["processed_source_bytes"] - checkpoint_before["processed_source_bytes"]
+        != batch_bytes
+    ):
+        raise AdmissionError("Veritas committed progress exceeds or differs from the bounded batch")
+    if batch_count == 0:
+        for field in ("last_ordinal", "last_event_sha256", "prefix_catalog_sha256"):
+            if checkpoint[field] != checkpoint_before[field]:
+                raise AdmissionError(
+                    f"Veritas state changed without committed batch progress: {field}"
+                )
+    elif (
+        checkpoint["last_ordinal"] <= checkpoint_before["last_ordinal"]
+        or checkpoint["last_event_sha256"] == checkpoint_before["last_event_sha256"]
+        or checkpoint["prefix_catalog_sha256"] == checkpoint_before["prefix_catalog_sha256"]
+    ):
+        raise AdmissionError(
+            "Veritas committed progress lacks event and catalog cursor advancement"
+        )
+
+    return {
+        **checkpoint,
+        "summary_sha256": summary_digest,
+        "batch_processed_segment_count": batch_count,
+        "batch_processed_source_bytes": batch_bytes,
+        "status": summary.get("status"),
+        "readiness": summary.get("readiness"),
+    }
 
 
 class GuardedExecutionInterrupted(Exception):
@@ -1052,9 +1640,11 @@ def _supervise_veritas_worker(
     *,
     status_path: Path,
     invocation_id: str,
+    execution_context: dict[str, Any] | None = None,
     timeout_seconds: float,
     termination_grace_seconds: float,
 ) -> int:
+    execution_context = execution_context or {}
     started = time.monotonic()
     started_at = _utc_now()
     try:
@@ -1065,6 +1655,7 @@ def _supervise_veritas_worker(
             decision="ADMIT",
             worker_start_requested_at_utc=started_at,
             worker_executable=Path(command[0]).name if command else None,
+            execution_context=execution_context,
         )
     except (OSError, AdmissionError) as error:
         print(
@@ -1079,7 +1670,22 @@ def _supervise_veritas_worker(
         )
         return RUNNER_RESULT_MISSING
     try:
-        worker = subprocess.Popen(command, start_new_session=True)
+        release_root = (
+            Path(command[1]).parent.parent
+            if len(command) > 1 and Path(command[1]).name == "veritas_source_analysis.py"
+            else VERITAS_RELEASE_ROOT
+        )
+        worker_environment = {
+            "PATH": f"{VERITAS_RUNTIME_PYTHON.parent}:/usr/bin:/bin",
+            "HOME": str(Path.home()),
+            "LANG": "C.UTF-8",
+            "LC_ALL": "C.UTF-8",
+            "PYTHONPATH": str(release_root / "packages"),
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "MKL_NUM_THREADS": "1",
+        }
+        worker = subprocess.Popen(command, env=worker_environment, start_new_session=True)
     except OSError as error:
         _write_inner_status(
             status_path,
@@ -1088,6 +1694,7 @@ def _supervise_veritas_worker(
             decision="ADMIT",
             worker_error=f"{type(error).__name__}: {error}"[:512],
             worker_started_at_utc=started_at,
+            execution_context=execution_context,
         )
         return 127
 
@@ -1100,6 +1707,7 @@ def _supervise_veritas_worker(
             worker_pid=worker.pid,
             worker_started_at_utc=started_at,
             cgroup_metrics=_cgroup_execution_metrics(),
+            execution_context=execution_context,
         )
     except (OSError, AdmissionError) as error:
         _terminate_worker(worker, termination_grace_seconds)
@@ -1166,6 +1774,7 @@ def _supervise_veritas_worker(
             watchdog_intervention=intervention,
             recent_io_pressure=samples,
             cgroup_metrics=_cgroup_execution_metrics(),
+            execution_context=execution_context,
         )
     except (OSError, AdmissionError) as error:
         print(
@@ -1239,6 +1848,7 @@ def _active_midas_workers(
     allow_current_veritas_service: bool = False,
     allow_current_synthetic_service: bool = False,
     invocation_id: str | None = None,
+    veritas_parent_invocation_id: str | None = None,
 ) -> list[str]:
     result = _systemctl(
         "list-units",
@@ -1250,6 +1860,13 @@ def _active_midas_workers(
     )
     active: list[str] = []
     current_unit = _current_veritas_service_unit() if allow_current_veritas_service else None
+    allowed_parent_unit = (
+        VERITAS_SERVICE_UNIT
+        if allow_current_veritas_service
+        and isinstance(veritas_parent_invocation_id, str)
+        and re.fullmatch(r"[0-9a-f]{32}", veritas_parent_invocation_id)
+        else None
+    )
     if allow_current_synthetic_service and invocation_id:
         cgroup = _current_cgroup()
         expected_suffix = f"-{invocation_id[:12]}.service"
@@ -1267,6 +1884,7 @@ def _active_midas_workers(
             and fields[0].startswith("midas-")
             and fields[0] not in ALLOW_ACTIVE_UNITS
             and fields[0] != current_unit
+            and fields[0] != allowed_parent_unit
         ):
             active.append(fields[0])
     return active
@@ -1663,21 +2281,98 @@ def _current_cgroup() -> Path:
 
 def _current_veritas_service_unit() -> str | None:
     for part in reversed(_current_cgroup().parts):
-        if part.startswith("midas-heavy-veritas-") and part.endswith(".service"):
+        if (
+            part == VERITAS_SERVICE_UNIT
+            or part.startswith("midas-heavy-veritas-")
+            and part.endswith(".service")
+        ):
             return part
     return None
 
 
-def _validate_veritas_runtime_context() -> None:
-    for unit in VERITAS_TIMER_UNITS:
-        properties = _properties(
+def _expected_veritas_service_execstart() -> list[str]:
+    launcher = VERITAS_RELEASE_ROOT / "bin" / "midas_resource_preflight.py"
+    command = [
+        str(VERITAS_RUNTIME_PYTHON),
+        str(launcher),
+        "run",
+        "--profile",
+        "veritas",
+        "--storage-path",
+        str(VERITAS_OUTPUT_ROOT),
+        "--storage-required-mib",
+        "0",
+        "--storage-reserve-mib",
+        "5120",
+        "--memory-budget-mib",
+        "128",
+        "--sample-seconds",
+        "30",
+        "--memory-high-mib",
+        "192",
+        "--memory-max-mib",
+        "256",
+        "--cpu-quota-percent",
+        "100",
+        "--timeout-seconds",
+        "600",
+        "--label",
+        "veritas-source-analysis",
+        "--source-revision",
+        VERITAS_APPROVED_SOURCE_REVISION,
+        "--release-identity",
+        VERITAS_RELEASE_ID,
+        "--release-root",
+        str(VERITAS_RELEASE_ROOT),
+        "--expected-module-sha256",
+        VERITAS_APPROVED_MODULE_SHA256,
+        "--",
+        *_veritas_worker_command(VERITAS_RELEASE_ROOT),
+    ]
+    return command
+
+
+def _parse_execstart(value: str) -> list[str]:
+    match = re.search(r"argv\[\]=(.*?);\s*ignore_errors=", value)
+    if not match:
+        raise AdmissionError("Veritas service ExecStart is not inspectable")
+    try:
+        return shlex.split(match.group(1))
+    except ValueError as error:
+        raise AdmissionError("Veritas service ExecStart is malformed") from error
+
+
+def _validate_veritas_runtime_context(
+    *,
+    owner_invocation_id: str | None = None,
+    owner_pid: int | None = None,
+    require_current_service_cgroup: bool = True,
+) -> str:
+    """Prove the current caller is this exact service invocation and unit definition."""
+    owner_invocation_id = owner_invocation_id or os.environ.get("INVOCATION_ID")
+    owner_pid = os.getpid() if owner_pid is None else owner_pid
+    if not isinstance(owner_invocation_id, str) or not re.fullmatch(
+        r"[0-9a-f]{32}", owner_invocation_id
+    ):
+        raise AdmissionError("Veritas guard must be called from a systemd service invocation")
+    timer_states = {
+        unit: _properties(
             _systemctl("show", unit, "-p", "ActiveState", "-p", "UnitFileState").stdout
         )
-        if (
-            properties.get("ActiveState") != "inactive"
-            or properties.get("UnitFileState") != "disabled"
-        ):
-            raise AdmissionError(f"{unit} must remain disabled and inactive for a Veritas run")
+        for unit in VERITAS_TIMER_UNITS
+    }
+    reality_timer = timer_states["midas-reality-capacity.timer"]
+    if (
+        reality_timer.get("ActiveState") != "inactive"
+        or reality_timer.get("UnitFileState") != "disabled"
+    ):
+        raise AdmissionError("Reality capacity timer must remain disabled and inactive")
+    veritas_timer = timer_states["midas-veritas-source-analysis.timer"]
+    if (veritas_timer.get("ActiveState"), veritas_timer.get("UnitFileState")) not in {
+        ("inactive", "disabled"),
+        ("active", "enabled"),
+    }:
+        raise AdmissionError("Veritas timer has an inconsistent or unsafe enabled state")
 
     service = _properties(
         _systemctl(
@@ -1717,40 +2412,187 @@ def _validate_veritas_runtime_context() -> None:
             "Restart",
             "-p",
             "WorkingDirectory",
+            "-p",
+            "InvocationID",
+            "-p",
+            "ExecStart",
+            "-p",
+            "Environment",
+            "-p",
+            "UnsetEnvironment",
         ).stdout
     )
     if (
-        service.get("ActiveState") not in {"inactive", "failed"}
-        or service.get("MainPID") != "0"
+        service.get("ActiveState") not in {"active", "activating"}
+        or service.get("MainPID") != str(owner_pid)
         or service.get("ControlPID") != "0"
+        or service.get("InvocationID") != owner_invocation_id
     ):
-        raise AdmissionError("Veritas source-analysis service must have no active process")
+        raise AdmissionError("Veritas source-analysis service owner identity is not current")
+    if require_current_service_cgroup:
+        current_unit = _current_veritas_service_unit()
+        if current_unit != VERITAS_SERVICE_UNIT:
+            raise AdmissionError("Veritas guard is outside the authorized one-shot service cgroup")
     expected = {
         "MemoryMax": str(256 * MIB),
         "CPUQuotaPerSecUSec": "1s",
         "Nice": "19",
         "IOSchedulingClass": "3",
-        "TimeoutStartUSec": "10min",
+        "TimeoutStartUSec": "12min",
         "MemoryHigh": "infinity",
         "MemorySwapMax": "infinity",
         "ProtectSystem": "strict",
         "ProtectHome": "read-only",
-        "ReadWritePaths": str(VERITAS_OUTPUT_ROOT),
         "WorkingDirectory": str(VERITAS_SERVICE_ROOT),
         "PrivateTmp": "yes",
         "NoNewPrivileges": "yes",
         "Restart": "no",
+        "UnsetEnvironment": "PYTHONPATH",
     }
     mismatches = [key for key, value in expected.items() if service.get(key) != value]
     if mismatches:
         raise AdmissionError(
             "Veritas source-analysis service constraints changed: " + ", ".join(mismatches)
         )
+    rw_paths = set(service.get("ReadWritePaths", "").split())
+    expected_rw_paths = {str(VERITAS_OUTPUT_ROOT), str(GUARDED_RECEIPT_DIR)}
+    if rw_paths != expected_rw_paths:
+        raise AdmissionError("Veritas service write paths differ from the approved minimal set")
+    if _parse_execstart(service.get("ExecStart", "")) != _expected_veritas_service_execstart():
+        raise AdmissionError("Veritas service ExecStart differs from the pinned guarded release")
+    environment = service.get("Environment", "")
+    if "OMP_NUM_THREADS=1" not in environment or "OPENBLAS_NUM_THREADS=1" not in environment:
+        raise AdmissionError("Veritas service thread limits are missing")
     for path in (VERITAS_SERVICE_ROOT, VERITAS_OUTPUT_ROOT):
         if path.is_symlink() or not path.is_dir():
             raise AdmissionError(f"Veritas service path is missing or unsafe: {path}")
+    rollback_module = VERITAS_SERVICE_ROOT / "packages/midas/veritas/finalized_source_analysis.py"
+    if (
+        rollback_module.is_symlink()
+        or not rollback_module.is_file()
+        or _sha256_bytes(rollback_module.read_bytes()) != VERITAS_PRODUCTION_MODULE_SHA256
+    ):
+        raise AdmissionError("the existing production Veritas module is not rollback-verifiable")
     if not VERITAS_OUTPUT_ROOT.resolve().is_relative_to(VERITAS_SERVICE_ROOT.resolve()):
         raise AdmissionError("Veritas write path is outside its service root")
+    return owner_invocation_id
+
+
+def _validate_veritas_transient_unit(
+    *, expected_status_dir: Path, parent_invocation_id: str, parent_pid: int
+) -> dict[str, Any]:
+    unit = _current_veritas_service_unit()
+    if not unit or not unit.startswith("midas-heavy-veritas-"):
+        raise AdmissionError("Veritas inner gate is outside its guarded transient service")
+    props = _properties(
+        _systemctl(
+            "show",
+            unit,
+            "-p",
+            "ActiveState",
+            "-p",
+            "MainPID",
+            "-p",
+            "InvocationID",
+            "-p",
+            "MemoryHigh",
+            "-p",
+            "MemoryMax",
+            "-p",
+            "MemorySwapMax",
+            "-p",
+            "CPUQuotaPerSecUSec",
+            "-p",
+            "IOWeight",
+            "-p",
+            "TasksMax",
+            "-p",
+            "Nice",
+            "-p",
+            "IOSchedulingClass",
+            "-p",
+            "ProtectSystem",
+            "-p",
+            "ProtectHome",
+            "-p",
+            "ReadWritePaths",
+            "-p",
+            "PrivateTmp",
+            "-p",
+            "NoNewPrivileges",
+            "-p",
+            "UMask",
+            "-p",
+            "RuntimeMaxUSec",
+            "-p",
+            "TimeoutStartUSec",
+            "-p",
+            "KillMode",
+            "-p",
+            "Restart",
+        ).stdout
+    )
+    if (
+        props.get("ActiveState") not in {"active", "activating"}
+        or props.get("MainPID") != str(os.getpid())
+        or not re.fullmatch(r"[0-9a-f]{32}", props.get("InvocationID", ""))
+    ):
+        raise AdmissionError("Veritas transient unit identity is not the current inner gate")
+    expected = {
+        "MemoryHigh": str(192 * MIB),
+        "MemoryMax": str(256 * MIB),
+        "MemorySwapMax": "0",
+        "CPUQuotaPerSecUSec": "1s",
+        "IOWeight": "10",
+        "TasksMax": "256",
+        "Nice": "19",
+        "IOSchedulingClass": "3",
+        "ProtectSystem": "strict",
+        "ProtectHome": "read-only",
+        "PrivateTmp": "yes",
+        "NoNewPrivileges": "yes",
+        "UMask": "0077",
+        "RuntimeMaxUSec": "10min",
+        "TimeoutStartUSec": "10min",
+        "KillMode": "control-group",
+        "Restart": "no",
+    }
+    mismatches = [key for key, value in expected.items() if props.get(key) != value]
+    if mismatches:
+        raise AdmissionError(
+            "Veritas transient cgroup or sandbox limits differ from the approved profile: "
+            + ", ".join(mismatches)
+        )
+    expected_rw = {str(VERITAS_OUTPUT_ROOT), str(expected_status_dir)}
+    if set(props.get("ReadWritePaths", "").split()) != expected_rw:
+        raise AdmissionError("Veritas transient write paths exceed the research root and receipt")
+    metrics = _cgroup_execution_metrics()
+    if not metrics.get("available"):
+        raise AdmissionError("Veritas transient cgroup metrics are unavailable")
+    limits = metrics.get("limits", {})
+    cgroup_expected = {
+        "memory.high": str(192 * MIB),
+        "memory.max": str(256 * MIB),
+        "memory.swap.max": "0",
+        "pids.max": "256",
+    }
+    if any(limits.get(key) != value for key, value in cgroup_expected.items()):
+        raise AdmissionError(
+            "Veritas transient effective cgroup limits do not match systemd properties"
+        )
+    cpu_max = limits.get("cpu.max", "").split()
+    if len(cpu_max) != 2 or int(cpu_max[0]) != int(cpu_max[1]):
+        raise AdmissionError("Veritas transient CPU quota is not exactly 100 percent")
+    if not metrics.get("io_weight_enforced") or not re.search(
+        r"(?:^|\s)default\s+10(?:\s|$)", str(metrics.get("io_weight", ""))
+    ):
+        raise AdmissionError("Veritas transient IOWeight=10 is not reflected in its cgroup")
+    metrics["systemd_properties"] = props
+    metrics["systemd_invocation_id"] = props["InvocationID"]
+    metrics["parent_service_invocation_id"] = parent_invocation_id
+    metrics["parent_service_pid"] = parent_pid
+    metrics["limits_verified"] = True
+    return metrics
 
 
 def _cgroup_memory(path: Path) -> dict[str, int | None]:
@@ -1810,6 +2652,7 @@ def collect_evidence(
     allow_current_veritas_service: bool = False,
     allow_current_synthetic_service: bool = False,
     invocation_id: str | None = None,
+    veritas_parent_invocation_id: str | None = None,
 ) -> dict[str, Any]:
     meminfo = parse_meminfo(Path("/proc/meminfo").read_text(encoding="utf-8"))
     vmstat_before = parse_vmstat(Path("/proc/vmstat").read_text(encoding="utf-8"))
@@ -1848,6 +2691,7 @@ def collect_evidence(
         allow_current_veritas_service=allow_current_veritas_service,
         allow_current_synthetic_service=allow_current_synthetic_service,
         invocation_id=invocation_id,
+        veritas_parent_invocation_id=veritas_parent_invocation_id,
     )
     evidence: dict[str, Any] = {
         "sampled_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -2110,10 +2954,12 @@ def _gate(
         sample_seconds=args.sample_seconds,
         include_task_cgroup=include_task_cgroup,
         repeat_pressure_samples=args.profile == "veritas",
-        allow_current_veritas_service=args.profile == "veritas" and include_task_cgroup,
+        allow_current_veritas_service=args.profile == "veritas",
         allow_current_synthetic_service=args.profile == "synthetic-validation"
         and include_task_cgroup,
         invocation_id=getattr(args, "invocation_id", None),
+        veritas_parent_invocation_id=getattr(args, "parent_service_invocation_id", None)
+        or getattr(args, "service_owner_invocation_id", None),
     )
     reasons = evaluate_evidence(
         evidence,
@@ -2400,7 +3246,7 @@ def _classify_guarded_result(
             code = final_unit.get("ExecMainCode")
             if result not in {None, "success", "exit-code"}:
                 return "result_missing_indeterminate"
-            if status not in {None, ""}:
+            if status is not None and status != "":
                 try:
                     if int(status) != synthetic_expected_exit:
                         return "result_missing_indeterminate"
@@ -2411,6 +3257,60 @@ def _classify_guarded_result(
         return "worker_succeeded" if synthetic_expected_exit == 0 else "worker_failed"
     if inner and inner.get("phase") == "worker_start_failed":
         return "worker_startup_failed"
+    if profile == "veritas" and inner and inner.get("phase") == "worker_finished":
+        worker_code = inner.get("worker_exit_code")
+        worker_signal = inner.get("worker_signal")
+        context = inner.get("execution_context")
+        transient = context.get("transient_unit") if isinstance(context, dict) else None
+        release = context.get("release") if isinstance(context, dict) else None
+        if (
+            not systemd_wait_completed
+            or not applied_limits_verified
+            or not unit_cleanup_confirmed
+            or not isinstance(unit, dict)
+            or not re.fullmatch(r"[0-9a-f]{32}", unit.get("InvocationID", ""))
+            or unit.get("ExecMainStartTimestamp") in {None, "", "n/a"}
+            or not isinstance(transient, dict)
+            or transient.get("limits_verified") is not True
+            or not isinstance(release, dict)
+            or release.get("passed") is not True
+        ):
+            return "result_missing_indeterminate"
+        if unit_after_wait and unit_after_wait.get("LoadState") != "not-found":
+            if unit_after_wait.get("Result") not in {"success", "exit-code"} or unit_after_wait.get(
+                "ExecMainCode"
+            ) not in {"exited", "killed", "dumped"}:
+                return "result_missing_indeterminate"
+            try:
+                systemd_status = int(unit_after_wait.get("ExecMainStatus", ""))
+            except ValueError:
+                return "result_missing_indeterminate"
+            expected_status = (
+                worker_code
+                if worker_signal is None and isinstance(worker_code, int)
+                else worker_signal
+            )
+            if systemd_status != expected_status:
+                return "result_missing_indeterminate"
+            if (unit_after_wait.get("Result") == "success") != (worker_code == 0):
+                return "result_missing_indeterminate"
+        if worker_signal is not None:
+            if not isinstance(worker_signal, int) or worker_signal <= 0:
+                return "result_missing_indeterminate"
+            return "worker_terminated_by_signal"
+        if not isinstance(worker_code, int) or isinstance(worker_code, bool):
+            return "result_missing_indeterminate"
+        if return_code != worker_code:
+            return "result_missing_indeterminate"
+        return "worker_succeeded" if worker_code == 0 else "worker_failed"
+    if profile == "veritas" and inner and inner.get("phase") == "worker_running":
+        return "result_missing_indeterminate"
+    if profile == "veritas":
+        if runner_error and unit is None:
+            return "unit_creation_failed"
+        if unit and unit.get("ExecMainStartTimestamp") in {None, "", "n/a"}:
+            return "unit_created_not_started"
+        return "result_missing_indeterminate"
     if profile != "veritas" and inner and inner.get("phase") == "worker_exec_requested":
         if return_code is None:
             return "result_missing_indeterminate"
@@ -2517,10 +3417,47 @@ def _run_inside(args: argparse.Namespace, command: list[str]) -> int:
             raise AdmissionError(f"synthetic status path could not be resolved: {error}") from error
         if status_dir.resolve() != expected_status_dir:
             raise AdmissionError("synthetic status directory is outside its private receipt root")
+    _write_inner_status(status_path, args.invocation_id, phase="inner_gate_starting")
+    veritas_context: dict[str, Any] | None = None
+    if args.profile == "veritas":
+        parent_invocation_id = args.parent_service_invocation_id or ""
+        parent_pid = args.parent_service_pid
+        if (
+            not re.fullmatch(r"[0-9a-f]{32}", parent_invocation_id)
+            or not isinstance(parent_pid, int)
+            or parent_pid <= 1
+        ):
+            raise AdmissionError("Veritas inner invocation has no verified parent service identity")
+        _validate_veritas_runtime_context(
+            owner_invocation_id=parent_invocation_id,
+            owner_pid=parent_pid,
+            require_current_service_cgroup=False,
+        )
+        if not args.release_root or not args.expected_module_sha256:
+            raise AdmissionError("Veritas inner invocation is missing its immutable release pin")
+        release = _validate_veritas_worker_command(
+            command, Path(args.release_root), args.expected_module_sha256
+        )
+        checkpoint_before = verify_veritas_checkpoint(VERITAS_OUTPUT_ROOT, release)
+        if checkpoint_before["state_sha256"] != args.expected_checkpoint_state_sha256:
+            raise AdmissionError("Veritas checkpoint changed after outer admission")
+        transient = _validate_veritas_transient_unit(
+            expected_status_dir=status_dir,
+            parent_invocation_id=parent_invocation_id,
+            parent_pid=parent_pid,
+        )
+        veritas_context = {
+            "release": release,
+            "checkpoint_before": checkpoint_before,
+            "transient_unit": transient,
+            "parent_service_invocation_id": parent_invocation_id,
+            "parent_service_pid": parent_pid,
+        }
     _write_inner_status(
         status_path,
         args.invocation_id,
         phase="inner_gate_starting",
+        execution_context=veritas_context,
     )
     synthetic_context: dict[str, Any] | None = None
     try:
@@ -2545,6 +3482,7 @@ def _run_inside(args: argparse.Namespace, command: list[str]) -> int:
                 decision="DENY",
                 detail=_safe_diagnostic(f"{type(error).__name__}: {error}"),
                 synthetic_context=synthetic_context,
+                execution_context=veritas_context,
             )
         except (OSError, AdmissionError):
             pass
@@ -2560,6 +3498,7 @@ def _run_inside(args: argparse.Namespace, command: list[str]) -> int:
             decision=decision,
             evidence=evidence,
             synthetic_context=synthetic_context,
+            execution_context=veritas_context,
         )
     except (OSError, AdmissionError) as error:
         print(
@@ -2580,10 +3519,34 @@ def _run_inside(args: argparse.Namespace, command: list[str]) -> int:
     os.environ["MIDAS_RESOURCE_PREFLIGHT_AT_UTC"] = evidence["sampled_at_utc"]
     os.environ["MIDAS_RESOURCE_PREFLIGHT_PROFILE"] = args.profile
     if args.profile == "veritas":
+        assert veritas_context is not None
+        # Recheck immediately after the 30-second inner admission window. The
+        # checkpoint must still be exactly the state approved by the outer gate.
+        checkpoint_ready = verify_veritas_checkpoint(
+            VERITAS_OUTPUT_ROOT, veritas_context["release"]
+        )
+        if checkpoint_ready["state_sha256"] != args.expected_checkpoint_state_sha256:
+            _write_inner_status(
+                status_path,
+                args.invocation_id,
+                phase="inner_gate_failed",
+                decision="DENY",
+                detail="Veritas checkpoint changed during inner admission",
+                execution_context=veritas_context,
+            )
+            return 75
+        transient_now = _validate_veritas_transient_unit(
+            expected_status_dir=status_dir,
+            parent_invocation_id=args.parent_service_invocation_id,
+            parent_pid=args.parent_service_pid,
+        )
+        veritas_context["checkpoint_at_worker_start"] = checkpoint_ready
+        veritas_context["transient_unit"] = transient_now
         return _supervise_veritas_worker(
             command,
             status_path=status_path,
             invocation_id=args.invocation_id,
+            execution_context=veritas_context,
             timeout_seconds=min(
                 float(args.execution_timeout_seconds),
                 float(VERITAS_RUN_LIMITS["timeout_seconds"]),
@@ -2670,7 +3633,11 @@ def _run_command(args: argparse.Namespace) -> int:
             raise AdmissionError("run requires a command after --")
         args.source_revision = getattr(args, "source_revision", "")
         args.release_identity = getattr(args, "release_identity", "")
+        args.release_root = getattr(args, "release_root", None)
+        args.expected_module_sha256 = getattr(args, "expected_module_sha256", None)
         args.label = getattr(args, "label", "task")
+        if args.profile == "veritas":
+            _validate_veritas_run_limits(args)
         if args.source_revision and not re.fullmatch(
             r"[A-Za-z0-9._-]{1,128}", args.source_revision
         ):
@@ -2679,6 +3646,24 @@ def _run_command(args: argparse.Namespace) -> int:
             r"[A-Za-z0-9._-]{1,128}", args.release_identity
         ):
             raise AdmissionError("--release-identity must be a short immutable identifier")
+        if args.profile == "veritas":
+            if (
+                args.source_revision != VERITAS_APPROVED_SOURCE_REVISION
+                or args.release_identity != VERITAS_RELEASE_ID
+                or not args.release_root
+                or not args.expected_module_sha256
+            ):
+                raise AdmissionError(
+                    "Veritas run must pin the approved release and module identity"
+                )
+            args.release_verification = _validate_veritas_worker_command(
+                command, Path(args.release_root), args.expected_module_sha256
+            )
+            args.service_owner_invocation_id = _validate_veritas_runtime_context()
+            args.service_owner_pid = os.getpid()
+            args.checkpoint_before = verify_veritas_checkpoint(
+                VERITAS_OUTPUT_ROOT, args.release_verification
+            )
         if args.profile == "synthetic-validation":
             synthetic_expected_exit = _validate_synthetic_limits(args, command)
             requested_receipts = getattr(args, "receipt_dir", None)
@@ -2700,10 +3685,51 @@ def _run_command(args: argparse.Namespace) -> int:
             )
         )
         receipt, receipt_path, status_path = _new_execution_receipt(args, command, receipt_dir)
+        if args.profile == "veritas":
+            receipt["release_verification"] = args.release_verification
+            receipt["checkpoint_before"] = args.checkpoint_before
+            receipt["service_owner"] = {
+                "unit": VERITAS_SERVICE_UNIT,
+                "invocation_id": args.service_owner_invocation_id,
+                "pid": args.service_owner_pid,
+            }
+            _update_execution_receipt(receipt, receipt_path, phase="created")
         if args.profile == "synthetic-validation":
             receipt["expected_worker_exit_code"] = synthetic_expected_exit
             _update_execution_receipt(receipt, receipt_path, phase="created")
     except (AdmissionError, OSError) as error:
+        if args.profile == "veritas" and "receipt_path" not in locals():
+            try:
+                args.source_revision = getattr(args, "source_revision", "")
+                args.release_identity = getattr(args, "release_identity", "")
+                args.label = getattr(args, "label", "veritas")
+                failed_receipt_dir = _prepare_receipt_directory(
+                    Path(getattr(args, "receipt_dir", None) or GUARDED_RECEIPT_DIR)
+                )
+                failed_receipt, failed_path, _failed_status = _new_execution_receipt(
+                    args, command, failed_receipt_dir
+                )
+                _finish_execution_receipt(
+                    failed_receipt,
+                    failed_path,
+                    classification="preflight_denied",
+                    exit_code=75,
+                    detail=_safe_diagnostic(str(error)),
+                )
+                print(
+                    json.dumps(
+                        {
+                            "invocation_id": failed_receipt["invocation_id"],
+                            "receipt": str(failed_path),
+                            "classification": "preflight_denied",
+                            "exit_code": 75,
+                        },
+                        sort_keys=True,
+                    ),
+                    file=sys.stderr,
+                )
+            except (OSError, AdmissionError, KeyError, AttributeError):
+                pass
         print(
             json.dumps({"decision": "DENY", "blocking_reasons": [str(error)[:512]]}),
             file=sys.stderr,
@@ -2936,6 +3962,22 @@ def _run_command(args: argparse.Namespace) -> int:
             str(args.timeout_seconds),
             "--termination-grace-seconds",
             str(args.termination_grace_seconds),
+            *(
+                [
+                    "--release-root",
+                    str(args.release_root),
+                    "--expected-module-sha256",
+                    str(args.expected_module_sha256),
+                    "--expected-checkpoint-state-sha256",
+                    args.checkpoint_before["state_sha256"],
+                    "--parent-service-invocation-id",
+                    args.service_owner_invocation_id,
+                    "--parent-service-pid",
+                    str(args.service_owner_pid),
+                ]
+                if args.profile == "veritas"
+                else []
+            ),
             "--",
             *task_command,
         ]
@@ -2949,7 +3991,7 @@ def _run_command(args: argparse.Namespace) -> int:
                     "--expand-environment=no",
                 ]
             )
-            if args.profile == "synthetic-validation":
+            if args.profile in {"veritas", "synthetic-validation"}:
                 systemd_command.append("--collect")
         else:
             systemd_command.extend(
@@ -2969,14 +4011,14 @@ def _run_command(args: argparse.Namespace) -> int:
             ]
         )
         if args.profile == "veritas":
+            release_packages = Path(args.release_root) / "packages"
             systemd_command.extend(
                 [
                     "--property=Nice=19",
                     "--property=IOSchedulingClass=idle",
                     "--property=ProtectSystem=strict",
                     "--property=ProtectHome=read-only",
-                    f"--property=ReadWritePaths={VERITAS_OUTPUT_ROOT}",
-                    f"--property=ReadWritePaths={status_path.parent}",
+                    f"--property=ReadWritePaths={VERITAS_OUTPUT_ROOT} {status_path.parent}",
                     "--property=PrivateTmp=yes",
                     "--property=NoNewPrivileges=yes",
                     "--property=UMask=0077",
@@ -2987,6 +4029,12 @@ def _run_command(args: argparse.Namespace) -> int:
                     "--property=Restart=no",
                     "--property=StandardOutput=journal",
                     "--property=StandardError=journal",
+                    f"--setenv=PYTHONPATH={release_packages}",
+                    f"--setenv=HOME={Path.home()}",
+                    f"--setenv=XDG_STATE_HOME={Path.home() / '.local' / 'state'}",
+                    "--setenv=OMP_NUM_THREADS=1",
+                    "--setenv=OPENBLAS_NUM_THREADS=1",
+                    "--setenv=MKL_NUM_THREADS=1",
                 ]
             )
         elif args.profile == "synthetic-validation":
@@ -3023,7 +4071,7 @@ def _run_command(args: argparse.Namespace) -> int:
                     else None
                 )
             ),
-            "Collect": args.profile != "veritas",
+            "Collect": args.profile in {"veritas", "synthetic-validation"},
             "KillMode": "control-group" if args.profile == "veritas" else None,
             "PrivateTmp": "yes" if args.profile == "veritas" else None,
             "ProtectSystem": "strict" if args.profile == "veritas" else None,
@@ -3031,6 +4079,21 @@ def _run_command(args: argparse.Namespace) -> int:
             "Restart": "no" if args.profile == "veritas" else None,
             "StandardOutput": "journal" if args.profile == "veritas" else None,
             "StandardError": "journal" if args.profile == "veritas" else None,
+            "ReadWritePaths": (
+                [str(VERITAS_OUTPUT_ROOT), str(status_path.parent)]
+                if args.profile == "veritas"
+                else None
+            ),
+            "TasksMax": 256 if args.profile == "veritas" else None,
+            "Nice": 19 if args.profile == "veritas" else None,
+            "IOSchedulingClass": "idle" if args.profile == "veritas" else None,
+            "TimeoutStartSec": f"{args.timeout_seconds}s" if args.profile == "veritas" else None,
+            "UnsetEnvironment": "not used in transient unit; PYTHONPATH is explicitly pinned"
+            if args.profile == "veritas"
+            else None,
+            "PYTHONPATH": str(Path(args.release_root) / "packages")
+            if args.profile == "veritas"
+            else None,
         }
         if args.profile == "synthetic-validation":
             receipt["requested_systemd_properties"].update(
@@ -3121,14 +4184,12 @@ def _run_command(args: argparse.Namespace) -> int:
         observe_unit_and_inner(force=True)
         unit_after_wait = (
             _unit_snapshot_after_wait(unit)
-            if args.profile == "synthetic-validation"
+            if args.profile in {"veritas", "synthetic-validation"}
             else latest_unit
         )
         if unit_after_wait and unit_after_wait.get("LoadState") not in {None, "not-found"}:
             latest_unit = unit_after_wait
-        unit_active_after_client_exit = _unit_is_active(
-            unit_after_wait if args.profile == "synthetic-validation" else latest_unit
-        )
+        unit_active_after_client_exit = _unit_is_active(unit_after_wait or latest_unit)
         if unit_active_after_client_exit:
             _update_execution_receipt(
                 receipt,
@@ -3148,9 +4209,9 @@ def _run_command(args: argparse.Namespace) -> int:
             latest_unit = _unit_snapshot(unit)
             observe_unit_and_inner(force=True)
             unit_active_after_client_exit = _unit_is_active(latest_unit)
-            if args.profile == "synthetic-validation":
+            if args.profile in {"veritas", "synthetic-validation"}:
                 unit_after_wait = _unit_snapshot_after_wait(unit)
-                unit_active_after_client_exit = _unit_is_active(unit_after_wait)
+                unit_active_after_client_exit = _unit_is_active(unit_after_wait or latest_unit)
         inner_status = _read_inner_status(status_path, receipt["invocation_id"])
         if inner_status:
             receipt["artifacts"]["inner_status_collected"] = True
@@ -3200,7 +4261,7 @@ def _run_command(args: argparse.Namespace) -> int:
         if latest_unit:
             receipt["transient_unit"]["properties"] = latest_unit
             receipt["transient_unit"]["invocation_id"] = latest_unit.get("InvocationID") or None
-        if args.profile == "synthetic-validation":
+        if args.profile in {"veritas", "synthetic-validation"}:
             receipt["transient_unit"]["properties_after_wait"] = unit_after_wait or {}
             cleanup = _wait_for_transient_unit_cleanup(unit)
             receipt["transient_unit"]["cleanup"] = cleanup
@@ -3209,30 +4270,49 @@ def _run_command(args: argparse.Namespace) -> int:
             )
             if unit_cleanup_confirmed:
                 receipt["transient_unit"]["last_observed_state"] = "collected"
-            context = inner_status.get("synthetic_context") if inner_status else None
+            context = (
+                inner_status.get("synthetic_context")
+                if args.profile == "synthetic-validation" and inner_status
+                else inner_status.get("execution_context")
+                if inner_status
+                else None
+            )
             if isinstance(context, dict):
-                context_metrics = context.get("cgroup_metrics")
-                if isinstance(context_metrics, dict) and context_metrics.get("available"):
-                    receipt["cgroup_metrics"] = context_metrics
-                context_properties = context.get("unit_properties")
-                inner_filesystem = (
-                    inner_status.get("filesystem_isolation") if inner_status else None
-                )
-                applied_limits_verified = (
-                    isinstance(context_properties, dict)
-                    and isinstance(context_metrics, dict)
-                    and context_metrics.get("available") is True
-                    and context.get("unit") == unit
-                    and isinstance(context.get("network_isolation"), dict)
-                    and context["network_isolation"].get("restricted") is True
-                    and context["network_isolation"].get("mechanism") == "seccomp-bpf"
-                    and isinstance(inner_filesystem, dict)
-                    and inner_filesystem.get("enforced") is True
-                )
+                if args.profile == "synthetic-validation":
+                    context_metrics = context.get("cgroup_metrics")
+                    if isinstance(context_metrics, dict) and context_metrics.get("available"):
+                        receipt["cgroup_metrics"] = context_metrics
+                    context_properties = context.get("unit_properties")
+                    inner_filesystem = (
+                        inner_status.get("filesystem_isolation") if inner_status else None
+                    )
+                    applied_limits_verified = (
+                        isinstance(context_properties, dict)
+                        and isinstance(context_metrics, dict)
+                        and context_metrics.get("available") is True
+                        and context.get("unit") == unit
+                        and isinstance(context.get("network_isolation"), dict)
+                        and context["network_isolation"].get("restricted") is True
+                        and context["network_isolation"].get("mechanism") == "seccomp-bpf"
+                        and isinstance(inner_filesystem, dict)
+                        and inner_filesystem.get("enforced") is True
+                    )
+                else:
+                    transient_context = context.get("transient_unit")
+                    if isinstance(transient_context, dict) and transient_context.get("available"):
+                        receipt["cgroup_metrics"] = transient_context
+                    applied_limits_verified = bool(
+                        isinstance(transient_context, dict)
+                        and transient_context.get("limits_verified") is True
+                        and context.get("release", {}).get("passed") is True
+                    )
             receipt["applied_limits_verification"] = {
                 "passed": applied_limits_verified,
                 "source": (
-                    "systemd properties, cgroup memory/CPU/PID controls, worker seccomp-bpf, "
+                    "systemd properties and effective cgroup memory, swap, CPU, PID, and I/O "
+                    "controls; the complete worker filesystem sandbox is separately verified"
+                    if args.profile == "veritas"
+                    else "systemd properties, cgroup memory/CPU/PID controls, worker seccomp-bpf, "
                     "and Landlock; cgroup I/O controller availability is reported separately"
                 ),
             }
@@ -3251,8 +4331,29 @@ def _run_command(args: argparse.Namespace) -> int:
             unit_cleanup_confirmed=unit_cleanup_confirmed,
             unit_after_wait=unit_after_wait,
         )
+        post_execution_error: str | None = None
+        if final_classification == "worker_succeeded" and args.profile == "veritas":
+            try:
+                post_execution = verify_veritas_post_execution_state(
+                    VERITAS_OUTPUT_ROOT,
+                    args.release_verification,
+                    args.checkpoint_before,
+                )
+                receipt["post_execution_verification"] = {
+                    "passed": True,
+                    "checkpoint_after": post_execution,
+                }
+            except (AdmissionError, OSError) as error:
+                post_execution_error = _safe_diagnostic(f"{type(error).__name__}: {error}")
+                receipt["post_execution_verification"] = {
+                    "passed": False,
+                    "detail": post_execution_error,
+                }
+                final_classification = "post_execution_state_invalid"
         if final_classification == "worker_succeeded":
             final_code = 0
+        elif final_classification == "post_execution_state_invalid":
+            final_code = RUNNER_RESULT_MISSING
         elif (
             inner_status
             and isinstance(inner_status.get("worker_exit_code"), int)
@@ -3273,7 +4374,7 @@ def _run_command(args: argparse.Namespace) -> int:
             classification=final_classification,
             exit_code=final_code,
             termination_signal=receipt["result"].get("termination_signal"),
-            detail=runner_output.get("stderr", {}).get("diagnostic_type"),
+            detail=post_execution_error or runner_output.get("stderr", {}).get("diagnostic_type"),
         )
         if not persisted:
             final_classification = "result_missing_indeterminate"
@@ -3521,6 +4622,8 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--receipt-dir")
     run.add_argument("--source-revision", default="")
     run.add_argument("--release-identity", default="")
+    run.add_argument("--release-root")
+    run.add_argument("--expected-module-sha256")
     run.add_argument("command", nargs=argparse.REMAINDER)
 
     inside = subs.add_parser("_inside", help=argparse.SUPPRESS)
@@ -3529,6 +4632,11 @@ def build_parser() -> argparse.ArgumentParser:
     inside.add_argument("--status-path", required=True)
     inside.add_argument("--execution-timeout-seconds", type=float, default=600)
     inside.add_argument("--termination-grace-seconds", type=float, default=2)
+    inside.add_argument("--release-root")
+    inside.add_argument("--expected-module-sha256")
+    inside.add_argument("--expected-checkpoint-state-sha256")
+    inside.add_argument("--parent-service-invocation-id")
+    inside.add_argument("--parent-service-pid", type=_positive_int)
     inside.add_argument("command", nargs=argparse.REMAINDER)
     return parser
 
@@ -3556,6 +4664,17 @@ def main(argv: list[str] | None = None) -> int:
             return _run_inside(args, command)
         raise AdmissionError(f"unsupported action: {args.action}")
     except AdmissionError as error:
+        if args.action == "_inside" and getattr(args, "status_path", None):
+            try:
+                _write_inner_status(
+                    Path(args.status_path),
+                    args.invocation_id,
+                    phase="inner_gate_failed",
+                    decision="DENY",
+                    detail=_safe_diagnostic(str(error)),
+                )
+            except (OSError, AdmissionError):
+                pass
         print(
             json.dumps({"decision": "DENY", "blocking_reasons": [str(error)]}, indent=2),
             file=sys.stderr,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import importlib.util
 import json
 import os
@@ -754,33 +755,56 @@ def test_veritas_profile_requires_a_full_30_second_sample() -> None:
         midas_resource_preflight._gate(args, include_task_cgroup=False, lock_held=True)
 
 
-def test_veritas_runtime_context_requires_disabled_timers_and_original_service_limits(
-    monkeypatch,
+def test_veritas_runtime_context_requires_exact_service_owner_and_pinned_execstart(
+    monkeypatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setattr(midas_resource_preflight, "VERITAS_SERVICE_ROOT", Path("/tmp"))
-    monkeypatch.setattr(midas_resource_preflight, "VERITAS_OUTPUT_ROOT", Path("/tmp"))
+    monkeypatch.setattr(midas_resource_preflight, "VERITAS_SERVICE_ROOT", tmp_path)
+    monkeypatch.setattr(midas_resource_preflight, "VERITAS_OUTPUT_ROOT", tmp_path)
+    monkeypatch.setattr(midas_resource_preflight, "GUARDED_RECEIPT_DIR", tmp_path / "receipts")
+    rollback_module = tmp_path / "packages/midas/veritas/finalized_source_analysis.py"
+    rollback_module.parent.mkdir(parents=True)
+    rollback_module.write_bytes(b"previous module")
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "VERITAS_PRODUCTION_MODULE_SHA256",
+        hashlib.sha256(b"previous module").hexdigest(),
+    )
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_current_veritas_service_unit",
+        lambda: "midas-veritas-source-analysis.service",
+    )
+    owner_invocation_id = "a" * 32
+    monkeypatch.setenv("INVOCATION_ID", owner_invocation_id)
+    expected_execstart = midas_resource_preflight._expected_veritas_service_execstart()
     properties = {
         "midas-veritas-source-analysis.timer": "ActiveState=inactive\nUnitFileState=disabled\n",
         "midas-reality-capacity.timer": "ActiveState=inactive\nUnitFileState=disabled\n",
         "midas-veritas-source-analysis.service": "\n".join(
             [
-                "ActiveState=failed",
-                "MainPID=0",
+                "ActiveState=activating",
+                f"MainPID={os.getpid()}",
                 "ControlPID=0",
                 f"MemoryMax={256 * midas_resource_preflight.MIB}",
                 "CPUQuotaPerSecUSec=1s",
                 "Nice=19",
                 "IOSchedulingClass=3",
-                "TimeoutStartUSec=10min",
+                "TimeoutStartUSec=12min",
                 "MemoryHigh=infinity",
                 "MemorySwapMax=infinity",
                 "ProtectSystem=strict",
                 "ProtectHome=read-only",
-                "ReadWritePaths=/tmp",
-                "WorkingDirectory=/tmp",
+                f"ReadWritePaths={tmp_path} {tmp_path / 'receipts'}",
+                f"WorkingDirectory={tmp_path}",
                 "PrivateTmp=yes",
                 "NoNewPrivileges=yes",
                 "Restart=no",
+                f"InvocationID={owner_invocation_id}",
+                "ExecStart={ path=/usr/bin/python3 ; argv[]="
+                + " ".join(expected_execstart)
+                + " ; ignore_errors=no ; }",
+                "Environment=OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1",
+                "UnsetEnvironment=PYTHONPATH",
             ]
         ),
     }
@@ -791,10 +815,10 @@ def test_veritas_runtime_context_requires_disabled_timers_and_original_service_l
 
     monkeypatch.setattr(midas_resource_preflight, "_systemctl", show)
 
-    midas_resource_preflight._validate_veritas_runtime_context()
+    assert midas_resource_preflight._validate_veritas_runtime_context() == owner_invocation_id
 
     properties["midas-reality-capacity.timer"] = "ActiveState=active\nUnitFileState=enabled\n"
-    with pytest.raises(midas_resource_preflight.AdmissionError, match="must remain disabled"):
+    with pytest.raises(midas_resource_preflight.AdmissionError, match="Reality capacity timer"):
         midas_resource_preflight._validate_veritas_runtime_context()
 
 
@@ -919,11 +943,19 @@ def test_veritas_run_cannot_exceed_its_fixed_scope_limits(overrides: dict, tmp_p
     values.update(overrides)
     assert midas_resource_preflight._run_command(Namespace(**values)) == 75
     receipt = next((tmp_path / "receipts").glob("*.json"))
-    assert json.loads(receipt.read_text())["final_classification"] == "admission_denied"
+    assert json.loads(receipt.read_text())["final_classification"] == "preflight_denied"
 
 
+@pytest.mark.parametrize(
+    ("post_state_invalid", "expected_exit", "expected_classification"),
+    [(False, 0, "worker_succeeded"), (True, 77, "post_execution_state_invalid")],
+)
 def test_veritas_run_uses_sandboxed_service_and_existing_resource_limits(
-    monkeypatch, tmp_path: Path
+    monkeypatch,
+    tmp_path: Path,
+    post_state_invalid: bool,
+    expected_exit: int,
+    expected_classification: str,
 ) -> None:
     from argparse import Namespace
 
@@ -945,9 +977,44 @@ def test_veritas_run_uses_sandboxed_service_and_existing_resource_limits(
             return 0
 
     monkeypatch.setattr(midas_resource_preflight, "_acquire_lock", Lock)
-    monkeypatch.setattr(midas_resource_preflight, "_validate_veritas_runtime_context", lambda: None)
+    monkeypatch.setattr(
+        midas_resource_preflight, "_validate_veritas_runtime_context", lambda: "a" * 32
+    )
     monkeypatch.setattr(midas_resource_preflight, "VERITAS_SERVICE_ROOT", tmp_path)
     monkeypatch.setattr(midas_resource_preflight, "VERITAS_OUTPUT_ROOT", tmp_path)
+    release_root = tmp_path / "release"
+    monkeypatch.setattr(midas_resource_preflight, "VERITAS_RELEASE_ROOT", release_root)
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_validate_veritas_worker_command",
+        lambda *_args: {"passed": True, "manifest_sha256": "c" * 64},
+    )
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "verify_veritas_checkpoint",
+        lambda *_args: {
+            "passed": True,
+            "state_sha256": "b" * 64,
+            "schema_version": 1,
+            "processed_segment_count": 100,
+            "last_ordinal": 100,
+            "processed_source_bytes": 1000,
+        },
+    )
+
+    def verify_post_state(*_args):
+        if post_state_invalid:
+            raise midas_resource_preflight.AdmissionError("synthetic post-state corruption")
+        return {
+            "passed": True,
+            "schema_version": 2,
+            "processed_segment_count": 100,
+            "processed_source_bytes": 1000,
+        }
+
+    monkeypatch.setattr(
+        midas_resource_preflight, "verify_veritas_post_execution_state", verify_post_state
+    )
     monkeypatch.setattr(
         midas_resource_preflight,
         "_gate",
@@ -971,6 +1038,10 @@ def test_veritas_run_uses_sandboxed_service_and_existing_resource_limits(
             worker_completed_at_utc="2026-11-08T00:00:01Z",
             worker_runtime_seconds=1.0,
             cgroup_metrics={"available": True, "memory": {"oom_kill_events": 0}},
+            execution_context={
+                "release": {"passed": True},
+                "transient_unit": {"available": True, "limits_verified": True},
+            },
         )
         commands.append(command)
         return Process()
@@ -978,7 +1049,22 @@ def test_veritas_run_uses_sandboxed_service_and_existing_resource_limits(
     monkeypatch.setattr(
         midas_resource_preflight,
         "_unit_snapshot",
-        lambda _unit: None,
+        lambda _unit: _unit_properties(),
+    )
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_unit_snapshot_after_wait",
+        lambda _unit: {"LoadState": "not-found"},
+    )
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_wait_for_transient_unit_cleanup",
+        lambda _unit: {"confirmed": True, "unit_absent": True},
+    )
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_systemctl",
+        lambda *_args, **_kwargs: subprocess.CompletedProcess([], 0, "", ""),
     )
     monkeypatch.setattr(
         midas_resource_preflight.subprocess,
@@ -987,7 +1073,7 @@ def test_veritas_run_uses_sandboxed_service_and_existing_resource_limits(
     )
     args = Namespace(
         profile="veritas",
-        command=["--", "/usr/bin/true"],
+        command=["--", *midas_resource_preflight._veritas_worker_command(release_root)],
         memory_high_mib=192,
         memory_max_mib=256,
         memory_budget_mib=128,
@@ -1000,11 +1086,13 @@ def test_veritas_run_uses_sandboxed_service_and_existing_resource_limits(
         storage_reserve_mib=0,
         termination_grace_seconds=2,
         receipt_dir=str(tmp_path / "receipts"),
-        source_revision="d92c0662cd04ff5be705ddcdc717e8e16aa85756",
-        release_identity="veritas-source-analysis-5679d4d-683346e0",
+        source_revision=midas_resource_preflight.VERITAS_APPROVED_SOURCE_REVISION,
+        release_identity=midas_resource_preflight.VERITAS_RELEASE_ID,
+        release_root=str(release_root),
+        expected_module_sha256=midas_resource_preflight.VERITAS_APPROVED_MODULE_SHA256,
     )
 
-    assert midas_resource_preflight._run_command(args) == 0
+    assert midas_resource_preflight._run_command(args) == expected_exit
     command = commands[0]
     assert "--property=MemoryHigh=192M" in command
     assert "--property=MemoryMax=256M" in command
@@ -1016,7 +1104,7 @@ def test_veritas_run_uses_sandboxed_service_and_existing_resource_limits(
     assert "--property=IOSchedulingClass=idle" in command
     assert "--property=ProtectSystem=strict" in command
     assert "--property=ProtectHome=read-only" in command
-    assert f"--property=ReadWritePaths={tmp_path}" in command
+    assert any(item.startswith(f"--property=ReadWritePaths={tmp_path} ") for item in command)
     assert "--property=PrivateTmp=yes" in command
     assert "--property=NoNewPrivileges=yes" in command
     assert "--property=RuntimeMaxSec=600s" in command
@@ -1027,15 +1115,16 @@ def test_veritas_run_uses_sandboxed_service_and_existing_resource_limits(
     assert f"--property=WorkingDirectory={tmp_path}" in command
     assert "--service-type=exec" in command
     assert "--wait" in command
-    assert "--collect" not in command
+    assert "--collect" in command
     assert "--scope" not in command
-    assert command[-1] == "/usr/bin/true"
+    assert command[-4:] == ["--max-segments", "128", "--max-source-mib", "32"]
     receipts = list((tmp_path / "receipts").glob("*.json"))
     assert len(receipts) == 1
     receipt = json.loads(receipts[0].read_text())
-    assert receipt["final_classification"] == "worker_succeeded"
-    assert receipt["source_revision"] == "d92c0662cd04ff5be705ddcdc717e8e16aa85756"
-    assert receipt["release_identity"] == "veritas-source-analysis-5679d4d-683346e0"
+    assert receipt["final_classification"] == expected_classification
+    assert receipt["post_execution_verification"]["passed"] is not post_state_invalid
+    assert receipt["source_revision"] == midas_resource_preflight.VERITAS_APPROVED_SOURCE_REVISION
+    assert receipt["release_identity"] == midas_resource_preflight.VERITAS_RELEASE_ID
     assert receipt["outer_admission"]["decision"] == "ADMIT"
     assert receipt["inner_admission"]["decision"] == "ADMIT"
     assert receipt["worker"]["start_confirmed"] is True
@@ -1059,6 +1148,28 @@ def test_inner_admission_denial_is_durable_and_never_starts_worker(
         "_gate",
         lambda *_args, **_kwargs: ({"decision": "DENY"}, ["synthetic inner denial"]),
     )
+    parent_invocation = "f" * 32
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_validate_veritas_runtime_context",
+        lambda **_kwargs: parent_invocation,
+    )
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_validate_veritas_worker_command",
+        lambda *_args: {"passed": True, "manifest_sha256": "a" * 64},
+    )
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "verify_veritas_checkpoint",
+        lambda *_args: {"passed": True, "state_sha256": "b" * 64, "schema_version": 1},
+    )
+    monkeypatch.setattr(
+        midas_resource_preflight,
+        "_validate_veritas_transient_unit",
+        lambda **_kwargs: {"available": True, "limits_verified": True},
+    )
+    monkeypatch.setattr(midas_resource_preflight, "VERITAS_OUTPUT_ROOT", tmp_path)
     monkeypatch.setattr(
         midas_resource_preflight.subprocess,
         "Popen",
@@ -1075,6 +1186,11 @@ def test_inner_admission_denial_is_durable_and_never_starts_worker(
         sample_seconds=30,
         execution_timeout_seconds=600,
         termination_grace_seconds=1,
+        release_root=str(tmp_path / "release"),
+        expected_module_sha256=midas_resource_preflight.VERITAS_APPROVED_MODULE_SHA256,
+        expected_checkpoint_state_sha256="b" * 64,
+        parent_service_invocation_id=parent_invocation,
+        parent_service_pid=os.getpid(),
     )
     assert midas_resource_preflight._run_inside(args, [sys.executable, "-c", "pass"]) == 75
     status = json.loads(status_path.read_text())
@@ -1170,7 +1286,7 @@ def _fake_guarded_run(
     stderr: str = "",
     popen_error: OSError | None = None,
     outer_reasons: list[str] | None = None,
-    profile: str = "veritas",
+    profile: str = "heavy",
 ) -> tuple[int, dict, Path]:
     from argparse import Namespace
 
@@ -1910,14 +2026,14 @@ def test_cancellation_reaps_local_runner_client_if_systemd_is_unavailable(monkey
 def test_parent_watchdog_events_are_durable_and_fail_closed(
     monkeypatch, tmp_path: Path, event: dict, runner_code: int, expected: str
 ) -> None:
-    original_wait = midas_resource_preflight._wait_for_veritas_process
+    original_wait = midas_resource_preflight._wait_for_runner_process
 
-    def wait(process, unit, *, on_watchdog=None, **kwargs):
-        assert on_watchdog is not None
-        on_watchdog(event)
+    def wait(process, unit, *, on_timeout=None, **kwargs):
+        assert on_timeout is not None
+        on_timeout(event)
         return runner_code
 
-    monkeypatch.setattr(midas_resource_preflight, "_wait_for_veritas_process", wait)
+    monkeypatch.setattr(midas_resource_preflight, "_wait_for_runner_process", wait)
     monkeypatch.setattr(midas_resource_preflight, "_kill_unit", lambda *_args: None)
     code, receipt, _path = _fake_guarded_run(
         monkeypatch,
@@ -1932,7 +2048,7 @@ def test_parent_watchdog_events_are_durable_and_fail_closed(
     assert receipt["final_classification"] == expected
     assert receipt["watchdog_interventions"] == [event]
     assert code != 0
-    monkeypatch.setattr(midas_resource_preflight, "_wait_for_veritas_process", original_wait)
+    monkeypatch.setattr(midas_resource_preflight, "_wait_for_runner_process", original_wait)
 
 
 def test_runner_output_receipt_never_stores_raw_worker_or_secret_text(tmp_path: Path) -> None:
