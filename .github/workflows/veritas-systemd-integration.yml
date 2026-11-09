@@ -47,6 +47,8 @@ jobs:
       - name: Create a dedicated user manager with delegated controllers
         run: |
           set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y dbus-user-session
           sudo useradd --create-home --shell /bin/bash midas-ci
           uid="$(id -u midas-ci)"
           sudo mkdir -p /etc/systemd/system/user@.service.d
@@ -65,6 +67,8 @@ jobs:
             sleep 1
           done
           sudo -u midas-ci env XDG_RUNTIME_DIR="$runtime" systemctl --user show-environment >/dev/null
+          sudo -u midas-ci env XDG_RUNTIME_DIR="$runtime" systemctl --user daemon-reload
+          sudo -u midas-ci env XDG_RUNTIME_DIR="$runtime" systemctl --user start dbus.socket
           for attempt in $(seq 1 30); do
             test -S "$runtime/bus" && break
             sleep 1

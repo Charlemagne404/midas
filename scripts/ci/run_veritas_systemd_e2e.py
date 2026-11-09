@@ -66,8 +66,13 @@ def configure_scenario(scenario: str) -> None:
         f"ReadWritePaths={RECEIPTS}\n"
         "ReadWritePaths=%t/bus\n"
         "RestrictAddressFamilies=AF_UNIX\n"
+        "Environment=\n"
+        "Environment=XDG_STATE_HOME=%h/.local/state\n"
         "Environment=XDG_RUNTIME_DIR=%t\n"
         "Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=%t/bus\n"
+        "Environment=OMP_NUM_THREADS=1\n"
+        "Environment=OPENBLAS_NUM_THREADS=1\n"
+        "Environment=MKL_NUM_THREADS=1\n"
         + "".join(f"Environment={key}={value}\n" for key, value in values.items()),
         encoding="utf-8",
     )
