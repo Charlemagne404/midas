@@ -152,6 +152,7 @@ def latest_receipt(
 
 def wait_unit(timeout: float = 13 * 60, *, receipt_path: Path) -> dict[str, str]:
     deadline = time.monotonic() + timeout
+    observed_invocation_id = None
     while time.monotonic() < deadline:
         props = preflight._properties(
             command(
@@ -171,7 +172,32 @@ def wait_unit(timeout: float = 13 * 60, *, receipt_path: Path) -> dict[str, str]
                 "ExecStart",
             ).stdout
         )
-        if props.get("InvocationID") and props.get("ActiveState") in {"inactive", "failed"}:
+        if props.get("ActiveState") in {"active", "activating"} and props.get("InvocationID"):
+            observed_invocation_id = props["InvocationID"]
+        try:
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            receipt = {}
+        service_owner = receipt.get("service_owner", {})
+        owner_invocation_id = service_owner.get("invocation_id")
+        receipt_complete = receipt.get("phase") == "completed" and bool(
+            receipt.get("final_classification")
+        )
+        unit_finished = props.get("ActiveState") in {"inactive", "failed"} and props.get(
+            "ExecMainStatus"
+        ) not in {None, ""}
+        if unit_finished and receipt_complete:
+            if (
+                service_owner.get("unit") != UNIT
+                or not isinstance(owner_invocation_id, str)
+                or len(owner_invocation_id) != 32
+                or any(character not in "0123456789abcdef" for character in owner_invocation_id)
+            ):
+                raise AssertionError("completed receipt has no valid permanent-unit identity")
+            if props.get("InvocationID") and props["InvocationID"] != owner_invocation_id:
+                raise AssertionError("final systemd invocation contradicts the durable receipt")
+            if observed_invocation_id and observed_invocation_id != owner_invocation_id:
+                raise AssertionError("observed systemd invocation contradicts the durable receipt")
             return props
         time.sleep(0.2)
     parent = preflight._properties(
@@ -283,7 +309,10 @@ def run_scenario(
             f"{expected_classification!r}; receipt={receipt_path}; "
             f"evidence={json.dumps(evidence, sort_keys=True)}"
         )
-    if status.get("InvocationID") != receipt.get("service_owner", {}).get("invocation_id"):
+    owner = receipt.get("service_owner", {})
+    if owner.get("unit") != UNIT or not owner.get("invocation_id"):
+        raise AssertionError("durable receipt does not identify the permanent service invocation")
+    if status.get("InvocationID") and status.get("InvocationID") != owner.get("invocation_id"):
         raise AssertionError("permanent service invocation and durable receipt identity differ")
     if not status.get("ExecMainStatus"):
         raise AssertionError("systemd did not retain the permanent unit exit status")
