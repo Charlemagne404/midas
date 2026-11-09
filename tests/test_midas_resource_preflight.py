@@ -838,6 +838,16 @@ def test_veritas_profile_requires_a_full_30_second_sample() -> None:
 def test_veritas_runtime_context_requires_exact_service_owner_and_pinned_execstart(
     monkeypatch, tmp_path: Path
 ) -> None:
+    import socket
+
+    runtime_dir = tmp_path / "runtime"
+    runtime_dir.mkdir()
+    bus_socket = runtime_dir / "bus"
+    bus_listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    bus_listener.bind(str(bus_socket))
+    bus_listener.close()
+    monkeypatch.setattr(midas_resource_preflight, "VERITAS_USER_MANAGER_RUNTIME_DIR", runtime_dir)
+    monkeypatch.setattr(midas_resource_preflight, "VERITAS_USER_MANAGER_BUS_SOCKET", bus_socket)
     monkeypatch.setattr(midas_resource_preflight, "VERITAS_SERVICE_ROOT", tmp_path)
     monkeypatch.setattr(midas_resource_preflight, "VERITAS_OUTPUT_ROOT", tmp_path)
     monkeypatch.setattr(midas_resource_preflight, "GUARDED_RECEIPT_DIR", tmp_path / "receipts")
@@ -876,7 +886,7 @@ def test_veritas_runtime_context_requires_exact_service_owner_and_pinned_execsta
                 "ProtectHome=read-only",
                 "ReadWritePaths="
                 f"{tmp_path} {tmp_path / 'receipts'} "
-                f"{midas_resource_preflight.VERITAS_USER_MANAGER_PRIVATE_SOCKET}",
+                f"{midas_resource_preflight.VERITAS_USER_MANAGER_BUS_SOCKET}",
                 f"WorkingDirectory={tmp_path}",
                 "PrivateTmp=yes",
                 "NoNewPrivileges=yes",
@@ -888,7 +898,7 @@ def test_veritas_runtime_context_requires_exact_service_owner_and_pinned_execsta
                 "Environment=XDG_RUNTIME_DIR="
                 f"{midas_resource_preflight.VERITAS_USER_MANAGER_RUNTIME_DIR} "
                 "DBUS_SESSION_BUS_ADDRESS=unix:path="
-                f"{midas_resource_preflight.VERITAS_USER_MANAGER_PRIVATE_SOCKET} "
+                f"{midas_resource_preflight.VERITAS_USER_MANAGER_BUS_SOCKET} "
                 "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1",
                 "UnsetEnvironment=PYTHONPATH",
             ]
@@ -905,17 +915,25 @@ def test_veritas_runtime_context_requires_exact_service_owner_and_pinned_execsta
 
     service_properties = properties["midas-veritas-source-analysis.service"]
     properties["midas-veritas-source-analysis.service"] = service_properties.replace(
-        f" {midas_resource_preflight.VERITAS_USER_MANAGER_PRIVATE_SOCKET}", ""
+        f" {midas_resource_preflight.VERITAS_USER_MANAGER_BUS_SOCKET}", ""
     )
     with pytest.raises(midas_resource_preflight.AdmissionError, match="service write paths"):
         midas_resource_preflight._validate_veritas_runtime_context()
     properties["midas-veritas-source-analysis.service"] = service_properties
 
     properties["midas-veritas-source-analysis.service"] = service_properties.replace(
-        f" DBUS_SESSION_BUS_ADDRESS=unix:path={midas_resource_preflight.VERITAS_USER_MANAGER_PRIVATE_SOCKET}",
-        "",
+        f"DBUS_SESSION_BUS_ADDRESS=unix:path={midas_resource_preflight.VERITAS_USER_MANAGER_BUS_SOCKET}",
+        "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/999999/bus",
     )
     with pytest.raises(midas_resource_preflight.AdmissionError, match="manager-bus environment"):
+        midas_resource_preflight._validate_veritas_runtime_context()
+    properties["midas-veritas-source-analysis.service"] = service_properties
+
+    properties["midas-veritas-source-analysis.service"] = service_properties.replace(
+        "OMP_NUM_THREADS=1",
+        "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/999999/systemd/private OMP_NUM_THREADS=1",
+    )
+    with pytest.raises(midas_resource_preflight.AdmissionError, match="exactly the validated"):
         midas_resource_preflight._validate_veritas_runtime_context()
     properties["midas-veritas-source-analysis.service"] = service_properties
 

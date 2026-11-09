@@ -65,6 +65,15 @@ jobs:
             sleep 1
           done
           sudo -u midas-ci env XDG_RUNTIME_DIR="$runtime" systemctl --user show-environment >/dev/null
+          for attempt in $(seq 1 30); do
+            test -S "$runtime/bus" && break
+            sleep 1
+          done
+          test -S "$runtime/bus"
+          sudo -u midas-ci env XDG_RUNTIME_DIR="$runtime" \
+            DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime/bus" \
+            busctl --user get-property org.freedesktop.systemd1 \
+              /org/freedesktop/systemd1 org.freedesktop.systemd1.Manager Version
           cgroup="/sys/fs/cgroup/user.slice/user-${uid}.slice/user@${uid}.service"
           available_controllers="$(cat "$cgroup/cgroup.controllers")"
           enabled_controllers="$(cat "$cgroup/cgroup.subtree_control")"

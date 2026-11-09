@@ -35,13 +35,16 @@ There is exactly one packaged `ExecStart`, and it is the immutable guarded
 launcher. The launcher starts the only transient research worker, waits for its
 systemd result, checks the sealed v2 checkpoint and bounded summary, and returns
 that result to the permanent oneshot. `ExecStartPre`, `ExecStartPost`, and
-`ExecStop` alternatives are rejected. The permanent trigger has a narrow
-`XDG_RUNTIME_DIR` and `DBUS_SESSION_BUS_ADDRESS` point explicitly at the
-invoking user's systemd manager, and `ReadWritePaths` allows only that manager's
-private socket. This is required to inspect protected service state and create
-the bounded transient worker while `ProtectHome=read-only` is active. It does
-not expose another user's manager. `PYTHONPATH` is cleared on the permanent
-trigger. The worker
+`ExecStop` alternatives are rejected. The permanent trigger sets
+`XDG_RUNTIME_DIR` and `DBUS_SESSION_BUS_ADDRESS` to the invoking user's runtime
+directory and D-Bus session socket (`%t/bus`); `ReadWritePaths` allows access
+only to that socket for manager requests. `systemd-run --wait` uses the D-Bus
+bus protocol, so `%t/systemd/private` must not be assigned as
+`DBUS_SESSION_BUS_ADDRESS`. The launcher verifies `%t/bus` is a user-owned
+socket before admission. This allows inspection of protected service state and
+creation of the bounded transient worker while `ProtectHome=read-only` is
+active. It does not expose another user's manager. `PYTHONPATH` is cleared on
+the permanent trigger. The worker
 uses `-S` with the release package and validated virtualenv site packages
 explicitly, so editable-install `.pth` files cannot add the old frozen overlay
 or main checkout as fallback import roots.

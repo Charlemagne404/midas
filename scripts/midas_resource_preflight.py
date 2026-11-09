@@ -254,7 +254,7 @@ VERITAS_RELEASE_ROOT = (
     Path.home() / ".local" / "share" / "midas-veritas" / "releases" / VERITAS_RELEASE_ID
 )
 VERITAS_USER_MANAGER_RUNTIME_DIR = Path("/run/user") / str(os.getuid())
-VERITAS_USER_MANAGER_PRIVATE_SOCKET = VERITAS_USER_MANAGER_RUNTIME_DIR / "systemd" / "private"
+VERITAS_USER_MANAGER_BUS_SOCKET = VERITAS_USER_MANAGER_RUNTIME_DIR / "bus"
 VERITAS_RUNTIME_PYTHON = Path.home() / "midas" / ".venv" / "bin" / "python"
 VERITAS_RUNTIME_SITE_PACKAGES = (
     VERITAS_RUNTIME_PYTHON.parent.parent
@@ -1625,7 +1625,9 @@ class _RunnerOutput:
             for argument in sorted(self.command, key=len, reverse=True):
                 if len(argument) >= 4:
                     tail = tail.replace(argument, "<redacted-argument>")
-            diagnostic_message = _safe_diagnostic(tail) if self.include_systemd_error and name == "stderr" else None
+            diagnostic_message = (
+                _safe_diagnostic(tail) if self.include_systemd_error and name == "stderr" else None
+            )
             if diagnostic_message:
                 # systemd-run emits manager diagnostics, not worker output. Keep
                 # a short redacted excerpt so failed transient-unit requests
@@ -2682,7 +2684,7 @@ def _validate_veritas_runtime_context(
     expected_rw_paths = {
         str(expected_output_root),
         str(GUARDED_RECEIPT_DIR),
-        str(VERITAS_USER_MANAGER_PRIVATE_SOCKET),
+        str(VERITAS_USER_MANAGER_BUS_SOCKET),
     }
     if rw_paths != expected_rw_paths:
         raise AdmissionError("Veritas service write paths differ from the approved minimal set")
@@ -2693,10 +2695,21 @@ def _validate_veritas_runtime_context(
         "OMP_NUM_THREADS=1",
         "OPENBLAS_NUM_THREADS=1",
         f"XDG_RUNTIME_DIR={VERITAS_USER_MANAGER_RUNTIME_DIR}",
-        f"DBUS_SESSION_BUS_ADDRESS=unix:path={VERITAS_USER_MANAGER_PRIVATE_SOCKET}",
+        f"DBUS_SESSION_BUS_ADDRESS=unix:path={VERITAS_USER_MANAGER_BUS_SOCKET}",
     )
     if any(value not in environment for value in required_environment):
         raise AdmissionError("Veritas service thread or manager-bus environment is missing")
+    bus_environment = [
+        value for value in environment.split() if value.startswith("DBUS_SESSION_BUS_ADDRESS=")
+    ]
+    if bus_environment != [required_environment[-1]]:
+        raise AdmissionError("Veritas service must select exactly the validated user D-Bus socket")
+    if (
+        VERITAS_USER_MANAGER_BUS_SOCKET.is_symlink()
+        or not VERITAS_USER_MANAGER_BUS_SOCKET.is_socket()
+        or VERITAS_USER_MANAGER_BUS_SOCKET.stat().st_uid != os.getuid()
+    ):
+        raise AdmissionError("Veritas service D-Bus session socket is missing or not user-owned")
     for path in (VERITAS_SERVICE_ROOT, VERITAS_OUTPUT_ROOT, expected_output_root):
         if path.is_symlink() or not path.is_dir():
             raise AdmissionError(f"Veritas service path is missing or unsafe: {path}")
