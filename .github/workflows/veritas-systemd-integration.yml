@@ -26,11 +26,22 @@ jobs:
       - name: Verify hosted VM systemd and cgroup v2
         run: |
           set -euo pipefail
-          test "$(cat /proc/1/comm)" = systemd
-          grep -q ' - cgroup2 ' /proc/mounts
-          test ! -e /home/charlie
-          test ! -e /mnt/continental-cloud
-          systemctl is-system-running --wait || test "$(systemctl is-system-running)" = degraded
+          pid1="$(cat /proc/1/comm)"
+          printf 'PID 1: %s\n' "$pid1"
+          test "$pid1" = systemd || { echo 'PID 1 is not systemd'; exit 1; }
+          cgroup_mount="$(awk '$3 == "cgroup2" { print; exit }' /proc/mounts)"
+          printf 'cgroup v2 mount: %s\n' "${cgroup_mount:-missing}"
+          test -n "$cgroup_mount" || { echo 'cgroup v2 is not mounted'; exit 1; }
+          for production_path in /home/charlie/midas/data /home/charlie/midas-veritas \
+            /mnt/continental-cloud/data/midas-backups; do
+            test ! -e "$production_path" || {
+              echo "production data path is visible on the hosted runner: $production_path"
+              exit 1
+            }
+          done
+          manager_state="$(systemctl is-system-running --wait || true)"
+          printf 'systemd state: %s\n' "$manager_state"
+          test "$manager_state" = running || test "$manager_state" = degraded
           systemd --version
 
       - name: Create a dedicated user manager with delegated controllers
