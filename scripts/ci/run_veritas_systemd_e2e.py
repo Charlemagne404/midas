@@ -322,8 +322,9 @@ def wait_for_admitted_host_window(*, timeout_seconds: float = 600) -> None:
         )
         if not reasons:
             return
-        if any(not reason.startswith("io_") for reason in reasons):
-            raise RuntimeError(f"host admission denied for a non-I/O condition: {reasons}")
+        pressure_prefixes = ("cpu_", "io_", "memory_", "user_manager_memory_")
+        if any(not reason.startswith(pressure_prefixes) for reason in reasons):
+            raise RuntimeError(f"host admission denied for a non-pressure condition: {reasons}")
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             raise TimeoutError(f"host I/O admission did not pass before the deadline: {reasons}")
